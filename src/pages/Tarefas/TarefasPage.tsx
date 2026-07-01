@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Trash2, 
-  Paperclip
+  Paperclip,
+  Clock,
+  MapPin,
+  Bell
 } from 'lucide-react';
 
 import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
 import { useAuthStore } from '../../entities/usuario/model/store';
-import type { Task, TaskStatus } from '../../entities/tarefa/model/types';
+import type { Task, TaskStatus, TaskType, TaskReminder } from '../../entities/tarefa/model/types';
+import { TASK_TYPE_LABELS, TASK_REMINDER_LABELS, TASK_TYPE_ICONS } from '../../entities/tarefa/model/types';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { SearchBar } from '../../shared/components/SearchBar';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
@@ -22,6 +26,8 @@ const STATUS_STAGES: { id: TaskStatus; label: string; color: string }[] = [
   { id: 'revisao', label: 'Em Revisão', color: '#FBBF24' },
   { id: 'concluida', label: 'Concluída', color: '#10B981' }
 ];
+
+const PRIORITY_COLORS = { alta: '#EF4444', media: '#F59E0B', baixa: '#10B981' };
 
 export default function TarefasPage() {
   const { tasks, loading, error, fetchTasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTaskStore();
@@ -53,6 +59,10 @@ export default function TarefasPage() {
   const [formAssignee, setFormAssignee] = useState('');
   const [formProjectId, setFormProjectId] = useState('');
   const [formDeadline, setFormDeadline] = useState('');
+  const [formTime, setFormTime] = useState('');
+  const [formTaskType, setFormTaskType] = useState<TaskType>('outro');
+  const [formReminder, setFormReminder] = useState<TaskReminder>('sem_lembrete');
+  const [formLocationLink, setFormLocationLink] = useState('');
 
   // Error and Toast States
   const [modalError, setModalError] = useState<string | null>(null);
@@ -98,6 +108,11 @@ export default function TarefasPage() {
       projectId: formProjectId || undefined,
       projectName: proj ? proj.name : undefined,
       deadline: formDeadline || undefined,
+      time: formTime || undefined,
+      taskType: formTaskType,
+      reminder: formReminder,
+      locationLink: formLocationLink || undefined,
+      notificationSent: false,
       checklist: [],
       comments: [],
       attachments: []
@@ -111,7 +126,8 @@ export default function TarefasPage() {
         resetAddForm();
         showToast('Tarefa criada com sucesso! 🎉');
       } else {
-        setModalError(error || 'Erro ao criar tarefa no Supabase. Verifique se o migration.sql foi executado.');
+        const freshError = useTaskStore.getState().error;
+        setModalError(freshError || 'Erro ao criar tarefa no Supabase. Verifique se o migration.sql foi executado.');
       }
     } catch (err: any) {
       setModalError(err.message || 'Erro ao criar tarefa.');
@@ -126,6 +142,10 @@ export default function TarefasPage() {
     setFormAssignee('');
     setFormProjectId('');
     setFormDeadline('');
+    setFormTime('');
+    setFormTaskType('outro');
+    setFormReminder('sem_lembrete');
+    setFormLocationLink('');
     setModalError(null);
   };
 
@@ -153,12 +173,10 @@ export default function TarefasPage() {
     }
   };
 
-  // Drag and Drop optimistic status update
   const handleTaskMove = async (taskId: string, targetStatus: TaskStatus) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
     const oldStatus = task.status;
-
     try {
       await updateTaskStatus(taskId, targetStatus, oldStatus);
       showToast(`Status da tarefa atualizado! 🚀`);
@@ -167,20 +185,14 @@ export default function TarefasPage() {
     }
   };
 
-  // Calendar View Actions
   const handleTaskDateMove = async (taskId: string, newDateStr: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
-    
-    // Apply date change
     const updated = { ...task, deadline: newDateStr };
     try {
       const success = await updateTask(updated);
-      if (success) {
-        showToast('Prazo da tarefa atualizado! 📅');
-      } else {
-        alert('Erro ao atualizar o prazo da tarefa.');
-      }
+      if (success) showToast('Prazo da tarefa atualizado! 📅');
+      else alert('Erro ao atualizar o prazo da tarefa.');
     } catch (err: any) {
       alert(`Falha ao mover tarefa: ${err.message || 'Erro de conexão.'}`);
     }
@@ -195,14 +207,8 @@ export default function TarefasPage() {
   const handleAddChecklistItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistItemText.trim() || !selectedTask) return;
-
     const list = selectedTask.checklist ? [...selectedTask.checklist] : [];
-    list.push({
-      id: `chk-${Date.now()}`,
-      text: newChecklistItemText,
-      done: false
-    });
-
+    list.push({ id: `chk-${Date.now()}`, text: newChecklistItemText, done: false });
     const updated = { ...selectedTask, checklist: list };
     await updateTask(updated);
     setEditFields({ ...editFields, checklist: list });
@@ -211,11 +217,7 @@ export default function TarefasPage() {
 
   const handleToggleChecklistItem = async (itemId: string, done: boolean) => {
     if (!selectedTask || !selectedTask.checklist) return;
-
-    const list = selectedTask.checklist.map(item => 
-      item.id === itemId ? { ...item, done } : item
-    );
-
+    const list = selectedTask.checklist.map(item => item.id === itemId ? { ...item, done } : item);
     const updated = { ...selectedTask, checklist: list };
     await updateTask(updated);
     setEditFields({ ...editFields, checklist: list });
@@ -223,7 +225,6 @@ export default function TarefasPage() {
 
   const handleDeleteChecklistItem = async (itemId: string) => {
     if (!selectedTask || !selectedTask.checklist) return;
-
     const list = selectedTask.checklist.filter(item => item.id !== itemId);
     const updated = { ...selectedTask, checklist: list };
     await updateTask(updated);
@@ -234,7 +235,6 @@ export default function TarefasPage() {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCommentText.trim() || !selectedTask) return;
-
     const list = selectedTask.comments ? [...selectedTask.comments] : [];
     list.push({
       id: `comm-${Date.now()}`,
@@ -242,7 +242,6 @@ export default function TarefasPage() {
       text: newCommentText,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' - Hoje'
     });
-
     const updated = { ...selectedTask, comments: list };
     await updateTask(updated);
     setEditFields({ ...editFields, comments: list });
@@ -276,11 +275,9 @@ export default function TarefasPage() {
   const filteredTasks = tasks.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
     const matchesProject = projectFilter === 'all' || t.projectId === projectFilter;
-
     return matchesSearch && matchesStatus && matchesPriority && matchesProject;
   });
 
@@ -289,29 +286,17 @@ export default function TarefasPage() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Gestão de Tarefas</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Controle e distribuição de tarefas de desenvolvimento e implantação</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Controle e distribuição de tarefas com horário, tipo e lembrete</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
-            <button 
-              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              style={{ padding: '6px 12px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
-              onClick={() => setViewMode('list')}
-            >
+            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('list')}>
               📋 Lista
             </button>
-            <button 
-              className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`}
-              style={{ padding: '6px 12px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
-              onClick={() => setViewMode('kanban')}
-            >
+            <button className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('kanban')}>
               🗂️ Kanban
             </button>
-            <button 
-              className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`}
-              style={{ padding: '6px 12px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
-              onClick={() => setViewMode('calendar')}
-            >
+            <button className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('calendar')}>
               📅 Calendário
             </button>
           </div>
@@ -322,37 +307,19 @@ export default function TarefasPage() {
         </div>
       </header>
 
-      {/* Filters and Search */}
+      {/* Filters */}
       <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar tarefas..." />
-        
         <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <select 
-            value={projectFilter} 
-            onChange={(e) => setProjectFilter(e.target.value)}
-            className="form-select"
-            style={{ width: '160px', padding: '6px 12px' }}
-          >
+          <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="form-select" style={{ width: '160px', padding: '6px 12px' }}>
             <option value="all">Todos os Projetos</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="form-select"
-            style={{ width: '140px', padding: '6px 12px' }}
-          >
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-select" style={{ width: '140px', padding: '6px 12px' }}>
             <option value="all">Todos os Status</option>
             {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
-          
-          <select 
-            value={priorityFilter} 
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="form-select"
-            style={{ width: '140px', padding: '6px 12px' }}
-          >
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="form-select" style={{ width: '140px', padding: '6px 12px' }}>
             <option value="all">Todas Prioridades</option>
             <option value="alta">Alta</option>
             <option value="media">Média</option>
@@ -364,15 +331,13 @@ export default function TarefasPage() {
       {loading && <LoadingOverlay active={true} message="Carregando tarefas..." />}
       {error && <div style={{ padding: '16px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', marginBottom: '24px' }}>{error}</div>}
 
-      {/* Kanban Board / Calendar Board / List Switcher */}
+      {/* View Switcher */}
       {viewMode === 'calendar' ? (
         <TaskCalendar
           tasks={filteredTasks}
+          projects={projects}
           onTaskMove={handleTaskDateMove}
-          onTaskClick={(taskId) => {
-            setSelectedTaskId(taskId);
-            setIsDetailDrawerOpen(true);
-          }}
+          onTaskClick={(taskId) => { setSelectedTaskId(taskId); setIsDetailDrawerOpen(true); }}
           onDayClick={handleDayClick}
         />
       ) : viewMode === 'kanban' ? (
@@ -380,60 +345,91 @@ export default function TarefasPage() {
           tasks={filteredTasks}
           stages={STATUS_STAGES}
           onTaskMove={handleTaskMove}
-          onTaskClick={(taskId) => {
-            setSelectedTaskId(taskId);
-            setIsDetailDrawerOpen(true);
-          }}
+          onTaskClick={(taskId) => { setSelectedTaskId(taskId); setIsDetailDrawerOpen(true); }}
         />
       ) : (
         /* List View */
         <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Tarefa</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Projeto</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Responsável</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Status</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Prioridade</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Prazo</th>
-                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', textAlign: 'right' }}>Ações</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Tarefa</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Tipo</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Data</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Horário</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Lembrete</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Responsável</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Status</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Prioridade</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {filteredTasks.map(t => (
-                <tr 
-                  key={t.id} 
-                  onClick={() => {
-                    setSelectedTaskId(t.id);
-                    setIsDetailDrawerOpen(true);
-                  }}
-                  style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'var(--transition-smooth)' }} 
+                <tr
+                  key={t.id}
+                  onClick={() => { setSelectedTaskId(t.id); setIsDetailDrawerOpen(true); }}
+                  style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
                   className="table-row-hover"
                 >
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#fff' }}>{t.title}</td>
-                  <td style={{ padding: '12px 16px' }}>{t.projectName || '-'}</td>
-                  <td style={{ padding: '12px 16px' }}>{t.assignee || '-'}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      backgroundColor: 'rgba(255,255,255,0.05)',
-                      color: STATUS_STAGES.find(s => s.id === t.status)?.color || '#fff'
-                    }}>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{t.title}</div>
+                    {t.locationLink && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--color-primary)', marginTop: '2px' }}>
+                        <MapPin size={10} />
+                        <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.locationLink}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem' }}>
+                      {t.taskType ? TASK_TYPE_ICONS[t.taskType] : '📌'}
+                      <span style={{ color: 'var(--text-secondary)' }}>{t.taskType ? TASK_TYPE_LABELS[t.taskType] : 'Outro'}</span>
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                    {t.deadline ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        📅 {t.deadline}
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    {t.time ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#A78BFA', fontWeight: 600 }}>
+                        <Clock size={12} /> {t.time}
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    {t.reminder && t.reminder !== 'sem_lembrete' ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#F59E0B', fontSize: '0.78rem' }}>
+                        <Bell size={11} /> {TASK_REMINDER_LABELS[t.reminder]}
+                      </span>
+                    ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>}
+                  </td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                    {t.assignee ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0 }}>
+                          {t.assignee.charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: '0.82rem' }}>{t.assignee}</span>
+                      </div>
+                    ) : '-'}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'rgba(255,255,255,0.05)', color: STATUS_STAGES.find(s => s.id === t.status)?.color || '#fff' }}>
                       {STATUS_STAGES.find(s => s.id === t.status)?.label}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{t.priority}</td>
-                  <td style={{ padding: '12px 16px' }}>{t.deadline || '-'}</td>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: `${PRIORITY_COLORS[t.priority]}15`, color: PRIORITY_COLORS[t.priority] }}>
+                      {t.priority.charAt(0).toUpperCase() + t.priority.slice(1)}
+                    </span>
+                  </td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      className="icon-btn" 
-                      onClick={() => handleDeleteClick(t.id)}
-                      style={{ color: 'var(--color-danger)', border: 'none', background: 'none', cursor: 'pointer' }}
-                    >
+                    <button className="icon-btn" onClick={() => handleDeleteClick(t.id)} style={{ color: 'var(--color-danger)', border: 'none', background: 'none', cursor: 'pointer' }}>
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -450,58 +446,92 @@ export default function TarefasPage() {
       {/* Task Detail Drawer */}
       {isDetailDrawerOpen && selectedTask && (
         <div className="drawer-overlay" onClick={() => setIsDetailDrawerOpen(false)} style={{ zIndex: 900 }}>
-          <div className="drawer-panel" onClick={(e) => e.stopPropagation()} style={{ width: '560px', backgroundColor: 'var(--bg-sidebar)', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', position: 'fixed', right: 0, top: 0, zIndex: 901, boxShadow: '-5px 0 25px rgba(0,0,0,0.5)' }}>
+          <div className="drawer-panel" onClick={(e) => e.stopPropagation()} style={{ width: '580px', backgroundColor: 'var(--bg-sidebar)', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', position: 'fixed', right: 0, top: 0, zIndex: 901, boxShadow: '-5px 0 25px rgba(0,0,0,0.5)' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>{editFields.title}</h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Detalhes da Tarefa</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{selectedTask.taskType ? TASK_TYPE_ICONS[selectedTask.taskType] : '📌'}</span>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0 }}>{editFields.title}</h3>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  {selectedTask.taskType && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px' }}>
+                      {TASK_TYPE_LABELS[selectedTask.taskType]}
+                    </span>
+                  )}
+                  {selectedTask.time && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#A78BFA' }}>
+                      <Clock size={11} /> {selectedTask.time}
+                    </span>
+                  )}
+                  {selectedTask.reminder && selectedTask.reminder !== 'sem_lembrete' && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#F59E0B' }}>
+                      <Bell size={11} /> {TASK_REMINDER_LABELS[selectedTask.reminder]}
+                    </span>
+                  )}
+                </div>
               </div>
               <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setIsDetailDrawerOpen(false)}>✕</button>
             </div>
 
             {/* Tabs */}
             <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
-              {([
-                { id: 'resumo', label: 'Resumo' },
-                { id: 'checklist', label: 'Checklist' },
-                { id: 'comentarios', label: 'Comentários' },
-                { id: 'arquivos', label: 'Arquivos' }
-              ] as const).map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    padding: '8px 10px',
-                    border: 'none',
-                    background: 'none',
-                    color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--text-secondary)',
-                    borderBottom: activeTab === tab.id ? '2px solid var(--color-primary)' : 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: 600
-                  }}
-                >
-                  {tab.label}
+              {(['resumo', 'checklist', 'comentarios', 'arquivos'] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '8px 10px', border: 'none', background: 'none', color: activeTab === tab ? 'var(--color-primary)' : 'var(--text-secondary)', borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, textTransform: 'capitalize' }}>
+                  {tab === 'resumo' ? 'Resumo' : tab === 'checklist' ? 'Checklist' : tab === 'comentarios' ? 'Comentários' : 'Arquivos'}
                 </button>
               ))}
             </div>
 
             {/* Content */}
             <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              
+
               {activeTab === 'resumo' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div className="input-group">
                     <span className="input-label">Título da Tarefa</span>
                     <input type="text" className="form-input" value={editFields.title || ''} onChange={(e) => setEditFields({ ...editFields, title: e.target.value })} />
                   </div>
                   <div className="input-group">
                     <span className="input-label">Descrição</span>
-                    <textarea className="form-input" style={{ minHeight: '80px', resize: 'none' }} value={editFields.description || ''} onChange={(e) => setEditFields({ ...editFields, description: e.target.value })} />
+                    <textarea className="form-input" style={{ minHeight: '70px', resize: 'none' }} value={editFields.description || ''} onChange={(e) => setEditFields({ ...editFields, description: e.target.value })} />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="input-group">
+                      <span className="input-label">Tipo</span>
+                      <select className="form-select" value={editFields.taskType || 'outro'} onChange={(e) => setEditFields({ ...editFields, taskType: e.target.value as TaskType })}>
+                        {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{TASK_TYPE_ICONS[k as TaskType]} {v}</option>)}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <span className="input-label">Status</span>
+                      <select className="form-select" value={editFields.status || 'pendente'} onChange={(e) => setEditFields({ ...editFields, status: e.target.value as TaskStatus })}>
+                        {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="input-group">
+                      <span className="input-label">Data de Entrega</span>
+                      <input type="date" className="form-input" value={editFields.deadline || ''} onChange={(e) => setEditFields({ ...editFields, deadline: e.target.value })} />
+                    </div>
+                    <div className="input-group">
+                      <span className="input-label">Horário</span>
+                      <input type="time" className="form-input" value={editFields.time || ''} onChange={(e) => setEditFields({ ...editFields, time: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <span className="input-label">Lembrete</span>
+                    <select className="form-select" value={editFields.reminder || 'sem_lembrete'} onChange={(e) => setEditFields({ ...editFields, reminder: e.target.value as TaskReminder })}>
+                      {Object.entries(TASK_REMINDER_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div className="input-group">
                       <span className="input-label">Projeto Associado</span>
                       <select className="form-select" value={editFields.projectId || ''} onChange={(e) => setEditFields({ ...editFields, projectId: e.target.value })}>
@@ -518,7 +548,7 @@ export default function TarefasPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div className="input-group">
                       <span className="input-label">Prioridade</span>
                       <select className="form-select" value={editFields.priority || 'media'} onChange={(e) => setEditFields({ ...editFields, priority: e.target.value as any })}>
@@ -528,19 +558,25 @@ export default function TarefasPage() {
                       </select>
                     </div>
                     <div className="input-group">
-                      <span className="input-label">Prazo</span>
-                      <input type="text" className="form-input" placeholder="Ex: 30/07/2026" value={editFields.deadline || ''} onChange={(e) => setEditFields({ ...editFields, deadline: e.target.value })} />
+                      <span className="input-label">Local / Link da Reunião</span>
+                      <input type="text" className="form-input" placeholder="Link ou endereço" value={editFields.locationLink || ''} onChange={(e) => setEditFields({ ...editFields, locationLink: e.target.value })} />
                     </div>
                   </div>
 
-                  <div className="input-group">
-                    <span className="input-label">Status</span>
-                    <select className="form-select" value={editFields.status || 'pendente'} onChange={(e) => setEditFields({ ...editFields, status: e.target.value as TaskStatus })}>
-                      {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                    </select>
-                  </div>
+                  {editFields.locationLink && (
+                    <div style={{ padding: '10px 14px', backgroundColor: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <MapPin size={14} style={{ color: '#818CF8', flexShrink: 0 }} />
+                      {editFields.locationLink.startsWith('http') ? (
+                        <a href={editFields.locationLink} target="_blank" rel="noopener noreferrer" style={{ color: '#818CF8', fontSize: '0.82rem', textDecoration: 'none', wordBreak: 'break-all' }}>
+                          {editFields.locationLink}
+                        </a>
+                      ) : (
+                        <span style={{ color: '#818CF8', fontSize: '0.82rem' }}>{editFields.locationLink}</span>
+                      )}
+                    </div>
+                  )}
 
-                  <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={handleSaveEdits}>
+                  <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }} onClick={handleSaveEdits}>
                     Salvar Alterações
                   </button>
                 </div>
@@ -549,43 +585,23 @@ export default function TarefasPage() {
               {activeTab === 'checklist' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <form onSubmit={handleAddChecklistItem} style={{ display: 'flex', gap: '8px' }}>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Adicionar item de checklist..."
-                      value={newChecklistItemText}
-                      onChange={(e) => setNewChecklistItemText(e.target.value)}
-                    />
+                    <input type="text" className="form-input" placeholder="Adicionar item de checklist..." value={newChecklistItemText} onChange={(e) => setNewChecklistItemText(e.target.value)} />
                     <button type="submit" className="primary-btn" style={{ padding: '0 16px' }}>Adicionar</button>
                   </form>
-
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
                     {selectedTask.checklist?.map(item => (
                       <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={item.done} 
-                            onChange={(e) => handleToggleChecklistItem(item.id, e.target.checked)}
-                            style={{ cursor: 'pointer' }}
-                          />
-                          <span style={{ fontSize: '0.85rem', textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--text-muted)' : '#fff' }}>
-                            {item.text}
-                          </span>
+                          <input type="checkbox" checked={item.done} onChange={(e) => handleToggleChecklistItem(item.id, e.target.checked)} style={{ cursor: 'pointer' }} />
+                          <span style={{ fontSize: '0.85rem', textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--text-muted)' : '#fff' }}>{item.text}</span>
                         </div>
-                        <button 
-                          className="icon-btn" 
-                          style={{ color: 'var(--color-danger)', border: 'none', background: 'none', cursor: 'pointer' }}
-                          onClick={() => handleDeleteChecklistItem(item.id)}
-                        >
+                        <button className="icon-btn" style={{ color: 'var(--color-danger)', border: 'none', background: 'none', cursor: 'pointer' }} onClick={() => handleDeleteChecklistItem(item.id)}>
                           <Trash2 size={12} />
                         </button>
                       </div>
                     ))}
                     {(!selectedTask.checklist || selectedTask.checklist.length === 0) && (
-                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', padding: '24px' }}>
-                        Nenhum item no checklist.
-                      </div>
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', padding: '24px' }}>Nenhum item no checklist.</div>
                     )}
                   </div>
                 </div>
@@ -594,16 +610,9 @@ export default function TarefasPage() {
               {activeTab === 'comentarios' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '8px' }}>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Adicionar comentário..."
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                    />
+                    <input type="text" className="form-input" placeholder="Adicionar comentário..." value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} />
                     <button type="submit" className="primary-btn" style={{ padding: '0 16px' }}>Enviar</button>
                   </form>
-
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
                     {selectedTask.comments?.map(comm => (
                       <div key={comm.id} style={{ backgroundColor: 'var(--bg-card)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border-color)', lineHeight: 1.4 }}>
@@ -634,7 +643,6 @@ export default function TarefasPage() {
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>
@@ -643,10 +651,10 @@ export default function TarefasPage() {
       {/* Add Task Modal */}
       {isAddModalOpen && (
         <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div className="card animate-slide-up" style={{ width: '480px', padding: '28px' }}>
+          <div className="card animate-slide-up" style={{ width: '560px', padding: '28px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Criar Nova Tarefa</h3>
-              <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setIsAddModalOpen(false)}>✕</button>
+              <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => { setIsAddModalOpen(false); resetAddForm(); }}>✕</button>
             </div>
 
             {modalError && (
@@ -654,18 +662,58 @@ export default function TarefasPage() {
                 {modalError}
               </div>
             )}
-            
+
             <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Título da Tarefa *</span>
                 <input type="text" className="form-input" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required placeholder="Ex: Criar Webhook do Stripe" />
               </div>
+
               <div className="input-group">
                 <span className="input-label">Descrição</span>
                 <textarea className="form-input" style={{ minHeight: '60px', resize: 'none' }} value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Descrição da tarefa..." />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* Tipo + Status */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="input-group">
+                  <span className="input-label">Tipo *</span>
+                  <select className="form-select" value={formTaskType} onChange={(e) => setFormTaskType(e.target.value as TaskType)} required>
+                    {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{TASK_TYPE_ICONS[k as TaskType]} {v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <span className="input-label">Status Inicial</span>
+                  <select className="form-select" value={formStatus} onChange={(e) => setFormStatus(e.target.value as TaskStatus)}>
+                    {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Data + Horário */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="input-group">
+                  <span className="input-label">Data de Entrega</span>
+                  <input type="date" className="form-input" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <span className="input-label">Horário *</span>
+                  <input type="time" className="form-input" value={formTime} onChange={(e) => setFormTime(e.target.value)} required />
+                </div>
+              </div>
+
+              {/* Lembrete */}
+              <div className="input-group">
+                <span className="input-label">Lembrete</span>
+                <select className="form-select" value={formReminder} onChange={(e) => setFormReminder(e.target.value as TaskReminder)}>
+                  {Object.entries(TASK_REMINDER_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+
+              {/* Projeto + Responsável */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div className="input-group">
                   <span className="input-label">Projeto Associado</span>
                   <select className="form-select" value={formProjectId} onChange={(e) => setFormProjectId(e.target.value)}>
@@ -681,8 +729,9 @@ export default function TarefasPage() {
                   </select>
                 </div>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+
+              {/* Prioridade + Local */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div className="input-group">
                   <span className="input-label">Prioridade</span>
                   <select className="form-select" value={formPriority} onChange={(e) => setFormPriority(e.target.value as any)}>
@@ -692,28 +741,35 @@ export default function TarefasPage() {
                   </select>
                 </div>
                 <div className="input-group">
-                  <span className="input-label">Prazo de Entrega</span>
-                  <input type="date" className="form-input" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} />
+                  <span className="input-label">Local / Link da Reunião</span>
+                  <input type="text" className="form-input" placeholder="Link ou endereço" value={formLocationLink} onChange={(e) => setFormLocationLink(e.target.value)} />
                 </div>
               </div>
 
-              <div className="input-group">
-                <span className="input-label">Status Inicial</span>
-                <select className="form-select" value={formStatus} onChange={(e) => setFormStatus(e.target.value as TaskStatus)}>
-                  {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                </select>
-              </div>
+              {/* Preview do local se existir */}
+              {formLocationLink && (
+                <div style={{ padding: '10px 14px', backgroundColor: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={14} style={{ color: '#818CF8', flexShrink: 0 }} />
+                  {formLocationLink.startsWith('http') ? (
+                    <a href={formLocationLink} target="_blank" rel="noopener noreferrer" style={{ color: '#818CF8', fontSize: '0.82rem', textDecoration: 'none', wordBreak: 'break-all' }}>
+                      {formLocationLink}
+                    </a>
+                  ) : (
+                    <span style={{ color: '#818CF8', fontSize: '0.82rem' }}>{formLocationLink}</span>
+                  )}
+                </div>
+              )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                <button type="button" className="outline-btn" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="primary-btn">Criar</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button type="button" className="outline-btn" onClick={() => { setIsAddModalOpen(false); resetAddForm(); }}>Cancelar</button>
+                <button type="submit" className="primary-btn">Criar Tarefa</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      <ConfirmDialog 
+      <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
         title="Excluir Tarefa?"
         message="Esta ação removerá de forma permanente todos os checklists e logs desta tarefa. Continuar?"
@@ -725,19 +781,7 @@ export default function TarefasPage() {
       />
 
       {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          backgroundColor: '#10B981',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 1100,
-          fontWeight: 600,
-          animation: 'slideIn 0.3s ease-out'
-        }}>
+        <div style={{ position: 'fixed', top: '24px', right: '24px', backgroundColor: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1100, fontWeight: 600, animation: 'slideIn 0.3s ease-out' }}>
           {toastMessage}
         </div>
       )}

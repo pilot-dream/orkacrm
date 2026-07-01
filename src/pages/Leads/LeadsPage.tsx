@@ -322,7 +322,8 @@ export default function LeadsPage() {
         resetAddForm();
         showToast('Lead criado com sucesso! 🎉');
       } else {
-        setModalError(error || 'Erro ao salvar o lead. Verifique se executou o script migration.sql.');
+        const freshError = useLeadStore.getState().error;
+        setModalError(freshError || 'Erro ao salvar o lead. Verifique se executou o script migration.sql.');
       }
     } catch (err: any) {
       setModalError(err.message || 'Erro ao criar o lead.');

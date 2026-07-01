@@ -1,5 +1,5 @@
 import { isSupabaseActive, supabase } from '../../../shared/api/supabaseClient';
-import type { Task, TaskStatus } from '../model/types';
+import type { Task, TaskStatus, TaskType, TaskReminder } from '../model/types';
 import { useAuthStore } from '../../usuario/model/store';
 
 export const mapTaskFromDb = (db: any): Task => ({
@@ -15,7 +15,13 @@ export const mapTaskFromDb = (db: any): Task => ({
   comments: db.comments || [],
   attachments: db.attachments || [],
   createdAt: db.created_at,
-  tenant_id: db.tenant_id
+  tenant_id: db.tenant_id,
+  // New fields
+  time: db.time || '',
+  taskType: (db.task_type as TaskType) || 'outro',
+  reminder: (db.reminder as TaskReminder) || 'sem_lembrete',
+  locationLink: db.location_link || '',
+  notificationSent: db.notification_sent ?? false,
 });
 
 export const mapTaskToDb = (t: Task) => ({
@@ -30,7 +36,14 @@ export const mapTaskToDb = (t: Task) => ({
   checklist: t.checklist || [],
   comments: t.comments || [],
   attachments: t.attachments || [],
-  tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+  tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai',
+  // New fields
+  time: t.time || null,
+  task_type: t.taskType || 'outro',
+  reminder: t.reminder || 'sem_lembrete',
+  location_link: t.locationLink || null,
+  // FUTURE_WORKER: Este campo será atualizado para true quando a notificação for enviada
+  notification_sent: t.notificationSent ?? false,
 });
 
 export const tarefaService = {
@@ -48,52 +61,62 @@ export const tarefaService = {
     }
     return (data || []).map(mapTaskFromDb);
   },
-  
+
   insert: async (t: Task): Promise<boolean> => {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_tasks');
       const list = saved ? JSON.parse(saved) : [];
-      list.push(t);
+      const tWithTenant = {
+        ...t,
+        tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+      };
+      list.push(tWithTenant);
       localStorage.setItem('orka_tasks', JSON.stringify(list));
+      console.log('✅ Tarefa criada (offline):', tWithTenant);
       return true;
     }
     const { error } = await supabase.from('tasks').insert([mapTaskToDb(t)]);
     if (error) {
-      console.error('Erro ao inserir tarefa no Supabase:', error);
+      console.error('❌ Erro ao criar tarefa:', error.message);
       throw new Error(error.message || 'Erro ao inserir tarefa no Supabase');
     }
+    console.log('✅ Tarefa criada:', t);
     return true;
   },
-  
+
   update: async (t: Task): Promise<boolean> => {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_tasks');
       let list: Task[] = saved ? JSON.parse(saved) : [];
       list = list.map(item => item.id === t.id ? t : item);
       localStorage.setItem('orka_tasks', JSON.stringify(list));
+      console.log('✅ Tarefa atualizada (offline):', t);
       return true;
     }
     const { error } = await supabase.from('tasks').update(mapTaskToDb(t)).eq('id', t.id);
     if (error) {
-      console.error('Erro ao atualizar tarefa no Supabase:', error);
+      console.error('❌ Erro ao atualizar tarefa:', error.message);
       throw new Error(error.message || 'Erro ao atualizar tarefa no Supabase');
     }
+    console.log('✅ Tarefa atualizada:', t);
     return true;
   },
-  
+
   delete: async (id: string): Promise<boolean> => {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_tasks');
       let list: Task[] = saved ? JSON.parse(saved) : [];
       list = list.filter(item => item.id !== id);
       localStorage.setItem('orka_tasks', JSON.stringify(list));
+      console.log('✅ Tarefa deletada (offline):', id);
       return true;
     }
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
-      console.error('Erro ao deletar tarefa no Supabase:', error);
+      console.error('❌ Erro ao excluir tarefa:', error.message);
       throw new Error(error.message || 'Erro ao deletar tarefa no Supabase');
     }
+    console.log('✅ Tarefa deletada:', id);
     return true;
   }
 };

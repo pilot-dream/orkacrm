@@ -43,7 +43,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return false;
     } catch (err: any) {
       set({ error: err.message || 'Erro ao adicionar projeto', loading: false });
-      return false;
+      throw err;
     }
   },
   

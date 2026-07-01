@@ -8,4 +8,5 @@ export interface Product {
   percentual: number;
   status: 'ativo' | 'inativo';
   createdAt?: string;
+  tenant_id?: string;
 }

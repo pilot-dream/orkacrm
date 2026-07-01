@@ -125,15 +125,20 @@ export const leadService = {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_leads');
       const list = saved ? JSON.parse(saved) : [];
-      list.push(lead);
+      const leadWithTenant = {
+        ...lead,
+        tenant_id: lead.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+      };
+      list.push(leadWithTenant);
       localStorage.setItem('orka_leads', JSON.stringify(list));
+      console.log('✅ Lead criado (offline):', leadWithTenant);
       return true;
     }
     
     // 1. Insert into leads table
     const { error: leadError } = await supabase.from('leads').insert([mapLeadToDb(lead)]);
     if (leadError) {
-      console.error('Erro ao inserir lead no Supabase:', leadError);
+      console.error('❌ Erro ao criar lead:', leadError.message);
       throw new Error(leadError.message || 'Erro ao salvar o lead');
     }
 
@@ -144,13 +149,15 @@ export const leadService = {
         product_id: p.productId,
         setup_valor: p.setup,
         mrr_valor: p.mrr,
-        percentual_comissao: p.percentual
+        percentual_comissao: p.percentual,
+        tenant_id: lead.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
       }));
       const { error: relError } = await supabase.from('lead_products').insert(rows);
       if (relError) {
-        console.error('Erro ao vincular produtos ao lead no Supabase:', relError);
+        console.error('❌ Erro ao vincular produtos ao lead:', relError.message);
       }
     }
+    console.log('✅ Lead criado:', lead);
     return true;
   },
   
@@ -160,20 +167,21 @@ export const leadService = {
       let list: Lead[] = saved ? JSON.parse(saved) : [];
       list = list.map(l => l.id === lead.id ? lead : l);
       localStorage.setItem('orka_leads', JSON.stringify(list));
+      console.log('✅ Lead atualizado (offline):', lead);
       return true;
     }
 
     // 1. Update lead table
     const { error: leadError } = await supabase.from('leads').update(mapLeadToDb(lead)).eq('id', lead.id);
     if (leadError) {
-      console.error('Erro ao atualizar lead no Supabase:', leadError);
+      console.error('❌ Erro ao atualizar lead:', leadError.message);
       throw new Error(leadError.message || 'Erro ao atualizar o lead');
     }
 
     // 2. Clean associations in lead_products table
     const { error: deleteError } = await supabase.from('lead_products').delete().eq('lead_id', lead.id);
     if (deleteError) {
-      console.error('Erro ao limpar vínculos de produtos:', deleteError);
+      console.error('❌ Erro ao limpar vínculos de produtos:', deleteError.message);
     }
 
     // 3. Insert new associations
@@ -183,13 +191,15 @@ export const leadService = {
         product_id: p.productId,
         setup_valor: p.setup,
         mrr_valor: p.mrr,
-        percentual_comissao: p.percentual
+        percentual_comissao: p.percentual,
+        tenant_id: lead.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
       }));
       const { error: relError } = await supabase.from('lead_products').insert(rows);
       if (relError) {
-        console.error('Erro ao atualizar vínculos de produtos no Supabase:', relError);
+        console.error('❌ Erro ao atualizar vínculos de produtos:', relError.message);
       }
     }
+    console.log('✅ Lead atualizado:', lead);
     return true;
   },
   
@@ -199,15 +209,17 @@ export const leadService = {
       let list: Lead[] = saved ? JSON.parse(saved) : [];
       list = list.filter(l => l.id !== id);
       localStorage.setItem('orka_leads', JSON.stringify(list));
+      console.log('✅ Lead deletado (offline):', id);
       return true;
     }
     // Clean up lead products association first to prevent foreign key errors
     await supabase.from('lead_products').delete().eq('lead_id', id);
     const { error } = await supabase.from('leads').delete().eq('id', id);
     if (error) {
-      console.error('Erro ao deletar lead no Supabase:', error);
+      console.error('❌ Erro ao excluir lead:', error.message);
       throw new Error(error.message || 'Erro ao deletar o lead');
     }
+    console.log('✅ Lead deletado:', id);
     return true;
   }
 };

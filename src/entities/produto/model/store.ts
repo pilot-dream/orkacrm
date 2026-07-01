@@ -40,7 +40,7 @@ export const useProductStore = create<ProductState>((set) => ({
       return false;
     } catch (err: any) {
       set({ error: err.message || 'Erro ao adicionar produto', loading: false });
-      return false;
+      throw err;
     }
   },
   

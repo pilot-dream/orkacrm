@@ -43,7 +43,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return false;
     } catch (err: any) {
       set({ error: err.message || 'Erro ao adicionar tarefa', loading: false });
-      return false;
+      throw err;
     }
   },
   

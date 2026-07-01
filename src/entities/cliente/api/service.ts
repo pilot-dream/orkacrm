@@ -97,13 +97,22 @@ export const clienteService = {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_customers');
       const list = saved ? JSON.parse(saved) : [];
-      list.push(c);
+      const cWithTenant = {
+        ...c,
+        tenant_id: c.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+      };
+      list.push(cWithTenant);
       localStorage.setItem('orka_customers', JSON.stringify(list));
+      console.log('✅ Cliente criado (offline):', cWithTenant);
       return true;
     }
     const { error } = await supabase.from('customers').insert([mapCustomerToDb(c)]);
-    if (error) console.error('Erro ao inserir cliente no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao criar cliente:', error.message);
+      throw new Error(error.message || 'Erro ao inserir cliente no Supabase');
+    }
+    console.log('✅ Cliente criado:', c);
+    return true;
   },
   
   update: async (c: Cliente): Promise<boolean> => {
@@ -112,11 +121,16 @@ export const clienteService = {
       let list: Cliente[] = saved ? JSON.parse(saved) : [];
       list = list.map(item => item.id === c.id ? c : item);
       localStorage.setItem('orka_customers', JSON.stringify(list));
+      console.log('✅ Cliente atualizado (offline):', c);
       return true;
     }
     const { error } = await supabase.from('customers').update(mapCustomerToDb(c)).eq('id', c.id);
-    if (error) console.error('Erro ao atualizar cliente no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao atualizar cliente:', error.message);
+      throw new Error(error.message || 'Erro ao atualizar cliente no Supabase');
+    }
+    console.log('✅ Cliente atualizado:', c);
+    return true;
   },
   
   delete: async (id: string): Promise<boolean> => {
@@ -125,10 +139,15 @@ export const clienteService = {
       let list: Cliente[] = saved ? JSON.parse(saved) : [];
       list = list.filter(item => item.id !== id);
       localStorage.setItem('orka_customers', JSON.stringify(list));
+      console.log('✅ Cliente deletado (offline):', id);
       return true;
     }
     const { error } = await supabase.from('customers').delete().eq('id', id);
-    if (error) console.error('Erro ao deletar cliente no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao deletar cliente:', error.message);
+      throw new Error(error.message || 'Erro ao deletar cliente no Supabase');
+    }
+    console.log('✅ Cliente deletado:', id);
+    return true;
   }
 };

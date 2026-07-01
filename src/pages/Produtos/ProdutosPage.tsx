@@ -82,7 +82,8 @@ export default function ProdutosPage() {
         resetForm();
         showToast('Produto cadastrado com sucesso! 🎉');
       } else {
-        setModalError(error || 'Erro ao adicionar produto no Supabase. Verifique se o migration.sql foi executado.');
+        const freshError = useProductStore.getState().error;
+        setModalError(freshError || 'Erro ao adicionar produto no Supabase. Verifique se o migration.sql foi executado.');
       }
     } catch (err: any) {
       setModalError(err.message || 'Erro ao adicionar produto.');
@@ -126,7 +127,8 @@ export default function ProdutosPage() {
         resetForm();
         showToast('Produto atualizado com sucesso! 🎉');
       } else {
-        setModalError(error || 'Erro ao atualizar produto no Supabase.');
+        const freshError = useProductStore.getState().error;
+        setModalError(freshError || 'Erro ao atualizar produto no Supabase.');
       }
     } catch (err: any) {
       setModalError(err.message || 'Erro ao atualizar produto.');

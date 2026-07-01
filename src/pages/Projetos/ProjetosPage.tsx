@@ -32,6 +32,7 @@ export default function ProjetosPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+  const [modalError, setModalError] = useState<string | null>(null);
   const userProfile = useAuthStore((state) => state.userProfile);
 
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -90,10 +91,19 @@ export default function ProjetosPage() {
       files: []
     };
 
-    const success = await addProject(newProject);
-    if (success) {
-      setIsAddModalOpen(false);
-      resetAddForm();
+    try {
+      setModalError(null);
+      const success = await addProject(newProject);
+      if (success) {
+        setIsAddModalOpen(false);
+        resetAddForm();
+        showToast('Projeto criado com sucesso! 🎉');
+      } else {
+        const freshError = useProjectStore.getState().error;
+        setModalError(freshError || 'Erro ao criar projeto no Supabase.');
+      }
+    } catch (err: any) {
+      setModalError(err.message || 'Erro ao criar projeto.');
     }
   };
 
@@ -103,6 +113,7 @@ export default function ProjetosPage() {
     setFormStage('fila');
     setFormDeadline('');
     setFormPriority('media');
+    setModalError(null);
   };
 
   const handleSaveEdits = async () => {
@@ -612,6 +623,12 @@ export default function ProjetosPage() {
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Criar Projeto Operacional</h3>
               <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setIsAddModalOpen(false)}>✕</button>
             </div>
+
+            {modalError && (
+              <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)', marginBottom: '14px' }}>
+                {modalError}
+              </div>
+            )}
             
             <form onSubmit={handleCreateProject} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">

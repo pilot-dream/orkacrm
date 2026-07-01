@@ -54,13 +54,22 @@ export const projetoService = {
     if (!isSupabaseActive()) {
       const saved = localStorage.getItem('orka_projects');
       const list = saved ? JSON.parse(saved) : [];
-      list.push(p);
+      const pWithTenant = {
+        ...p,
+        tenant_id: p.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+      };
+      list.push(pWithTenant);
       localStorage.setItem('orka_projects', JSON.stringify(list));
+      console.log('✅ Projeto criado (offline):', pWithTenant);
       return true;
     }
     const { error } = await supabase.from('projects').insert([mapProjectToDb(p)]);
-    if (error) console.error('Erro ao inserir projeto no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao criar projeto:', error.message);
+      throw new Error(error.message || 'Erro ao inserir projeto no Supabase');
+    }
+    console.log('✅ Projeto criado:', p);
+    return true;
   },
   
   update: async (p: Project): Promise<boolean> => {
@@ -69,11 +78,16 @@ export const projetoService = {
       let list: Project[] = saved ? JSON.parse(saved) : [];
       list = list.map(item => item.id === p.id ? p : item);
       localStorage.setItem('orka_projects', JSON.stringify(list));
+      console.log('✅ Projeto atualizado (offline):', p);
       return true;
     }
     const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
-    if (error) console.error('Erro ao atualizar projeto no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao atualizar projeto:', error.message);
+      throw new Error(error.message || 'Erro ao atualizar projeto no Supabase');
+    }
+    console.log('✅ Projeto atualizado:', p);
+    return true;
   },
   
   delete: async (id: string): Promise<boolean> => {
@@ -82,10 +96,15 @@ export const projetoService = {
       let list: Project[] = saved ? JSON.parse(saved) : [];
       list = list.filter(item => item.id !== id);
       localStorage.setItem('orka_projects', JSON.stringify(list));
+      console.log('✅ Projeto deletado (offline):', id);
       return true;
     }
     const { error } = await supabase.from('projects').delete().eq('id', id);
-    if (error) console.error('Erro ao deletar projeto no Supabase:', error);
-    return !error;
+    if (error) {
+      console.error('❌ Erro ao deletar projeto:', error.message);
+      throw new Error(error.message || 'Erro ao deletar projeto no Supabase');
+    }
+    console.log('✅ Projeto deletado:', id);
+    return true;
   }
 };

@@ -5,6 +5,7 @@ import type { Agent } from '../components/AgentsView';
 import type { AutomationFlow, WebhookRegistry } from '../components/AutomationsView';
 import type { Customer } from '../components/CustomersView';
 import type { TeamMember } from '../components/SettingsView';
+import { useAuthStore } from '../entities/usuario/model/store';
 
 export interface Profile {
   email: string;
@@ -755,7 +756,8 @@ export const mapTeamMemberFromDb = (db: any): TeamMember => ({
 export const supabaseTeam = {
   fetch: async (): Promise<TeamMember[]> => {
     if (!isSupabaseActive()) return [];
-    const { data, error } = await supabase.from('team_members').select('*').order('created_at', { ascending: true });
+    const tenant = useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai';
+    const { data, error } = await supabase.from('team_members').select('*').eq('tenant_id', tenant).order('created_at', { ascending: true });
     if (error) {
       console.error('Erro ao buscar membros do time no Supabase:', error);
       return [];
@@ -764,23 +766,27 @@ export const supabaseTeam = {
   },
   insert: async (member: TeamMember): Promise<boolean> => {
     if (!isSupabaseActive()) return false;
+    const tenant = useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai';
     const { error } = await supabase.from('team_members').insert([{
       id: member.id,
       name: member.name,
       email: member.email,
       role: member.role,
-      status: member.status
+      status: member.status,
+      tenant_id: tenant
     }]);
     if (error) console.error('Erro ao inserir membro do time no Supabase:', error);
     return !error;
   },
   update: async (member: TeamMember): Promise<boolean> => {
     if (!isSupabaseActive()) return false;
+    const tenant = useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai';
     const { error } = await supabase.from('team_members').update({
       name: member.name,
       email: member.email,
       role: member.role,
-      status: member.status
+      status: member.status,
+      tenant_id: tenant
     }).eq('id', member.id);
     if (error) console.error('Erro ao atualizar membro do time no Supabase:', error);
     return !error;

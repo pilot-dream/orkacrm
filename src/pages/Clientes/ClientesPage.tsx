@@ -36,6 +36,17 @@ export default function ClientesPage() {
   const [formStatus, setFormStatus] = useState<'active' | 'inactive'>('active');
   const [formStartDate, setFormStartDate] = useState('');
 
+  // Error and Toast States
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
   // Associated entities state (fetched dynamically when customer is selected)
   const [associatedProjects, setAssociatedProjects] = useState<any[]>([]);
   const [associatedTransactions, setAssociatedTransactions] = useState<any[]>([]);
@@ -141,10 +152,16 @@ export default function ClientesPage() {
       poc: formPoc
     };
 
-    const success = await addCliente(newCust);
-    if (success) {
-      setIsAddModalOpen(false);
-      resetForm();
+    try {
+      setModalError(null);
+      const success = await addCliente(newCust);
+      if (success) {
+        setIsAddModalOpen(false);
+        resetForm();
+        showToast('Cliente cadastrado com sucesso! 🎉');
+      }
+    } catch (err: any) {
+      setModalError(err.message || 'Erro ao cadastrar cliente.');
     }
   };
 
@@ -169,6 +186,7 @@ export default function ClientesPage() {
     setFormPoc('');
     setFormStatus('active');
     setFormStartDate('');
+    setModalError(null);
   };
 
   const filteredCustomers = clientes.filter(c => {
@@ -571,6 +589,12 @@ export default function ClientesPage() {
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Cadastrar Cliente Ativo</h3>
               <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setIsAddModalOpen(false)}>✕</button>
             </div>
+
+            {modalError && (
+              <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)', marginBottom: '14px' }}>
+                {modalError}
+              </div>
+            )}
             
             <form onSubmit={handleCreateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
@@ -627,6 +651,23 @@ export default function ClientesPage() {
         onCancel={() => setIsDeleteConfirmOpen(false)}
       />
 
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          backgroundColor: '#10B981',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 1100,
+          fontWeight: 600,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {toastMessage}
+        </div>
+      )}
     </PageContainer>
   );
 }

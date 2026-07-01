@@ -40,7 +40,7 @@ export const useClienteStore = create<ClienteState>((set) => ({
       return false;
     } catch (err: any) {
       set({ error: err.message || 'Erro ao adicionar cliente', loading: false });
-      return false;
+      throw err;
     }
   },
   
