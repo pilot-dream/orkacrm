@@ -52,7 +52,6 @@ export default function ClientesPage() {
   const [associatedProjects, setAssociatedProjects] = useState<any[]>([]);
   const [associatedTransactions, setAssociatedTransactions] = useState<any[]>([]);
   const [associatedContracts, setAssociatedContracts] = useState<any[]>([]);
-  const [associatedFiles, setAssociatedFiles] = useState<any[]>([]);
   const [associatedTimeline, setAssociatedTimeline] = useState<any[]>([]);
   const [obsText, setObsText] = useState('');
 
@@ -103,13 +102,6 @@ export default function ClientesPage() {
           .order('created_at', { ascending: false });
         setAssociatedTimeline(acts || []);
 
-        // Associated Files: from arquivos where relationship matches customer id
-        const { data: files } = await supabase
-          .from('arquivos')
-          .select('*')
-          .eq('relacionamento_id', cust.id);
-        setAssociatedFiles(files || []);
-
       } catch (err) {
         console.error('Error fetching customer associations:', err);
       }
@@ -123,9 +115,6 @@ export default function ClientesPage() {
       ]);
       setAssociatedContracts([
         { id: '1', title: `Contrato Guarda-Chuva - ${cust.name}`, value: (cust.monthlySpend || 5000) * 12, start_date: cust.startDate || '15/06/2026', status: 'Vigente' }
-      ]);
-      setAssociatedFiles([
-        { id: '1', nome: 'Minuta_Acordo_Orka_SaaS.pdf', tamanho: 2450, url: '#' }
       ]);
       setAssociatedTimeline([
         { id: '1', titulo: 'Cliente Integrado', descricao: 'Onboarding iniciado pela equipe comercial.', date: cust.startDate || '15/06/2026' }

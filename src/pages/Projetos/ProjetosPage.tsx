@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
-  Trash2, 
-  Paperclip
+  Trash2
 } from 'lucide-react';
 
 import { useProjectStore } from '../../entities/projeto/model/store';

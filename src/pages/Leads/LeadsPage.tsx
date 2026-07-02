@@ -35,7 +35,7 @@ export default function LeadsPage() {
   // Zustand Stores
   const { leads, loading, error, fetchLeads, addLead, updateLead, updateLeadStage, deleteLead } = useLeadStore();
   const { products, fetchProducts } = useProductStore();
-  const { propostas, fetchPropostasByLeadId, addProposta, deleteProposta } = usePropostaStore();
+  const { fetchPropostasByLeadId, addProposta } = usePropostaStore();
   const fetchClientes = useClienteStore((state) => state.fetchClientes);
   const teamMembers = useAuthStore((state) => state.teamMembers);
   const userProfile = useAuthStore((state) => state.userProfile);
@@ -69,7 +69,7 @@ export default function LeadsPage() {
   const [leadToDeleteId, setLeadToDeleteId] = useState<string | null>(null);
   
   // Drawer active tab
-  const [activeTab, setActiveTab] = useState<'details' | 'proposals' | 'timeline' | 'comments' | 'files'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'comments' | 'files'>('details');
 
   // Form states for adding Lead
   const [formCompany, setFormCompany] = useState('');
@@ -1165,7 +1165,7 @@ export default function LeadsPage() {
                     </div>
                     <div>
                       <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Comissão Estimada</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-warning)' }}>{formatCurrency(formProducts.reduce((acc, p) => acc + (formMonthlyRevenue || 0) * (p.percentual / 100), 0))}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-warning)' }}>{formatCurrency(formProducts.reduce((acc, p) => acc + (Number(formMonthlyRevenue) || 0) * (p.percentual / 100), 0))}</span>
                     </div>
                   </div>
                 )}
@@ -1797,53 +1797,6 @@ export default function LeadsPage() {
                 </div>
               )}
 
-              {activeTab === 'proposals' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ fontSize: '0.92rem', fontWeight: 700 }}>Negociações (Propostas)</h4>
-                    <button className="outline-btn" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={() => setIsProposalModalOpen(true)}>
-                      Nova Proposta
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {propostas.map(p => (
-                      <div key={p.id} style={{ backgroundColor: 'var(--bg-card)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            backgroundColor: p.status === 'aprovada' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                            color: p.status === 'aprovada' ? 'var(--color-success)' : 'var(--text-secondary)'
-                          }}>
-                            {p.status.toUpperCase()}
-                          </span>
-                          <button 
-                            className="icon-btn" 
-                            style={{ color: 'var(--color-danger)', border: 'none', background: 'none', cursor: 'pointer' }}
-                            onClick={() => deleteProposta(p.id)}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.8rem' }}>
-                          <div>Setup: <b>{formatCurrency(p.valorSetup)}</b></div>
-                          <div>MRR: <b>{formatCurrency(p.valorMrr)}/mês</b></div>
-                          <div>Probabilidade: <b>{p.probabilidade}%</b></div>
-                          {p.dataPrevista && <div>Fechamento: <b>{p.dataPrevista}</b></div>}
-                        </div>
-                      </div>
-                    ))}
-                    {propostas.length === 0 && (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed var(--border-color)', borderRadius: '8px' }}>
-                        Nenhuma proposta registrada para este lead.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {activeTab === 'timeline' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
