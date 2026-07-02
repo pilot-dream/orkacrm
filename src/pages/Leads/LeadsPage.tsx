@@ -104,6 +104,10 @@ export default function LeadsPage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [leadToDeleteId, setLeadToDeleteId] = useState<string | null>(null);
   
+  // Pending stage change validation for expected close date
+  const [pendingMove, setPendingMove] = useState<{ leadId: string; targetStage: LeadStage; oldStage: LeadStage } | null>(null);
+  const [pendingExpectedDate, setPendingExpectedDate] = useState('');
+  
   // Drawer active tab
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'comments' | 'files'>('details');
 
@@ -651,6 +655,32 @@ export default function LeadsPage() {
     localStorage.setItem('orka_transactions', JSON.stringify(trxs));
   };
 
+  const handleConfirmPendingMove = async () => {
+    if (!pendingMove || !pendingExpectedDate) return;
+    const { leadId, targetStage, oldStage } = pendingMove;
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) {
+      setPendingMove(null);
+      return;
+    }
+
+    const dateParts = pendingExpectedDate.split('-');
+    let formattedDate = pendingExpectedDate;
+    if (dateParts.length === 3) {
+      formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+    }
+
+    lead.expectedDate = formattedDate;
+    setPendingMove(null);
+
+    try {
+      await updateLeadStage(leadId, targetStage, oldStage);
+      showToast(`Lead movido para Negociação! 🚀`);
+    } catch (err: any) {
+      alert(`Erro ao salvar alteração de estágio: ${err.message || 'Erro de conexão.'}`);
+    }
+  };
+
   // Drag and Drop implementation with business rules validations
   const handleLeadMove = async (leadId: string, targetStage: LeadStage) => {
     const lead = leads.find(l => l.id === leadId);
@@ -679,12 +709,11 @@ export default function LeadsPage() {
 
     // Rule 3: Negociação expected date confirmation prompt if missing
     if (targetStage === 'negociacao' && !lead.expectedDate) {
-      const date = prompt('Digite a Data Prevista de Fechamento (obrigatória na Negociação):', new Date().toLocaleDateString('pt-BR'));
-      if (!date) {
-        showToast('Movimentação cancelada: Data Prevista é obrigatória.');
-        return;
-      }
-      lead.expectedDate = date;
+      setPendingMove({ leadId, targetStage, oldStage });
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      setPendingExpectedDate(todayStr);
+      return;
     }
 
     if (errors.length > 0) {
@@ -1983,6 +2012,51 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
+
+      {pendingMove && (
+        <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
+          <div className="card animate-slide-up" style={{ width: '400px', padding: '24px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Data Prevista de Fechamento</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+              A data prevista de fechamento é obrigatória para mover o lead para o estágio de <b>Negociação</b>.
+            </p>
+            
+            <div className="input-group" style={{ marginBottom: '20px' }}>
+              <span className="input-label">Data Prevista *</span>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={pendingExpectedDate} 
+                onChange={(e) => setPendingExpectedDate(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button 
+                type="button" 
+                className="outline-btn" 
+                onClick={() => {
+                  setPendingMove(null);
+                  showToast('Movimentação cancelada.');
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="primary-btn" 
+                onClick={handleConfirmPendingMove}
+                style={{ cursor: 'pointer' }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog 
         isOpen={isDeleteConfirmOpen}
         title="Excluir Lead?"
