@@ -1279,7 +1279,7 @@ export default function LeadsPage() {
 
               {formStage === 'negociacao' && (
                 <div className="input-group">
-                  <span className="input-label">Data Prevista de Fechamento *</span>
+                  <span className="input-label">Data Prevista de Negociação *</span>
                   <input type="date" className="form-input" value={formExpectedDate} onChange={(e) => setFormExpectedDate(e.target.value)} required />
                 </div>
               )}
@@ -1679,7 +1679,7 @@ export default function LeadsPage() {
                   {/* Conditional render: Data Prevista (expectedDate) in Negociação */}
                   {editFields.stage === 'negociacao' && (
                     <div className="input-group">
-                      <span className="input-label">Data Prevista de Fechamento *</span>
+                      <span className="input-label">Data Prevista de Negociação *</span>
                       <input type="date" className="form-input" value={editFields.expectedDate || ''} onChange={(e) => setEditFields({ ...editFields, expectedDate: e.target.value })} required />
                     </div>
                   )}
@@ -2020,9 +2020,9 @@ export default function LeadsPage() {
       {pendingMove && (
         <div className="drawer-overlay" style={{ justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
           <div className="card animate-slide-up" style={{ width: '400px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Data Prevista de Fechamento</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Data Prevista de Negociação</h3>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-              A data prevista de fechamento é obrigatória para mover o lead para o estágio de <b>Negociação</b>.
+              A data prevista de negociação é obrigatória para mover o lead para o estágio de <b>Negociação</b>.
             </p>
             
             <div className="input-group" style={{ marginBottom: '20px' }}>
