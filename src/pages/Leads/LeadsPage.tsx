@@ -401,22 +401,36 @@ export default function LeadsPage() {
 
   // Save Lead Edits (Drawer)
   const handleSaveEdits = async () => {
-    if (!editFields.company || !editFields.contactName) return;
+    const triggerValidationError = (msg: string) => {
+      setValidationError(msg);
+      setTimeout(() => {
+        document.getElementById('drawer-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
+    };
+
+    if (!editFields.company) {
+      triggerValidationError('⚠️ O nome da empresa é obrigatório.');
+      return;
+    }
+    if (!editFields.contactName) {
+      triggerValidationError('⚠️ O nome do contato é obrigatório.');
+      return;
+    }
 
     // Faturamento Mensal da Empresa is mandatory starting from Qualificação
     if (editFields.stage !== 'prospeccao' && !editFields.monthlyRevenue) {
-      setValidationError('⚠️ O Faturamento Mensal da Empresa é obrigatório a partir do estágio de Qualificação.');
+      triggerValidationError('⚠️ O Faturamento Mensal da Empresa é obrigatório a partir do estágio de Qualificação.');
       return;
     }
 
     // Regras de validação do PRD
     if (editFields.stage === 'negociacao' && !editFields.expectedDate) {
-      setValidationError('⚠️ A Data Prevista de Fechamento é obrigatória no estágio de Negociação.');
+      triggerValidationError('⚠️ A Data Prevista de Fechamento é obrigatória no estágio de Negociação.');
       return;
     }
 
     if (editFields.stage === 'fechado' && !editFields.owner) {
-      setValidationError('⚠️ O Lead não pode ser fechado/convertido sem um responsável (Responsável).');
+      triggerValidationError('⚠️ O Lead não pode ser fechado/convertido sem um responsável (Responsável).');
       return;
     }
 
@@ -424,16 +438,16 @@ export default function LeadsPage() {
     if (editFields.stage === 'negociacao' || editFields.stage === 'contrato' || editFields.stage === 'fechado') {
       if (editFields.setupPaymentMethod === 'parcelado') {
         if (!editFields.setupInstallmentsCount || Number(editFields.setupInstallmentsCount) <= 0) {
-          setValidationError('⚠️ A quantidade de parcelas é obrigatória.');
+          triggerValidationError('⚠️ A quantidade de parcelas é obrigatória.');
           return;
         }
         if (!editFields.setupFirstInstallmentDate) {
-          setValidationError('⚠️ A data da primeira parcela é obrigatória.');
+          triggerValidationError('⚠️ A data da primeira parcela é obrigatória.');
           return;
         }
       }
       if (!editFields.mrrDueDay) {
-        setValidationError('⚠️ O dia de vencimento da mensalidade é obrigatório.');
+        triggerValidationError('⚠️ O dia de vencimento da mensalidade é obrigatório.');
         return;
       }
     }
@@ -1429,7 +1443,7 @@ export default function LeadsPage() {
             </div>
 
             {/* Drawer Content */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div id="drawer-scroll-container" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {validationError && (
                 <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)' }}>
@@ -1817,6 +1831,11 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
+                  {validationError && (
+                    <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)', marginBottom: '8px' }}>
+                      {validationError}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                     <button className="primary-btn" style={{ flexGrow: 1, justifyContent: 'center' }} onClick={handleSaveEdits}>
                       Salvar Alterações
