@@ -29,6 +29,9 @@ export default function FinanceiroPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | TransactionStatus>('all');
   const [monthFilter, setMonthFilter] = useState<string | null>(null);
+  const [datePeriod, setDatePeriod] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [startDateFilter, setStartDateFilter] = useState('');
+  const [endDateFilter, setEndDateFilter] = useState('');
   
   // Modals / Dialogs
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -149,15 +152,17 @@ export default function FinanceiroPage() {
   const churnRate = 2.4; // Taxa de churn fixa do MVP
   const ltvEstimado = churnRate > 0 ? (mrrAcumulado * 100) / churnRate : mrrAcumulado * 12;
 
-  const totalInflows = transactions
-    .filter(t => t.type === 'income' && t.status !== 'Cancelado')
-    .reduce((acc, curr) => acc + curr.value, 0);
-
-  const totalOutflows = transactions
-    .filter(t => t.type === 'expense' && t.status !== 'Cancelado')
-    .reduce((acc, curr) => acc + curr.value, 0);
-
-  const netBalance = totalInflows - totalOutflows;
+  const parseDueDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = Number(parts[0]);
+      const month = Number(parts[1]) - 1;
+      const year = Number(parts[2]);
+      return new Date(year, month, day);
+    }
+    return null;
+  };
 
   // Filter logic
   const filteredTransactions = transactions.filter(t => {
@@ -170,8 +175,57 @@ export default function FinanceiroPage() {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     const matchesMonth = !monthFilter || t.dueDate.includes(`/${monthFilter}/`);
 
-    return matchesSearch && matchesType && matchesStatus && matchesMonth;
+    let matchesDate = true;
+    if (datePeriod !== 'all') {
+      const tDate = parseDueDate(t.dueDate);
+      if (!tDate) {
+        matchesDate = false;
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (datePeriod === 'today') {
+          const compDate = new Date(tDate);
+          compDate.setHours(0, 0, 0, 0);
+          matchesDate = compDate.getTime() === today.getTime();
+        } else if (datePeriod === 'week') {
+          const currentDay = today.getDay();
+          const firstDayOfWeek = new Date(today);
+          firstDayOfWeek.setDate(today.getDate() - currentDay);
+          firstDayOfWeek.setHours(0, 0, 0, 0);
+          
+          const lastDayOfWeek = new Date(firstDayOfWeek);
+          lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+          lastDayOfWeek.setHours(23, 59, 59, 999);
+          
+          matchesDate = tDate.getTime() >= firstDayOfWeek.getTime() && tDate.getTime() <= lastDayOfWeek.getTime();
+        } else if (datePeriod === 'month') {
+          matchesDate = tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
+        } else if (datePeriod === 'custom') {
+          const start = startDateFilter ? new Date(startDateFilter + 'T00:00:00') : null;
+          const end = endDateFilter ? new Date(endDateFilter + 'T23:59:59') : null;
+          if (start) {
+            matchesDate = matchesDate && tDate.getTime() >= start.getTime();
+          }
+          if (end) {
+            matchesDate = matchesDate && tDate.getTime() <= end.getTime();
+          }
+        }
+      }
+    }
+
+    return matchesSearch && matchesType && matchesStatus && matchesMonth && matchesDate;
   });
+
+  const totalInflows = filteredTransactions
+    .filter(t => t.type === 'income' && t.status !== 'Cancelado')
+    .reduce((acc, curr) => acc + curr.value, 0);
+
+  const totalOutflows = filteredTransactions
+    .filter(t => t.type === 'expense' && t.status !== 'Cancelado')
+    .reduce((acc, curr) => acc + curr.value, 0);
+
+  const netBalance = totalInflows - totalOutflows;
 
   return (
     <PageContainer>
@@ -257,6 +311,19 @@ export default function FinanceiroPage() {
         
         <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end' }}>
           <select 
+            value={datePeriod} 
+            onChange={(e) => setDatePeriod(e.target.value as any)}
+            className="form-select"
+            style={{ width: '150px', padding: '6px 12px' }}
+          >
+            <option value="all">Qualquer data</option>
+            <option value="today">Hoje</option>
+            <option value="week">Esta semana</option>
+            <option value="month">Este mês</option>
+            <option value="custom">Período personalizado</option>
+          </select>
+
+          <select 
             value={typeFilter} 
             onChange={(e) => setTypeFilter(e.target.value as any)}
             className="form-select"
@@ -282,6 +349,27 @@ export default function FinanceiroPage() {
           </select>
         </div>
       </section>
+
+      {datePeriod === 'custom' && (
+        <section style={{ display: 'flex', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>De:</span>
+            <input type="date" className="form-input" style={{ width: '150px', padding: '4px 8px', fontSize: '0.82rem' }} value={startDateFilter} onChange={(e) => setStartDateFilter(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Até:</span>
+            <input type="date" className="form-input" style={{ width: '150px', padding: '4px 8px', fontSize: '0.82rem' }} value={endDateFilter} onChange={(e) => setEndDateFilter(e.target.value)} />
+          </div>
+          <button 
+            type="button" 
+            className="outline-btn" 
+            style={{ padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer' }}
+            onClick={() => { setStartDateFilter(''); setEndDateFilter(''); }}
+          >
+            Limpar Datas
+          </button>
+        </section>
+      )}
 
       {monthFilter && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', fontSize: '0.8rem', color: 'var(--color-primary)' }}>
