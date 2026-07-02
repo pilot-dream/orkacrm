@@ -13,7 +13,6 @@ import { usePropostaStore } from '../../entities/proposta/model/store';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import { KanbanBoard } from './components/KanbanBoard';
 import { LeadFiles } from './components/LeadFiles';
-import { propostaService } from '../../entities/proposta/api/service';
 import type { Lead, LeadStage, NegotiatedProduct } from '../../entities/lead/model/types';
 import type { Proposta } from '../../entities/proposta/model/types';
 import { PageContainer } from '../../shared/components/PageContainer';
@@ -662,17 +661,7 @@ export default function LeadsPage() {
     setValidationErrorList([]);
     const errors: string[] = [];
 
-    // Rule 1: Negociação requires at least 1 proposal
-    if (targetStage === 'negociacao') {
-      try {
-        const proposals = await propostaService.fetchByLeadId(leadId);
-        if (proposals.length === 0) {
-          errors.push('O Lead não possui nenhuma proposta cadastrada. É necessário criar pelo menos uma proposta para mover para o estágio de Negociação.');
-        }
-      } catch (err) {
-        errors.push('Erro ao verificar as propostas vinculadas ao lead.');
-      }
-    }
+
 
     // Rule 2: Fechado requires comercial owner, products, values
     if (targetStage === 'fechado') {
