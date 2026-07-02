@@ -13,6 +13,7 @@ import { SearchBar } from '../../shared/components/SearchBar';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { LoadingOverlay } from '../../shared/components/LoadingOverlay';
 import { ProjectKanbanBoard } from './components/ProjectKanbanBoard';
+import { FileUploadSection } from '../../shared/components/FileUploadSection';
 
 const STAGES: { id: ProjectStage; label: string; color: string }[] = [
   { id: 'escopo', label: 'Escopo', color: '#60A5FA' },
@@ -593,21 +594,11 @@ export default function ProjetosPage() {
                 </div>
               )}
 
-              {activeTab === 'arquivos' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ border: '2px dashed var(--border-color)', borderRadius: '8px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                    <Paperclip size={24} style={{ margin: '0 auto 8px auto', display: 'block', color: 'var(--text-muted)' }} />
-                    Anexar arquivos de implantação/escopo
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {selectedProject.files?.map(f => (
-                      <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>{f.name}</span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{(f.size / 1024).toFixed(1)} KB</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {activeTab === 'arquivos' && selectedProject && (
+                <FileUploadSection
+                  entityId={selectedProject.id}
+                  entityType="projeto"
+                />
               )}
 
             </div>

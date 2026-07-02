@@ -11,6 +11,7 @@ import { SearchBar } from '../../shared/components/SearchBar';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { LoadingOverlay } from '../../shared/components/LoadingOverlay';
 import { isSupabaseActive, supabase } from '../../shared/api/supabaseClient';
+import { FileUploadSection } from '../../shared/components/FileUploadSection';
 
 export default function ClientesPage() {
   const { clientes, loading, error, fetchClientes, addCliente, deleteCliente } = useClienteStore();
@@ -509,21 +510,11 @@ export default function ClientesPage() {
                 </div>
               )}
 
-              {activeProfileTab === 'arquivos' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <h4 style={{ fontSize: '0.92rem', fontWeight: 700 }}>Anexos e Documentos</h4>
-                  {associatedFiles.map((f, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
-                      <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>{f.nome}</span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{(f.tamanho / 1024).toFixed(1)} MB</span>
-                    </div>
-                  ))}
-                  {associatedFiles.length === 0 && (
-                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed var(--border-color)', borderRadius: '8px' }}>
-                      Nenhum documento anexado.
-                    </div>
-                  )}
-                </div>
+              {activeProfileTab === 'arquivos' && selectedCustomer && (
+                <FileUploadSection
+                  entityId={selectedCustomer.id}
+                  entityType="cliente"
+                />
               )}
 
               {activeProfileTab === 'timeline' && (
