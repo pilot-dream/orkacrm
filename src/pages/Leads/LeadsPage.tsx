@@ -566,15 +566,22 @@ export default function LeadsPage() {
       }
     }
 
+
     if ((lead.mrrValue || 0) > 0) {
-      const mrrDay = lead.mrrDueDay || 10;
-      const today = new Date();
-      let dueYear = today.getFullYear();
-      let dueMonth = today.getMonth();
-      if (today.getDate() > mrrDay) {
-        dueMonth += 1;
+      let dueDate: Date;
+      const mrrDueDayRaw = lead.mrrDueDay as unknown as string | number;
+      if (typeof mrrDueDayRaw === 'string' && mrrDueDayRaw.includes('-')) {
+        // New format: full date string YYYY-MM-DD → use as-is (first installment)
+        dueDate = new Date(mrrDueDayRaw + 'T12:00:00');
+      } else {
+        // Legacy format: day number (10, 20, 30)
+        const mrrDay = Number(mrrDueDayRaw) || 10;
+        const today = new Date();
+        let dueYear = today.getFullYear();
+        let dueMonth = today.getMonth();
+        if (today.getDate() > mrrDay) dueMonth += 1;
+        dueDate = new Date(dueYear, dueMonth, mrrDay);
       }
-      const dueDate = new Date(dueYear, dueMonth, mrrDay);
 
       trxs.push({
         id: `trx-${Date.now()}-mrr`,
@@ -589,6 +596,7 @@ export default function LeadsPage() {
         tenant_id: lead.tenant_id
       });
     }
+
     localStorage.setItem('orka_transactions', JSON.stringify(trxs));
   };
 
@@ -1157,7 +1165,7 @@ export default function LeadsPage() {
                     </div>
                     <div>
                       <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Comissão Estimada</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-warning)' }}>{formatCurrency(formProducts.reduce((acc, p) => acc + (p.setup + p.mrr) * (p.percentual / 100), 0))}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-warning)' }}>{formatCurrency(formProducts.reduce((acc, p) => acc + (formMonthlyRevenue || 0) * (p.percentual / 100), 0))}</span>
                     </div>
                   </div>
                 )}
@@ -1293,17 +1301,19 @@ export default function LeadsPage() {
                   )}
 
                   <div className="input-group" style={{ marginBottom: 0 }}>
-                    <span className="input-label">Dia de vencimento da mensalidade (MRR) *</span>
-                    <select 
-                      className="form-select" 
-                      value={formMrrDueDay} 
+                    <span className="input-label">Data de vencimento da mensalidade (MRR) *</span>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={formMrrDueDay}
                       onChange={(e) => setFormMrrDueDay(e.target.value)}
                       required
-                    >
-                      <option value="10">Todo dia 10</option>
-                      <option value="20">Todo dia 20</option>
-                      <option value="30">Todo dia 30</option>
-                    </select>
+                    />
+                    {formMrrDueDay && (() => {
+                      const d = new Date(formMrrDueDay + 'T12:00:00');
+                      const next = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
+                      return <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Próxima parcela: {next.toLocaleDateString('pt-BR')}</span>;
+                    })()}
                   </div>
                 </div>
               )}
@@ -1357,7 +1367,7 @@ export default function LeadsPage() {
 
             {/* Tab navigation */}
             <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
-              {(['details', 'proposals', 'timeline', 'comments', 'files'] as const).map((tab) => (
+              {(['details', 'timeline', 'comments', 'files'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -1374,7 +1384,6 @@ export default function LeadsPage() {
                   }}
                 >
                   {tab === 'details' ? 'Editar Detalhes' : 
-                   tab === 'proposals' ? 'Propostas' : 
                    tab === 'timeline' ? 'Timeline' :
                    tab === 'comments' ? 'Comentários' : 'Arquivos'}
                 </button>
@@ -1562,11 +1571,7 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                    <div className="input-group">
-                      <span className="input-label">Setup (R$)</span>
-                      <input type="number" className="form-input" value={editFields.value || 0} onChange={(e) => setEditFields({ ...editFields, value: Number(e.target.value) })} />
-                    </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div className="input-group">
                       <span className="input-label">Estágio</span>
                       <select className="form-select" value={editFields.stage || 'prospeccao'} onChange={(e) => setEditFields({ ...editFields, stage: e.target.value as LeadStage })}>
@@ -1694,17 +1699,23 @@ export default function LeadsPage() {
                       )}
 
                       <div className="input-group" style={{ marginBottom: 0 }}>
-                        <span className="input-label">Dia de vencimento da mensalidade (MRR) *</span>
-                        <select 
-                          className="form-select" 
-                          value={editFields.mrrDueDay || '10'} 
-                          onChange={(e) => setEditFields({ ...editFields, mrrDueDay: Number(e.target.value) })}
+                        <span className="input-label">Data de vencimento da mensalidade (MRR) *</span>
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={typeof editFields.mrrDueDay === 'number'
+                            ? ''
+                            : (editFields.mrrDueDay as unknown as string) || ''}
+                          onChange={(e) => setEditFields({ ...editFields, mrrDueDay: e.target.value as unknown as number })}
                           required
-                        >
-                          <option value="10">Todo dia 10</option>
-                          <option value="20">Todo dia 20</option>
-                          <option value="30">Todo dia 30</option>
-                        </select>
+                        />
+                        {editFields.mrrDueDay && (() => {
+                          const val = editFields.mrrDueDay as unknown as string;
+                          if (!val || typeof val !== 'string' || !val.includes('-')) return null;
+                          const d = new Date(val + 'T12:00:00');
+                          const next = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
+                          return <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Próxima parcela: {next.toLocaleDateString('pt-BR')}</span>;
+                        })()}
                       </div>
                     </div>
                   )}
