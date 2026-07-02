@@ -31,6 +31,43 @@ const STAGES: { id: LeadStage; label: string; color: string }[] = [
   { id: 'perdido', label: 'Perdido', color: '#EF4444' }
 ];
 
+const getDayFromDateString = (dateStr: string | number | undefined): number => {
+  if (!dateStr) return 10;
+  if (typeof dateStr === 'number') return dateStr;
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const day = Number(parts[2]);
+    if (!isNaN(day) && day >= 1 && day <= 31) {
+      return day;
+    }
+  }
+  const partsSlash = dateStr.split('/');
+  if (partsSlash.length === 3) {
+    const day = Number(partsSlash[0]);
+    if (!isNaN(day) && day >= 1 && day <= 31) {
+      return day;
+    }
+  }
+  const num = Number(dateStr);
+  if (!isNaN(num)) return num;
+  return 10;
+};
+
+const getDateStringFromDayNumber = (dayNum: number | string | undefined): string => {
+  if (!dayNum) return '';
+  if (typeof dayNum === 'string') {
+    if (dayNum.includes('-')) return dayNum;
+    const parsed = Number(dayNum);
+    if (isNaN(parsed)) return '';
+    dayNum = parsed;
+  }
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(dayNum).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function LeadsPage() {
   // Zustand Stores
   const { leads, loading, error, fetchLeads, addLead, updateLead, updateLeadStage, deleteLead } = useLeadStore();
@@ -311,7 +348,7 @@ export default function LeadsPage() {
       setupInstallmentsCount: formSetupPaymentMethod === 'parcelado' ? Number(formSetupInstallmentsCount) : undefined,
       setupInstallmentValue: formSetupPaymentMethod === 'parcelado' ? Number(formSetupInstallmentValue) : undefined,
       setupFirstInstallmentDate: formSetupPaymentMethod === 'parcelado' ? formSetupFirstInstallmentDate || undefined : undefined,
-      mrrDueDay: formMrrDueDay ? Number(formMrrDueDay) : 10
+      mrrDueDay: formMrrDueDay ? getDayFromDateString(formMrrDueDay) : 10
     };
 
     try {
@@ -404,7 +441,8 @@ export default function LeadsPage() {
     setValidationError(null);
     const updatedLead: Lead = {
       ...selectedLead!,
-      ...editFields
+      ...editFields,
+      mrrDueDay: editFields.mrrDueDay ? getDayFromDateString(editFields.mrrDueDay) : 10
     } as Lead;
 
     try {
@@ -1703,15 +1741,13 @@ export default function LeadsPage() {
                         <input
                           type="date"
                           className="form-input"
-                          value={typeof editFields.mrrDueDay === 'number'
-                            ? ''
-                            : (editFields.mrrDueDay as unknown as string) || ''}
+                          value={editFields.mrrDueDay ? getDateStringFromDayNumber(editFields.mrrDueDay) : ''}
                           onChange={(e) => setEditFields({ ...editFields, mrrDueDay: e.target.value as unknown as number })}
                           required
                         />
                         {editFields.mrrDueDay && (() => {
-                          const val = editFields.mrrDueDay as unknown as string;
-                          if (!val || typeof val !== 'string' || !val.includes('-')) return null;
+                          const val = getDateStringFromDayNumber(editFields.mrrDueDay);
+                          if (!val || !val.includes('-')) return null;
                           const d = new Date(val + 'T12:00:00');
                           const next = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
                           return <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Próxima parcela: {next.toLocaleDateString('pt-BR')}</span>;
