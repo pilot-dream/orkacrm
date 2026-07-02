@@ -742,6 +742,10 @@ export default function LeadsPage() {
         showToast('Conversão revertida. Cliente desativado e registros financeiros removidos. ⚠️');
       } else {
         showToast(`Lead movido para ${STAGES.find(s => s.id === targetStage)?.label}! 🚀`);
+        if (targetStage === 'contrato') {
+          setSelectedLeadId(leadId);
+          setIsDetailDrawerOpen(true);
+        }
       }
     } catch (err: any) {
       alert(`Erro ao salvar alteração de estágio: ${err.message || 'Erro de conexão.'}`);
