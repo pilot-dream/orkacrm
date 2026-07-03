@@ -576,9 +576,24 @@ export default function TarefasPage() {
                     </div>
                   )}
 
-                  <button className="primary-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }} onClick={handleSaveEdits}>
-                    Salvar Alterações
-                  </button>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                    <button 
+                      type="button"
+                      className="outline-btn" 
+                      style={{ flex: 1, borderColor: 'var(--color-danger)', color: 'var(--color-danger)', justifyContent: 'center', cursor: 'pointer' }} 
+                      onClick={() => handleDeleteClick(selectedTask.id)}
+                    >
+                      Excluir Tarefa
+                    </button>
+                    <button 
+                      type="button"
+                      className="primary-btn" 
+                      style={{ flex: 2, justifyContent: 'center', cursor: 'pointer' }} 
+                      onClick={handleSaveEdits}
+                    >
+                      Salvar Alterações
+                    </button>
+                  </div>
                 </div>
               )}
 
