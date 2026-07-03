@@ -44,6 +44,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ lead, onClick, onDelete 
     cursor: isDragging ? 'grabbing' : 'grab',
     transition: transform ? undefined : 'transform 0.2s ease, box-shadow 0.2s ease',
     userSelect: 'none',
+    touchAction: 'none',
     zIndex: isDragging ? 1000 : (isMenuOpen ? 1010 : undefined),
   };
 

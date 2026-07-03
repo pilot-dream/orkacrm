@@ -28,6 +28,7 @@ export const TaskKanbanCard: React.FC<TaskKanbanCardProps> = ({ task, onClick })
     cursor: isDragging ? 'grabbing' : 'grab',
     transition: transform ? undefined : 'transform 0.2s ease, box-shadow 0.2s ease',
     userSelect: 'none',
+    touchAction: 'none',
     zIndex: isDragging ? 1000 : undefined,
   };
 
