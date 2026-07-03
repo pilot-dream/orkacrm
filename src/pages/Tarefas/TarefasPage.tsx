@@ -5,7 +5,19 @@ import {
   Paperclip,
   Clock,
   MapPin,
-  Bell
+  Bell,
+  List,
+  KanbanSquare,
+  Calendar as CalendarIcon,
+  Pin,
+  Users,
+  Phone,
+  RefreshCcw,
+  Code,
+  Rocket,
+  Wrench,
+  DollarSign,
+  Briefcase
 } from 'lucide-react';
 
 import { useTaskStore } from '../../entities/tarefa/model/store';
@@ -28,6 +40,21 @@ const STATUS_STAGES: { id: TaskStatus; label: string; color: string }[] = [
 ];
 
 const PRIORITY_COLORS = { alta: '#EF4444', media: '#F59E0B', baixa: '#10B981' };
+
+const renderTaskIcon = (type?: string, size = 14) => {
+  switch (type) {
+    case 'reuniao': return <Users size={size} />;
+    case 'ligacao': return <Phone size={size} />;
+    case 'followup': return <RefreshCcw size={size} />;
+    case 'desenvolvimento': return <Code size={size} />;
+    case 'implantacao': return <Rocket size={size} />;
+    case 'suporte': return <Wrench size={size} />;
+    case 'financeiro': return <DollarSign size={size} />;
+    case 'comercial': return <Briefcase size={size} />;
+    case 'outro':
+    default: return <Pin size={size} />;
+  }
+};
 
 export default function TarefasPage() {
   const { tasks, loading, error, fetchTasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTaskStore();
@@ -289,14 +316,14 @@ export default function TarefasPage() {
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
-            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('list')}>
-              📋 Lista
+            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('list')}>
+              <List size={14} /> Lista
             </button>
-            <button className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('kanban')}>
-              🗂️ Kanban
+            <button className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('kanban')}>
+              <KanbanSquare size={14} /> Kanban
             </button>
-            <button className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewMode('calendar')}>
-              📅 Calendário
+            <button className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('calendar')}>
+              <CalendarIcon size={14} /> Calendário
             </button>
           </div>
           <button className="primary-btn" onClick={() => setIsAddModalOpen(true)}>
@@ -382,14 +409,14 @@ export default function TarefasPage() {
                   </td>
                   <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem' }}>
-                      {t.taskType ? TASK_TYPE_ICONS[t.taskType] : '📌'}
+                      {renderTaskIcon(t.taskType, 14)}
                       <span style={{ color: 'var(--text-secondary)' }}>{t.taskType ? TASK_TYPE_LABELS[t.taskType] : 'Outro'}</span>
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                     {t.deadline ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        📅 {t.deadline}
+                        <CalendarIcon size={12} /> {t.deadline}
                       </span>
                     ) : '-'}
                   </td>
@@ -450,7 +477,7 @@ export default function TarefasPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>{selectedTask.taskType ? TASK_TYPE_ICONS[selectedTask.taskType] : '📌'}</span>
+                  <span style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}>{renderTaskIcon(selectedTask.taskType, 20)}</span>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0 }}>{editFields.title}</h3>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -501,7 +528,8 @@ export default function TarefasPage() {
                     <div className="input-group">
                       <span className="input-label">Tipo</span>
                       <select className="form-select" value={editFields.taskType || 'outro'} onChange={(e) => setEditFields({ ...editFields, taskType: e.target.value as TaskType })}>
-                        {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{TASK_TYPE_ICONS[k as TaskType]} {v}</option>)}
+                        <option value="all">Todos os Tipos</option>
+                        {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                     </div>
                     <div className="input-group">
@@ -693,9 +721,10 @@ export default function TarefasPage() {
                 <div className="input-group">
                   <span className="input-label">Tipo *</span>
                   <select className="form-select" value={formTaskType} onChange={(e) => setFormTaskType(e.target.value as TaskType)} required>
-                    {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{TASK_TYPE_ICONS[k as TaskType]} {v}</option>
-                    ))}
+                      <option value="outro">Selecione...</option>
+                      {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
                   </select>
                 </div>
                 <div className="input-group">

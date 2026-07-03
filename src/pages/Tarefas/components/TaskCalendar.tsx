@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Task } from '../../../entities/tarefa/model/types';
-import { TASK_TYPE_LABELS, TASK_TYPE_ICONS, TASK_REMINDER_LABELS } from '../../../entities/tarefa/model/types';
-import { ChevronLeft, ChevronRight, AlertTriangle, Clock, MapPin, Bell, X } from 'lucide-react';
+import { TASK_TYPE_LABELS, TASK_REMINDER_LABELS } from '../../../entities/tarefa/model/types';
+import { ChevronLeft, ChevronRight, AlertTriangle, Clock, MapPin, Bell, X, Users, Phone, RefreshCcw, Code, Rocket, Wrench, DollarSign, Briefcase, Pin } from 'lucide-react';
 import type { Project } from '../../../entities/projeto/model/types';
 
 interface TaskCalendarProps {
@@ -11,6 +11,21 @@ interface TaskCalendarProps {
   onTaskClick: (taskId: string) => void;
   onDayClick: (dateStr: string) => void;
 }
+
+const renderTaskIcon = (type?: string, size = 14) => {
+  switch (type) {
+    case 'reuniao': return <Users size={size} />;
+    case 'ligacao': return <Phone size={size} />;
+    case 'followup': return <RefreshCcw size={size} />;
+    case 'desenvolvimento': return <Code size={size} />;
+    case 'implantacao': return <Rocket size={size} />;
+    case 'suporte': return <Wrench size={size} />;
+    case 'financeiro': return <DollarSign size={size} />;
+    case 'comercial': return <Briefcase size={size} />;
+    case 'outro':
+    default: return <Pin size={size} />;
+  }
+};
 
 const getPriorityColor = (priority: 'baixa' | 'media' | 'alta') => {
   switch (priority) {
@@ -91,7 +106,7 @@ const EventPopup: React.FC<EventPopupProps> = ({ task, projectName, anchorRect, 
       {/* Close button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 14px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-          <span style={{ fontSize: '1rem' }}>{task.taskType ? TASK_TYPE_ICONS[task.taskType] : '📌'}</span>
+          <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}>{renderTaskIcon(task.taskType, 16)}</span>
           <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff', lineHeight: 1.3 }}>{task.title}</span>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', flexShrink: 0, marginLeft: '8px' }}>
@@ -359,7 +374,9 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                             style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: overdue ? 'rgba(239, 68, 68, 0.08)' : 'rgba(51, 65, 85, 0.3)', borderLeft: `3px solid ${getPriorityColor(t.priority)}`, border: overdue ? '1px dashed #EF4444' : undefined, borderLeftWidth: overdue ? '3px' : undefined, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', cursor: 'pointer' }}
                             title={`${t.title} (${t.assignee || 'Sem resp.'})`}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                              {t.taskType ? TASK_TYPE_ICONS[t.taskType] : '📌'} {t.title}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {renderTaskIcon(t.taskType, 12)} {t.title}
+                              </div>
                             </span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
                               {t.time && <span style={{ fontSize: '0.65rem', color: '#A78BFA' }}>{t.time}</span>}
@@ -403,7 +420,9 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                           onClick={(e) => handleTaskChipClick(e, t)}
                           style={{ padding: '8px 10px', borderRadius: '6px', backgroundColor: overdue ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-panel, #0F172A)', borderLeft: `4px solid ${getPriorityColor(t.priority)}`, border: overdue ? '1px dashed #EF4444' : '1px solid var(--border-color)', borderLeftWidth: overdue ? '4px' : undefined, display: 'flex', flexDirection: 'column', gap: '6px', cursor: 'pointer' }}>
                           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff', lineHeight: '1.3' }}>
-                            {t.taskType ? TASK_TYPE_ICONS[t.taskType] : '📌'} {t.title}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {renderTaskIcon(t.taskType, 12)} {t.title}
+                            </div>
                           </span>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -448,7 +467,9 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                     style={{ padding: '12px 16px', borderRadius: '8px', backgroundColor: overdue ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-panel, #0F172A)', borderLeft: `4px solid ${getPriorityColor(t.priority)}`, border: overdue ? '1px dashed #EF4444' : '1px solid var(--border-color)', borderLeftWidth: overdue ? '4px' : undefined, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                        {t.taskType ? TASK_TYPE_ICONS[t.taskType] : '📌'} {t.title}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {renderTaskIcon(t.taskType, 12)} {t.title}
+                        </div>
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {t.time && <span style={{ fontSize: '0.75rem', color: '#A78BFA', fontWeight: 600 }}>⏰ {t.time}</span>}
