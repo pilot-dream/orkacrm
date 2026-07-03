@@ -24,7 +24,7 @@ import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import type { Task, TaskStatus, TaskType, TaskReminder } from '../../entities/tarefa/model/types';
-import { TASK_TYPE_LABELS, TASK_REMINDER_LABELS, TASK_TYPE_ICONS } from '../../entities/tarefa/model/types';
+import { TASK_TYPE_LABELS, TASK_REMINDER_LABELS } from '../../entities/tarefa/model/types';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { SearchBar } from '../../shared/components/SearchBar';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
