@@ -91,8 +91,11 @@ export default function ConfiguracoesPage() {
   return (
     <div className="page-container">
       <header className="page-header">
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Configurações do Sistema</h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>ORKA CRM v2.0 - Parâmetros da Empresa & Equipe</p>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
+          <span className="hide-on-mobile">Configurações do Sistema</span>
+          <span className="show-on-mobile">Configurações</span>
+        </h1>
+        <p className="hide-on-mobile" style={{ color: 'var(--color-text-muted)' }}>ORKA CRM v2.0 - Parâmetros da Empresa & Equipe</p>
       </header>
 
       <div style={{ marginTop: '24px' }}>
