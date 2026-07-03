@@ -141,33 +141,39 @@ BEGIN
         END IF;
 
         -- Criar Transação de MRR (Mensalidade) no Financeiro se maior que zero
+        -- Criar Transações de MRR (Mensalidade) no Financeiro se maior que zero (gerar 24 meses recorrentes)
         IF v_mrr > 0 THEN
             DECLARE
-                v_due_date DATE;
+                v_first_due DATE;
                 v_day INT := COALESCE(NEW.mrr_due_day, 10);
                 v_today DATE := CURRENT_DATE;
-                v_due_str TEXT;
+                v_due TEXT;
             BEGIN
                 IF EXTRACT(DAY FROM v_today) <= v_day THEN
-                    v_due_date := make_date(EXTRACT(YEAR FROM v_today)::INT, EXTRACT(MONTH FROM v_today)::INT, v_day);
+                    v_first_due := make_date(EXTRACT(YEAR FROM v_today)::INT, EXTRACT(MONTH FROM v_today)::INT, v_day);
                 ELSE
-                    v_due_date := make_date(EXTRACT(YEAR FROM v_today)::INT, EXTRACT(MONTH FROM v_today)::INT, v_day) + INTERVAL '1 month';
+                    v_first_due := make_date(EXTRACT(YEAR FROM v_today)::INT, EXTRACT(MONTH FROM v_today)::INT, v_day) + INTERVAL '1 month';
                 END IF;
-                v_due_str := to_char(v_due_date, 'DD/MM/YYYY');
 
-                INSERT INTO public.transactions (id, type, description, value, due_date, status, party, tenant_id, category, project_id)
-                VALUES (
-                    'trx-mrr-' || NEW.id,
-                    'income',
-                    'Mensalidade (MRR) - ' || NEW.company,
-                    v_mrr,
-                    v_due_str,
-                    'Pendente',
-                    NEW.company,
-                    v_tenant,
-                    'Assinatura',
-                    v_project_id
-                );
+                FOR i IN 0..23 LOOP
+                    v_due := to_char(v_first_due + (i || ' month')::interval, 'DD/MM/YYYY');
+                    
+                    INSERT INTO public.transactions (id, type, description, value, due_date, status, party, tenant_id, category, project_id, installment_number)
+                    VALUES (
+                        'trx-mrr-' || NEW.id || '-' || (i+1),
+                        'income',
+                        'Mensalidade (MRR) - ' || NEW.company || ' (Mês ' || (i+1) || ')',
+                        v_mrr,
+                        v_due,
+                        'Pendente',
+                        NEW.company,
+                        v_tenant,
+                        'Assinatura',
+                        v_project_id,
+                        (i+1)
+                    )
+                    ON CONFLICT (id) DO NOTHING;
+                END LOOP;
             END;
         END IF;
 
@@ -185,7 +191,7 @@ BEGIN
 
         -- Remover transações financeiras geradas automaticamente
         DELETE FROM public.transactions WHERE id LIKE 'trx-setup-' || OLD.id || '%';
-        DELETE FROM public.transactions WHERE id = 'trx-mrr-' || OLD.id;
+        DELETE FROM public.transactions WHERE id LIKE 'trx-mrr-' || OLD.id || '%';
 
         -- Remover projeto de onboarding gerado automaticamente
         DELETE FROM public.projects 

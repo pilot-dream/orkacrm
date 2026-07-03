@@ -29,7 +29,7 @@ export default function FinanceiroPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | TransactionStatus>('all');
   const [monthFilter, setMonthFilter] = useState<string | null>(null);
-  const [datePeriod, setDatePeriod] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [datePeriod, setDatePeriod] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('month');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   
@@ -46,6 +46,13 @@ export default function FinanceiroPage() {
   const [formCategory, setFormCategory] = useState('Outros');
   const [formStatus, setFormStatus] = useState<TransactionStatus>('Pendente');
   const [formParty, setFormParty] = useState('');
+
+  // Expense custom payment recurrence & installment states
+  const [formExpenseRecurrence, setFormExpenseRecurrence] = useState<'unica' | 'fixa'>('unica');
+  const [formExpensePaymentMethod, setFormExpensePaymentMethod] = useState<'a_vista' | 'parcelado'>('a_vista');
+  const [formExpenseInstallmentsCount, setFormExpenseInstallmentsCount] = useState('1');
+  const [formExpenseFirstInstallmentDate, setFormExpenseFirstInstallmentDate] = useState('');
+  const [formFixedDueDay, setFormFixedDueDay] = useState('10');
 
   useEffect(() => {
     fetchTransactions();
@@ -80,21 +87,107 @@ export default function FinanceiroPage() {
 
   const handleCreateTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formDescription || !formValue || !formDueDate) return;
+    if (!formDescription || !formValue) return;
 
-    const newTrx: Transaction = {
-      id: `trx-${Date.now()}`,
-      type: formType,
-      description: formDescription,
-      value: Number(formValue),
-      dueDate: formDueDate,
-      paymentDate: formStatus === 'Recebido' || formStatus === 'Pago' ? formDueDate : null,
-      category: formCategory,
-      status: formStatus,
-      party: formParty
+    const parseInputDate = (dateStr: string): Date => {
+      if (dateStr.includes('-')) {
+        return new Date(dateStr + 'T12:00:00');
+      }
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
+      return new Date();
     };
 
-    const success = await addTransaction(newTrx);
+    const formatDateBR = (d: Date): string => {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    let transactionsToCreate: Transaction[] = [];
+
+    if (formType === 'expense') {
+      if (formExpenseRecurrence === 'fixa') {
+        const day = Math.min(Math.max(Number(formFixedDueDay) || 10, 1), 31);
+        const today = new Date();
+        const baseYear = today.getFullYear();
+        const baseMonth = today.getMonth();
+        
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(baseYear, baseMonth + i, day);
+          if (d.getDate() !== day) {
+            d.setDate(0);
+          }
+          
+          transactionsToCreate.push({
+            id: `trx-expense-fixed-${Date.now()}-${i}`,
+            type: 'expense',
+            description: `${formDescription} (Recorrente Mês ${i+1}/12)`,
+            value: Number(formValue),
+            dueDate: formatDateBR(d),
+            paymentDate: null,
+            category: formCategory,
+            status: 'Pendente',
+            party: formParty
+          });
+        }
+      } else {
+        if (formExpensePaymentMethod === 'parcelado') {
+          const count = Math.max(Number(formExpenseInstallmentsCount) || 1, 1);
+          const firstDate = parseInputDate(formExpenseFirstInstallmentDate || new Date().toISOString().split('T')[0]);
+          const installmentVal = Math.round(Number(formValue) / count);
+          
+          for (let i = 0; i < count; i++) {
+            const d = new Date(firstDate.getFullYear(), firstDate.getMonth() + i, firstDate.getDate());
+            transactionsToCreate.push({
+              id: `trx-expense-inst-${Date.now()}-${i+1}`,
+              type: 'expense',
+              description: `${formDescription} (Parcela ${i+1}/${count})`,
+              value: installmentVal,
+              dueDate: formatDateBR(d),
+              paymentDate: null,
+              category: formCategory,
+              status: 'Pendente',
+              party: formParty
+            });
+          }
+        } else {
+          transactionsToCreate.push({
+            id: `trx-${Date.now()}`,
+            type: 'expense',
+            description: formDescription,
+            value: Number(formValue),
+            dueDate: formDueDate || formatDateBR(new Date()),
+            paymentDate: formStatus === 'Pago' ? (formDueDate || formatDateBR(new Date())) : null,
+            category: formCategory,
+            status: formStatus,
+            party: formParty
+          });
+        }
+      }
+    } else {
+      transactionsToCreate.push({
+        id: `trx-${Date.now()}`,
+        type: 'income',
+        description: formDescription,
+        value: Number(formValue),
+        dueDate: formDueDate || formatDateBR(new Date()),
+        paymentDate: formStatus === 'Recebido' ? (formDueDate || formatDateBR(new Date())) : null,
+        category: formCategory,
+        status: formStatus,
+        party: formParty
+      });
+    }
+
+    let success = true;
+    for (const trx of transactionsToCreate) {
+      const res = await addTransaction(trx);
+      if (!res) success = false;
+    }
+
     if (success) {
       setIsAddModalOpen(false);
       resetAddForm();
@@ -109,6 +202,11 @@ export default function FinanceiroPage() {
     setFormCategory('Outros');
     setFormStatus('Pendente');
     setFormParty('');
+    setFormExpenseRecurrence('unica');
+    setFormExpensePaymentMethod('a_vista');
+    setFormExpenseInstallmentsCount('1');
+    setFormExpenseFirstInstallmentDate('');
+    setFormFixedDueDay('10');
   };
 
   const handleToggleStatus = async (t: Transaction) => {
@@ -527,16 +625,115 @@ export default function FinanceiroPage() {
                 <input type="text" className="form-input" value={formDescription} onChange={(e) => setFormDescription(e.target.value)} required placeholder="Ex: Mensalidade Junho Stripe" />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {formType === 'expense' && (
                 <div className="input-group">
-                  <span className="input-label">Valor (R$) *</span>
-                  <input type="number" className="form-input" value={formValue} onChange={(e) => setFormValue(e.target.value)} required placeholder="Ex: 5000" />
+                  <span className="input-label">Recorrência da Despesa</span>
+                  <select 
+                    className="form-select" 
+                    value={formExpenseRecurrence} 
+                    onChange={(e) => setFormExpenseRecurrence(e.target.value as any)}
+                  >
+                    <option value="unica">Despesa Única</option>
+                    <option value="fixa">Despesa Fixa / Recorrente</option>
+                  </select>
                 </div>
+              )}
+
+              {formType === 'expense' && formExpenseRecurrence === 'fixa' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="input-group">
+                    <span className="input-label">Valor Mensal (R$) *</span>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      value={formValue} 
+                      onChange={(e) => setFormValue(e.target.value)} 
+                      required 
+                      placeholder="Ex: 500" 
+                    />
+                  </div>
+                  <div className="input-group">
+                    <span className="input-label">Dia do Vencimento (1 a 31) *</span>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      min="1" 
+                      max="31" 
+                      value={formFixedDueDay} 
+                      onChange={(e) => setFormFixedDueDay(e.target.value)} 
+                      required 
+                      placeholder="Ex: 10" 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formType === 'expense' && formExpenseRecurrence === 'unica' && (
                 <div className="input-group">
-                  <span className="input-label">Vencimento *</span>
-                  <input type="text" className="form-input" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} required placeholder="Ex: 30/07/2026" />
+                  <span className="input-label">Forma de Pagamento</span>
+                  <select 
+                    className="form-select" 
+                    value={formExpensePaymentMethod} 
+                    onChange={(e) => setFormExpensePaymentMethod(e.target.value as any)}
+                  >
+                    <option value="a_vista">À vista</option>
+                    <option value="parcelado">Parcelado</option>
+                  </select>
                 </div>
-              </div>
+              )}
+
+              {formType === 'expense' && formExpenseRecurrence === 'unica' && formExpensePaymentMethod === 'parcelado' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="input-group">
+                      <span className="input-label">Valor Total (R$) *</span>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        value={formValue} 
+                        onChange={(e) => setFormValue(e.target.value)} 
+                        required 
+                        placeholder="Ex: 1200" 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <span className="input-label">Quantidade de Parcelas *</span>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        min="1" 
+                        value={formExpenseInstallmentsCount} 
+                        onChange={(e) => setFormExpenseInstallmentsCount(e.target.value)} 
+                        required 
+                        placeholder="Ex: 3" 
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <span className="input-label">Data da Primeira Parcela *</span>
+                    <input 
+                      type="date" 
+                      className="form-input" 
+                      value={formExpenseFirstInstallmentDate} 
+                      onChange={(e) => setFormExpenseFirstInstallmentDate(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!(formType === 'expense' && formExpenseRecurrence === 'fixa') && !(formType === 'expense' && formExpenseRecurrence === 'unica' && formExpensePaymentMethod === 'parcelado') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="input-group">
+                    <span className="input-label">Valor (R$) *</span>
+                    <input type="number" className="form-input" value={formValue} onChange={(e) => setFormValue(e.target.value)} required placeholder="Ex: 5000" />
+                  </div>
+                  <div className="input-group">
+                    <span className="input-label">Vencimento *</span>
+                    <input type="text" className="form-input" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} required={formType === 'income' || (formType === 'expense' && formExpensePaymentMethod === 'a_vista')} placeholder="Ex: 30/07/2026" />
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="input-group">
