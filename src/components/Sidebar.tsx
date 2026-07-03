@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userProfile
 }) => {
   const menuItems = [
-    { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'leads', label: 'Leads', icon: UserCheck },
     { id: 'projects', label: 'Projetos', icon: Briefcase },
     { id: 'tasks', label: 'Tarefas', icon: CheckSquare },

@@ -3,9 +3,22 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { Layers } from 'lucide-react';
 
+import { useEffect } from 'react';
+import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function RevenueProductChartWidget() {
   const navigate = useNavigate();
   const transactions = useFinanceiroStore((state) => state.transactions);
+  const loading = useFinanceiroStore((state) => state.loading);
+  const fetchTransactions = useFinanceiroStore((state) => state.fetchTransactions);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  if (loading && transactions.length === 0) {
+    return <ChartSkeleton height="340px" />;
+  }
 
   // Group incomes by category
   const incomes = transactions.filter(t => t.type === 'income');

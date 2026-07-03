@@ -1,35 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { DollarSign, RefreshCw, AlertCircle, ShoppingBag, Plus } from 'lucide-react';
 
 export default function RecentSalesWidget() {
   const navigate = useNavigate();
-  const { transactions, fetchTransactions } = useFinanceiroStore();
-  const [status, setStatus] = useState<'loading' | 'success' | 'empty' | 'error'>('loading');
-
-  const loadData = async () => {
-    setStatus('loading');
-    try {
-      await fetchTransactions();
-      const sales = transactions.filter(t => t.type === 'income');
-      if (sales.length > 0) {
-        setStatus('success');
-      } else {
-        setStatus('empty');
-      }
-    } catch (e) {
-      setStatus('error');
-    }
-  };
+  const { transactions, loading, error, fetchTransactions } = useFinanceiroStore();
 
   useEffect(() => {
-    loadData();
-  }, [transactions.length]);
+    fetchTransactions();
+  }, []);
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
-    loadData();
+    fetchTransactions(true);
   };
 
   const handleCreateSale = () => {
@@ -37,6 +21,14 @@ export default function RecentSalesWidget() {
   };
 
   const sales = transactions.filter(t => t.type === 'income').slice(0, 4);
+
+  const status = (loading && transactions.length === 0)
+    ? 'loading'
+    : error
+      ? 'error'
+      : sales.length > 0
+        ? 'success'
+        : 'empty';
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -83,7 +75,7 @@ export default function RecentSalesWidget() {
       }}>
         <AlertCircle size={32} color="var(--color-danger)" />
         <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Falha ao carregar vendas recentes.</span>
-        <button onClick={loadData} className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Recarregar</button>
+        <button onClick={handleRefresh} className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Recarregar</button>
       </div>
     );
   }

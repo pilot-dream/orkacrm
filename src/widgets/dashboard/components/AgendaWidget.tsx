@@ -1,8 +1,21 @@
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { useProjectStore } from '../../../entities/projeto/model/store';
 
+import { useEffect } from 'react';
+import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function AgendaWidget() {
   const projects = useProjectStore((state) => state.projects);
+  const loading = useProjectStore((state) => state.loading);
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  if (loading && projects.length === 0) {
+    return <CardSkeleton height="360px" />;
+  }
 
   // Group upcoming deadlines
   const upcomingDeadlines = projects

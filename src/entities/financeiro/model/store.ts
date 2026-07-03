@@ -6,20 +6,46 @@ interface FinanceiroState {
   transactions: Transaction[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchTransactions: () => Promise<void>;
+  fetchTransactions: (force?: boolean) => Promise<void>;
   addTransaction: (t: Transaction) => Promise<boolean>;
   updateTransaction: (t: Transaction) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
 }
 
-export const useFinanceiroStore = create<FinanceiroState>((set) => ({
+export const useFinanceiroStore = create<FinanceiroState>((set, get) => ({
   transactions: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchTransactions: async () => {
-    set({ loading: true, error: null });
+  fetchTransactions: async (force = false) => {
+    const { transactions, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000;
+
+    if (!force && transactions.length > 0 && (now - lastFetch) < TTL) {
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = transactions.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
       const data = await financeiroService.fetch();
       
@@ -44,9 +70,12 @@ export const useFinanceiroStore = create<FinanceiroState>((set) => ({
         return t;
       }));
 
-      set({ transactions: updatedData, loading: false });
+      if (newAbortController.signal.aborted) return;
+
+      set({ transactions: updatedData, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar lançamentos financeiros', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar transações', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

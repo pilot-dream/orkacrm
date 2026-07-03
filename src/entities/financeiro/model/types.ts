@@ -15,4 +15,6 @@ export interface Transaction {
   tenant_id?: string;
   projectId?: string;
   installmentNumber?: number;
+  paymentValue?: number | null;
+  paidBy?: string | null;
 }

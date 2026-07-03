@@ -6,25 +6,55 @@ interface ClienteState {
   clientes: Cliente[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchClientes: () => Promise<void>;
+  fetchClientes: (force?: boolean) => Promise<void>;
   addCliente: (cliente: Cliente) => Promise<boolean>;
   updateCliente: (cliente: Cliente) => Promise<boolean>;
   deleteCliente: (id: string) => Promise<boolean>;
 }
 
-export const useClienteStore = create<ClienteState>((set) => ({
+export const useClienteStore = create<ClienteState>((set, get) => ({
   clientes: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchClientes: async () => {
-    set({ loading: true, error: null });
+  fetchClientes: async (force = false) => {
+    const { clientes, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000;
+
+    if (!force && clientes.length > 0 && (now - lastFetch) < TTL) {
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = clientes.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
       const data = await clienteService.fetch();
-      set({ clientes: data, loading: false });
+      
+      if (newAbortController.signal.aborted) return;
+
+      set({ clientes: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar clientes', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar clientes', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

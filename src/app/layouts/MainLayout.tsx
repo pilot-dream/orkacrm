@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import { Sidebar } from '../../widgets/sidebar/Sidebar';
 import { Navbar } from '../../widgets/navbar/Navbar';
 import { useAuthStore } from '../../entities/usuario/model/store';
@@ -11,6 +12,21 @@ export const MainLayout: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showMobileNotifs, setShowMobileNotifs] = useState(false);
+  const navigate = useNavigate();
+  
+  const userProfile = useAuthStore((state) => state.userProfile);
+  const notifications = useAuthStore((state) => state.notifications);
+  const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Sidebar hover & pin states
+  const [isPinned, setIsPinned] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sidebar-pinned');
+    return saved !== 'false'; // default is pinned/expanded (true)
+  });
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const isExpanded = isPinned || isHovered;
 
   const fetchTasks = useTaskStore((state) => state.fetchTasks);
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
@@ -35,7 +51,7 @@ export const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
       {/* Mobile Header Bar */}
       <div className="mobile-header-bar">
         <button 
@@ -49,10 +65,51 @@ export const MainLayout: React.FC = () => {
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <div style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '1.5px', color: '#fff', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          ORKA <span style={{ color: 'var(--color-primary)', fontSize: '0.75rem', padding: '1px 6px', borderRadius: '10px', backgroundColor: 'rgba(45, 140, 255, 0.15)', border: '1px solid rgba(45, 140, 255, 0.3)' }}>CRM</span>
+        <div style={{ flexGrow: 1 }}></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button 
+            onClick={() => setShowMobileNotifs(!showMobileNotifs)}
+            style={{ position: 'relative', background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--color-danger)', color: '#fff', borderRadius: '50%', width: '14px', height: '14px', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                {unreadCount}
+              </span>
+            )}
+            
+            {showMobileNotifs && (
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '30px', right: '-10px', width: '280px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-lg)', boxShadow: 'var(--shadow-premium)', zIndex: 100, textAlign: 'left' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color)', fontWeight: 600, fontSize: '0.85rem' }}>
+                  Notificações
+                </div>
+                <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                  {notifications.map(notif => (
+                    <div key={notif.id} onClick={() => markNotificationAsRead(notif.id)} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-color)', opacity: notif.read ? 0.6 : 1, background: notif.read ? 'transparent' : 'rgba(45,140,255,0.05)' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#fff' }}>{notif.text}</p>
+                    </div>
+                  ))}
+                  {notifications.length === 0 && <div style={{ padding: '16px', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Nenhuma notificação nova.</div>}
+                </div>
+              </div>
+            )}
+          </button>
+          
+          {userProfile && (
+            <button 
+              onClick={() => navigate('/configuracoes')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              {userProfile.avatar ? (
+                <img src={userProfile.avatar} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+              ) : (
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
+          )}
         </div>
-        <div style={{ width: '28px' }}></div>
       </div>
 
       {/* Backdrop overlay for mobile menu */}
@@ -65,6 +122,29 @@ export const MainLayout: React.FC = () => {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         onNewLeadClick={() => setIsModalOpen(true)}
+        isExpanded={isExpanded}
+        isPinned={isPinned}
+        onPinToggle={() => {
+          const next = !isPinned;
+          setIsPinned(next);
+          localStorage.setItem('sidebar-pinned', String(next));
+        }}
+        onHoverChange={(hovering) => setIsHovered(hovering)}
+      />
+
+      {/* Invisible Left-Edge Trigger Boundary for Auto-Reveal */}
+      <div 
+        className="edge-trigger-zone"
+        onMouseEnter={() => setIsHovered(true)}
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '18px',
+          zIndex: 99,
+          pointerEvents: isExpanded ? 'none' : 'auto'
+        }}
       />
 
       <div className="main-canvas">

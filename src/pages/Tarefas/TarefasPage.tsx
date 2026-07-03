@@ -283,10 +283,9 @@ export default function TarefasPage() {
 
   return (
     <PageContainer>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <header className="page-header" style={{ marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Gestão de Tarefas</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Controle e distribuição de tarefas com horário, tipo e lembrete</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0 }}>Gestão de Tarefas</h1>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>

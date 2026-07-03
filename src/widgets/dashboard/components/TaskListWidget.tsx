@@ -1,8 +1,19 @@
 import { useTaskStore } from '../../../entities/tarefa/model/store';
 import { CheckSquare } from 'lucide-react';
 
+import { useEffect } from 'react';
+import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function TaskListWidget() {
-  const { tasks, updateTask } = useTaskStore();
+  const { tasks, updateTask, fetchTasks, loading } = useTaskStore();
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  if (loading && tasks.length === 0) {
+    return <CardSkeleton height="360px" />;
+  }
 
   const pendingTasks = tasks.filter(t => t.status === 'pendente' || t.status === 'em_progresso');
 

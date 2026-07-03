@@ -7,8 +7,11 @@ interface LeadState {
   leads: Lead[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchLeads: () => Promise<void>;
+  fetchLeads: (force?: boolean) => Promise<void>;
   addLead: (lead: Lead) => Promise<boolean>;
   updateLead: (lead: Lead) => Promise<boolean>;
   updateLeadStage: (leadId: string, newStage: LeadStage, oldStage: LeadStage) => Promise<boolean>;
@@ -19,14 +22,42 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   leads: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchLeads: async () => {
-    set({ loading: true, error: null });
+  fetchLeads: async (force = false) => {
+    const { leads, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000; // 5 minutes
+
+    if (!force && leads.length > 0 && (now - lastFetch) < TTL) {
+      return; // Valid cache, return immediately
+    }
+
+    if (abortController) {
+      abortController.abort(); // Cancel previous request
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = leads.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
+      // In a real implementation, we could pass newAbortController.signal to leadService.fetch
       const data = await leadService.fetch();
-      set({ leads: data, loading: false });
+      
+      if (newAbortController.signal.aborted) return;
+
+      set({ leads: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar leads', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar leads', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

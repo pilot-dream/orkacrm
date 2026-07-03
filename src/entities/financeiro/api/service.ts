@@ -14,7 +14,9 @@ export const mapTransactionFromDb = (db: any): Transaction => ({
   party: db.party || '',
   tenant_id: db.tenant_id,
   projectId: db.project_id,
-  installmentNumber: db.installment_number
+  installmentNumber: db.installment_number,
+  paymentValue: db.payment_value !== undefined && db.payment_value !== null ? Number(db.payment_value) : null,
+  paidBy: db.paid_by || null
 });
 
 export const mapTransactionToDb = (t: Transaction) => ({
@@ -29,7 +31,9 @@ export const mapTransactionToDb = (t: Transaction) => ({
   party: t.party,
   project_id: t.projectId || null,
   installment_number: t.installmentNumber || null,
-  tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai'
+  tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai',
+  payment_value: t.paymentValue !== undefined ? t.paymentValue : null,
+  paid_by: t.paidBy || null
 });
 
 export const financeiroService = {

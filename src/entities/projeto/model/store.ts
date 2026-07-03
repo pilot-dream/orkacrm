@@ -7,8 +7,11 @@ interface ProjectState {
   projects: Project[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchProjects: () => Promise<void>;
+  fetchProjects: (force?: boolean) => Promise<void>;
   addProject: (p: Project) => Promise<boolean>;
   updateProject: (p: Project) => Promise<boolean>;
   updateProjectStage: (projectId: string, newStage: ProjectStage, oldStage: ProjectStage) => Promise<boolean>;
@@ -19,14 +22,41 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchProjects: async () => {
-    set({ loading: true, error: null });
+  fetchProjects: async (force = false) => {
+    const { projects, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000;
+
+    if (!force && projects.length > 0 && (now - lastFetch) < TTL) {
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = projects.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
       const data = await projetoService.fetch();
-      set({ projects: data, loading: false });
+      
+      if (newAbortController.signal.aborted) return;
+
+      set({ projects: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar projetos', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar projetos', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

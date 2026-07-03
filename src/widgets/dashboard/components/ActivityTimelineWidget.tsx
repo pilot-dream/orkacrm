@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react';
 import { isSupabaseActive, supabase } from '../../../shared/api/supabaseClient';
 import { Activity, Clock } from 'lucide-react';
 
+import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function ActivityTimelineWidget() {
   const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTimeline = async () => {
+      setLoading(true);
       if (isSupabaseActive()) {
         try {
           const { data } = await supabase
@@ -21,9 +25,14 @@ export default function ActivityTimelineWidget() {
       } else {
         setActivities([]);
       }
+      setLoading(false);
     };
     loadTimeline();
   }, []);
+
+  if (loading) {
+    return <CardSkeleton height="360px" />;
+  }
 
   return (
     <div style={{

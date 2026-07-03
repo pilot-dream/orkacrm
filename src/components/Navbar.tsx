@@ -3,38 +3,19 @@ import { Search, Bell } from 'lucide-react';
 import type { Notification, Profile } from '../lib/supabaseService';
 
 interface NavbarProps {
-  activeTab: string;
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
   userProfile: Profile | null;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, notifications, onMarkAsRead, userProfile }) => {
+export const Navbar: React.FC<NavbarProps> = ({ notifications, onMarkAsRead, userProfile }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-
-  const getPageTitle = (tab: string) => {
-    switch (tab) {
-      case 'dashboard': return 'Painel de Controle Comercial & Operacional';
-      case 'leads': return 'Central de Leads & Prospecção Inteligente';
-      case 'projects': return 'Quadro Kanban de Projetos & Entrega';
-      case 'tasks': return 'Central de Tarefas & Otimização de Prioridades';
-      case 'pipeline': return 'Funil de Vendas Inteligente';
-      case 'financial': return 'Módulo Financeiro & Gestão de Caixa';
-      case 'automations': return 'Monitor de Automações & Integrações';
-      case 'customers': return 'Diretório de Clientes';
-      case 'agents': return 'Orquestrador de Agentes IA & Monitor de Tokens';
-      case 'ai-hub': return 'Orquestrador de IA & Prompts';
-      case 'settings': return 'Configurações Globais do Sistema';
-      default: return 'Orka CRM';
-    }
-  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="navbar">
       <div className="navbar-left">
-        <h2 className="navbar-title">{getPageTitle(activeTab)}</h2>
         <div className="search-box" style={{ display: 'none' }}>
           <Search size={16} className="text-secondary" />
           <input 

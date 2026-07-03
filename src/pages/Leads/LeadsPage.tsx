@@ -872,12 +872,12 @@ export default function LeadsPage() {
 
   return (
     <PageContainer>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <header className="mobile-header-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Central de Leads</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Gestão comercial e funil de prospecção da ORKA</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
             <button 
               className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`}

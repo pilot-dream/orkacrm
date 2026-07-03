@@ -6,25 +6,55 @@ interface ProductState {
   products: Product[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (force?: boolean) => Promise<void>;
   addProduct: (product: Product) => Promise<boolean>;
   updateProduct: (product: Product) => Promise<boolean>;
   deleteProduct: (id: string) => Promise<boolean>;
 }
 
-export const useProductStore = create<ProductState>((set) => ({
+export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchProducts: async () => {
-    set({ loading: true, error: null });
+  fetchProducts: async (force = false) => {
+    const { products, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000;
+
+    if (!force && products.length > 0 && (now - lastFetch) < TTL) {
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = products.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
       const data = await produtoService.fetch();
-      set({ products: data, loading: false });
+      
+      if (newAbortController.signal.aborted) return;
+
+      set({ products: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar produtos', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar produtos', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

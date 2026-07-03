@@ -29,9 +29,31 @@ const getLast6Months = () => {
   return months;
 };
 
+import { useEffect } from 'react';
+import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function MrrEvolutionChartWidget() {
   const clientes = useClienteStore((state) => state.clientes);
   const transactions = useFinanceiroStore((state) => state.transactions);
+  
+  const fetchClientes = useClienteStore((state) => state.fetchClientes);
+  const fetchTransactions = useFinanceiroStore((state) => state.fetchTransactions);
+
+  const loadingClientes = useClienteStore((state) => state.loading);
+  const loadingFinanceiro = useFinanceiroStore((state) => state.loading);
+
+  useEffect(() => {
+    fetchClientes();
+    fetchTransactions();
+  }, []);
+
+  const isInitialLoading = 
+    (loadingClientes && clientes.length === 0) || 
+    (loadingFinanceiro && transactions.length === 0);
+
+  if (isInitialLoading) {
+    return <ChartSkeleton height="340px" />;
+  }
 
   const monthsList = getLast6Months();
   const chartData = monthsList.map((m, index) => {

@@ -11,9 +11,22 @@ import {
 import { useLeadStore } from '../../../entities/lead/model/store';
 import { Target } from 'lucide-react';
 
+import { useEffect } from 'react';
+import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function FunnelConversionChartWidget() {
   const navigate = useNavigate();
   const leads = useLeadStore((state) => state.leads);
+  const loading = useLeadStore((state) => state.loading);
+  const fetchLeads = useLeadStore((state) => state.fetchLeads);
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  if (loading && leads.length === 0) {
+    return <ChartSkeleton height="340px" />;
+  }
 
   // Group by stage values
   const stagesList = [

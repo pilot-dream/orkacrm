@@ -2,8 +2,22 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useClienteStore } from '../../../entities/cliente/model/store';
 import { Target } from 'lucide-react';
 
+import { useEffect } from 'react';
+import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function GoalProgressWidget() {
   const clientes = useClienteStore((state) => state.clientes);
+  const loading = useClienteStore((state) => state.loading);
+  const fetchClientes = useClienteStore((state) => state.fetchClientes);
+
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  if (loading && clientes.length === 0) {
+    return <ChartSkeleton height="320px" />;
+  }
+
   const mrrTotal = clientes.reduce((acc, c) => acc + (c.monthlySpend || 0), 0);
   
   const targetMrr = 50000; // Company Target

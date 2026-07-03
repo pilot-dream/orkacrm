@@ -7,8 +7,11 @@ interface TaskState {
   tasks: Task[];
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
+  lastFetch: number;
+  abortController: AbortController | null;
   
-  fetchTasks: () => Promise<void>;
+  fetchTasks: (force?: boolean) => Promise<void>;
   addTask: (t: Task) => Promise<boolean>;
   updateTask: (t: Task) => Promise<boolean>;
   updateTaskStatus: (taskId: string, newStatus: TaskStatus, oldStatus: TaskStatus) => Promise<boolean>;
@@ -19,14 +22,41 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   loading: false,
   error: null,
+  isRefreshing: false,
+  lastFetch: 0,
+  abortController: null,
   
-  fetchTasks: async () => {
-    set({ loading: true, error: null });
+  fetchTasks: async (force = false) => {
+    const { tasks, lastFetch, abortController } = get();
+    const now = Date.now();
+    const TTL = 5 * 60 * 1000;
+
+    if (!force && tasks.length > 0 && (now - lastFetch) < TTL) {
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    const newAbortController = new AbortController();
+    set({ abortController: newAbortController });
+
+    const isInitialLoad = tasks.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    } else {
+      set({ isRefreshing: true, error: null });
+    }
+
     try {
       const data = await tarefaService.fetch();
-      set({ tasks: data, loading: false });
+      
+      if (newAbortController.signal.aborted) return;
+
+      set({ tasks: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
-      set({ error: err.message || 'Erro ao carregar tarefas', loading: false });
+      if (newAbortController.signal.aborted) return;
+      set({ error: err.message || 'Erro ao carregar tarefas', loading: false, isRefreshing: false, abortController: null });
     }
   },
   

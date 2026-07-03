@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Search, Bell } from 'lucide-react';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import { supabaseNotifications } from '../../lib/supabaseService';
 
 export const Navbar: React.FC = () => {
-  const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notifications = useAuthStore((state) => state.notifications);
@@ -21,26 +19,11 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const getPageTitle = (pathname: string) => {
-    switch (pathname) {
-      case '/dashboard': return 'Painel de Controle Comercial & Operacional';
-      case '/leads': return 'Central de Leads & Prospecção Inteligente';
-      case '/projetos': return 'Quadro Kanban de Projetos & Entrega';
-      case '/tarefas': return 'Central de Tarefas & Otimização de Prioridades';
-      case '/financeiro': return 'Módulo Financeiro & Gestão de Caixa';
-      case '/clientes': return 'Diretório de Clientes';
-      case '/produtos': return 'Tabela Mestre de Produtos';
-      case '/configuracoes': return 'Configurações Globais do Sistema';
-      default: return 'Orka CRM';
-    }
-  };
-
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="navbar">
       <div className="navbar-left">
-        <h2 className="navbar-title">{getPageTitle(location.pathname)}</h2>
         <div className="search-box" style={{ display: 'none' }}>
           <Search size={16} className="text-secondary" />
           <input 

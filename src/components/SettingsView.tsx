@@ -663,7 +663,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="form-grid force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="input-group">
                   <span className="input-label">Alíquota de Imposto sobre Serviços (ISS) (%)</span>
                   <input type="number" className="form-input" defaultValue={5} />
@@ -674,7 +674,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="form-grid force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="input-group">
                   <span className="input-label">Prazo de Vencimento Padrão (dias)</span>
                   <input type="number" className="form-input" defaultValue={5} />
@@ -793,7 +793,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Altere a paleta de cores geral da interface do sistema.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
+            <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
               
               {/* Dark mode select */}
               <div 

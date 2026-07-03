@@ -3,10 +3,42 @@ import { useLeadStore } from '../../../entities/lead/model/store';
 import { useClienteStore } from '../../../entities/cliente/model/store';
 import { useProjectStore } from '../../../entities/projeto/model/store';
 
+import { useEffect } from 'react';
+import { SkeletonBlock } from '../../skeletons/SkeletonBase';
+
 export default function KpisGridWidget() {
   const leads = useLeadStore((state) => state.leads);
   const clientes = useClienteStore((state) => state.clientes);
   const projects = useProjectStore((state) => state.projects);
+
+  const fetchLeads = useLeadStore((state) => state.fetchLeads);
+  const fetchClientes = useClienteStore((state) => state.fetchClientes);
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
+
+  const loadingLeads = useLeadStore((state) => state.loading);
+  const loadingClientes = useClienteStore((state) => state.loading);
+  const loadingProjects = useProjectStore((state) => state.loading);
+
+  useEffect(() => {
+    fetchLeads();
+    fetchClientes();
+    fetchProjects();
+  }, []);
+
+  const isInitialLoading = 
+    (loadingLeads && leads.length === 0) || 
+    (loadingClientes && clientes.length === 0) || 
+    (loadingProjects && projects.length === 0);
+
+  if (isInitialLoading) {
+    return (
+      <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        {[1, 2, 3, 4].map(i => (
+          <SkeletonBlock key={i} style={{ height: '110px' }} />
+        ))}
+      </div>
+    );
+  }
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -86,7 +118,7 @@ export default function KpisGridWidget() {
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+    <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
       {kpis.map((kpi) => {
         const IconComponent = kpi.icon;
         return (

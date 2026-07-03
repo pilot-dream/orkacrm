@@ -1,35 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../../../entities/projeto/model/store';
 import { AlertTriangle, RefreshCw, AlertCircle, Plus } from 'lucide-react';
 
 export default function CriticalProjectsWidget() {
   const navigate = useNavigate();
-  const { projects, fetchProjects } = useProjectStore();
-  const [status, setStatus] = useState<'loading' | 'success' | 'empty' | 'error'>('loading');
-
-  const loadData = async () => {
-    setStatus('loading');
-    try {
-      await fetchProjects();
-      const critical = projects.filter(p => p.priority === 'alta' && p.stage !== 'concluido');
-      if (critical.length > 0) {
-        setStatus('success');
-      } else {
-        setStatus('empty');
-      }
-    } catch (e) {
-      setStatus('error');
-    }
-  };
+  const { projects, loading, error, fetchProjects } = useProjectStore();
 
   useEffect(() => {
-    loadData();
-  }, [projects.length]); // Refresh if store projects count change
+    fetchProjects();
+  }, []);
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
-    loadData();
+    fetchProjects(true);
   };
 
   const handleCreateProject = () => {
@@ -37,6 +21,14 @@ export default function CriticalProjectsWidget() {
   };
 
   const critical = projects.filter(p => p.priority === 'alta' && p.stage !== 'concluido');
+
+  const status = (loading && projects.length === 0)
+    ? 'loading'
+    : error
+      ? 'error'
+      : critical.length > 0
+        ? 'success'
+        : 'empty';
 
   if (status === 'loading') {
     return (
@@ -79,7 +71,7 @@ export default function CriticalProjectsWidget() {
       }}>
         <AlertCircle size={32} color="var(--color-danger)" />
         <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Falha ao carregar projetos críticos.</span>
-        <button onClick={loadData} className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Recarregar</button>
+        <button onClick={handleRefresh} className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Recarregar</button>
       </div>
     );
   }

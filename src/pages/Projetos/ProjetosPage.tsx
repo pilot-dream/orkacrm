@@ -251,10 +251,9 @@ export default function ProjetosPage() {
 
   return (
     <PageContainer>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="page-header" style={{ marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Projetos Operacionais</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Acompanhamento de onboarding e implantações operacionais da ORKA</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0 }}>Projetos Operacionais</h1>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
@@ -278,7 +277,7 @@ export default function ProjetosPage() {
             <span>Criar Projeto</span>
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Filter and Search */}
       <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>

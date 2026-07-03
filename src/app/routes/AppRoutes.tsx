@@ -13,36 +13,65 @@ const FinanceiroPage = lazy(() => import('../../pages/Financeiro/FinanceiroPage'
 const ConfiguracoesPage = lazy(() => import('../../pages/Configuracoes/ConfiguracoesPage'));
 const LoginPage = lazy(() => import('../../pages/Login/LoginPage'));
 
-// Simple loading indicator
-const PageLoader = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', color: 'var(--color-primary)' }}>
-    <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(45, 140, 255, 0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%' }}></div>
+// Skeleton Components
+import { DashboardSkeleton } from '../../widgets/skeletons/DashboardSkeleton';
+import { KanbanSkeleton } from '../../widgets/skeletons/KanbanSkeleton';
+import { TableSkeleton } from '../../widgets/skeletons/TableSkeleton';
+import { SettingsSkeleton } from '../../widgets/skeletons/SettingsSkeleton';
+import { TarefasSkeleton } from '../../widgets/skeletons/TarefasSkeleton';
+
+// Simple fallback for Login and root layout if needed
+const SimpleLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--color-primary)' }}>
+    <div className="animate-pulse" style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-primary)', borderRadius: '50%' }}></div>
   </div>
 );
 
 export const AppRoutes: React.FC = () => {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* Auth Route */}
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      {/* Auth Route */}
+      <Route path="/login" element={<Suspense fallback={<SimpleLoader />}><LoginPage /></Suspense>} />
 
-        {/* Protected Routes Layout */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="leads" element={<LeadsPage />} />
-          <Route path="clientes" element={<ClientesPage />} />
-          <Route path="produtos" element={<ProdutosPage />} />
-          <Route path="projetos" element={<ProjetosPage />} />
-          <Route path="tarefas" element={<TarefasPage />} />
-          <Route path="financeiro" element={<FinanceiroPage />} />
-          <Route path="configuracoes" element={<ConfiguracoesPage />} />
-          
-          {/* Catch-all redirects to Dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Route>
-      </Routes>
-    </Suspense>
+      {/* Protected Routes Layout */}
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        
+        <Route path="dashboard" element={
+          <Suspense fallback={<DashboardSkeleton />}><DashboardPage /></Suspense>
+        } />
+        
+        <Route path="leads" element={
+          <Suspense fallback={<KanbanSkeleton />}><LeadsPage /></Suspense>
+        } />
+        
+        <Route path="clientes" element={
+          <Suspense fallback={<TableSkeleton />}><ClientesPage /></Suspense>
+        } />
+        
+        <Route path="produtos" element={
+          <Suspense fallback={<TableSkeleton />}><ProdutosPage /></Suspense>
+        } />
+        
+        <Route path="projetos" element={
+          <Suspense fallback={<KanbanSkeleton />}><ProjetosPage /></Suspense>
+        } />
+        
+        <Route path="tarefas" element={
+          <Suspense fallback={<TarefasSkeleton />}><TarefasPage /></Suspense>
+        } />
+        
+        <Route path="financeiro" element={
+          <Suspense fallback={<TableSkeleton />}><FinanceiroPage /></Suspense>
+        } />
+        
+        <Route path="configuracoes" element={
+          <Suspense fallback={<SettingsSkeleton />}><ConfiguracoesPage /></Suspense>
+        } />
+        
+        {/* Catch-all redirects to Dashboard */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
   );
 };

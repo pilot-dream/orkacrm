@@ -30,9 +30,22 @@ const getLast6Months = () => {
   return months;
 };
 
+import { useEffect } from 'react';
+import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
+
 export default function CashFlowChartWidget() {
   const navigate = useNavigate();
   const transactions = useFinanceiroStore((state) => state.transactions);
+  const loading = useFinanceiroStore((state) => state.loading);
+  const fetchTransactions = useFinanceiroStore((state) => state.fetchTransactions);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  if (loading && transactions.length === 0) {
+    return <ChartSkeleton height="340px" />;
+  }
 
   const monthsList = getLast6Months();
   const chartData = monthsList.map(m => {
