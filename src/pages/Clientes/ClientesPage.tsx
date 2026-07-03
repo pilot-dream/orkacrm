@@ -302,7 +302,7 @@ export default function ClientesPage() {
       {/* Profile Detail Drawer (Complete 360 Customer Profile) */}
       {isDetailDrawerOpen && selectedCustomer && (
         <div className="drawer-overlay" onClick={() => setIsDetailDrawerOpen(false)} style={{ zIndex: 900 }}>
-          <div className="drawer-panel" onClick={(e) => e.stopPropagation()} style={{ width: '640px', backgroundColor: 'var(--bg-sidebar)', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', position: 'fixed', right: 0, top: 0, zIndex: 901, boxShadow: '-5px 0 25px rgba(0,0,0,0.5)' }}>
+          <div className="drawer" onClick={(e) => e.stopPropagation()} style={{ width: '640px', padding: '24px', zIndex: 901 }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
