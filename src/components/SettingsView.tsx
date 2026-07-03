@@ -15,6 +15,7 @@ import {
   User,
   DollarSign
 } from 'lucide-react';
+import { isSupabaseActive, supabase } from '../shared/api/supabaseClient';
 import type { Profile } from '../entities/usuario/model/types';
 import type { Product } from '../entities/produto/model/types';
 
@@ -100,6 +101,54 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [address, setAddress] = useState('Av. Paulista, 1000 - Bela Vista');
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg') {
+      alert('Apenas arquivos PNG ou JPEG são permitidos.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('O tamanho máximo do arquivo é 2MB.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      if (isSupabaseActive()) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `avatar_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('arquivos')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from('arquivos')
+          .getPublicUrl(filePath);
+
+        setProfileForm({ ...profileForm, avatar: data.publicUrl });
+      } else {
+        setTimeout(() => {
+          setProfileForm({ ...profileForm, avatar: URL.createObjectURL(file) });
+          setUploadingAvatar(false);
+        }, 1000);
+        return;
+      }
+    } catch (error: any) {
+      alert(`Erro ao fazer upload: ${error.message}`);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   // Team State
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -306,17 +355,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <div className="input-group">
-              <span className="input-label">URL da Foto de Perfil (Avatar)</span>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <span className="input-label">Foto de Perfil (Avatar)</span>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <input 
-                  type="text" 
+                  type="file" 
+                  accept="image/png, image/jpeg"
                   className="form-input" 
-                  placeholder="Cole o link de uma imagem ou use presets abaixo..." 
-                  value={profileForm.avatar}
-                  onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
-                  style={{ flexGrow: 1 }}
+                  onChange={handleAvatarUpload}
+                  disabled={uploadingAvatar}
+                  style={{ flexGrow: 1, paddingTop: '10px' }}
                 />
-                {profileForm.avatar && (
+                {uploadingAvatar && <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Enviando...</span>}
+                {profileForm.avatar && !uploadingAvatar && (
                   <button type="button" className="outline-btn" style={{ color: 'var(--color-danger)' }} onClick={() => setProfileForm({ ...profileForm, avatar: '' })}>
                     Limpar
                   </button>
