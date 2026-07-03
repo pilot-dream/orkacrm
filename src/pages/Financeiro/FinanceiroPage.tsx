@@ -548,7 +548,7 @@ export default function FinanceiroPage() {
                 </td>
                 <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                    {t.type === 'income' && (t.status === 'Pendente' || t.status === 'Atrasado') && (
+                    {(t.status === 'Pendente' || t.status === 'Atrasado') && (
                       <button
                         onClick={() => handleToggleStatus(t)}
                         className="outline-btn"
@@ -565,7 +565,7 @@ export default function FinanceiroPage() {
                         }}
                       >
                         <Check size={12} />
-                        <span>Receber</span>
+                        <span>{t.type === 'income' ? 'Receber' : 'Pagar'}</span>
                       </button>
                     )}
                     {(t.status === 'Pendente' || t.status === 'Atrasado') && (
