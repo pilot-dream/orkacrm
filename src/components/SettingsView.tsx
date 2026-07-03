@@ -13,7 +13,8 @@ import {
   Trash2, 
   Terminal,
   User,
-  DollarSign
+  DollarSign,
+  Upload
 } from 'lucide-react';
 import { isSupabaseActive, supabase } from '../shared/api/supabaseClient';
 import type { Profile } from '../entities/usuario/model/types';
@@ -103,10 +104,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [state, setState] = useState('SP');
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState('');
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setSelectedFileName(file.name);
 
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg') {
@@ -356,18 +360,63 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             <div className="input-group">
               <span className="input-label">Foto de Perfil (Avatar)</span>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <input 
-                  type="file" 
-                  accept="image/png, image/jpeg"
-                  className="form-input" 
-                  onChange={handleAvatarUpload}
-                  disabled={uploadingAvatar}
-                  style={{ flexGrow: 1, paddingTop: '10px' }}
-                />
-                {uploadingAvatar && <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Enviando...</span>}
+              <div 
+                className="form-input" 
+                style={{ 
+                  display: 'flex', 
+                  gap: '12px', 
+                  alignItems: 'center', 
+                  padding: '8px 12px',
+                  height: 'auto'
+                }}
+              >
+                <label 
+                  style={{ 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 12px',
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                    opacity: uploadingAvatar ? 0.6 : 1,
+                    pointerEvents: uploadingAvatar ? 'none' : 'auto'
+                  }}
+                >
+                  <Upload size={16} />
+                  <span>Escolher arquivo</span>
+                  <input 
+                    type="file" 
+                    accept="image/png, image/jpeg"
+                    style={{ display: 'none' }}
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+                
+                <div style={{ flexGrow: 1, fontSize: '0.85rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {uploadingAvatar ? (
+                    'Enviando...'
+                  ) : selectedFileName ? (
+                    selectedFileName
+                  ) : profileForm.avatar ? (
+                    'Imagem já configurada'
+                  ) : (
+                    'Nenhum arquivo escolhido'
+                  )}
+                </div>
+
                 {profileForm.avatar && !uploadingAvatar && (
-                  <button type="button" className="outline-btn" style={{ color: 'var(--color-danger)' }} onClick={() => setProfileForm({ ...profileForm, avatar: '' })}>
+                  <button 
+                    type="button" 
+                    className="outline-btn" 
+                    style={{ color: 'var(--color-danger)', border: 'none', padding: '4px 8px', height: 'auto' }} 
+                    onClick={() => { setProfileForm({ ...profileForm, avatar: '' }); setSelectedFileName(''); }}
+                  >
                     Limpar
                   </button>
                 )}
