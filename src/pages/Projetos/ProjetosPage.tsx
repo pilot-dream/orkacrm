@@ -283,7 +283,7 @@ export default function ProjetosPage() {
       <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar projetos por nome..." />
         
-        <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="mobile-filters-row" style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <select 
             value={stageFilter} 
             onChange={(e) => setStageFilter(e.target.value)}

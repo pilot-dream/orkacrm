@@ -336,7 +336,7 @@ export default function TarefasPage() {
       {/* Filters */}
       <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar tarefas..." />
-        <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="mobile-filters-row" style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="form-select" style={{ width: '160px', padding: '6px 12px' }}>
             <option value="all">Todos os Projetos</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
