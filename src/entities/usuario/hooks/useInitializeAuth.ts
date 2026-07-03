@@ -5,6 +5,7 @@ import { isSupabaseActive, supabase } from '../../../shared/api/supabaseClient';
 export function useInitializeAuth() {
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
+  const setInitialized = useAuthStore((state) => state.setInitialized);
   const setUserProfile = useAuthStore((state) => state.setUserProfile);
   const setTeamMembers = useAuthStore((state) => state.setTeamMembers);
   const setNotifications = useAuthStore((state) => state.setNotifications);
@@ -20,6 +21,7 @@ export function useInitializeAuth() {
       if (savedEmail) {
         login(savedEmail);
       }
+      setInitialized(true);
       return;
     }
 
@@ -27,27 +29,24 @@ export function useInitializeAuth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.email) {
         login(session.user.email);
-        localStorage.setItem('orka_user_email', session.user.email);
       } else {
         logout();
-        localStorage.removeItem('orka_user_email');
       }
+      setInitialized(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.email) {
         login(session.user.email);
-        localStorage.setItem('orka_user_email', session.user.email);
       } else {
         logout();
-        localStorage.removeItem('orka_user_email');
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [login, logout]);
+  }, [login, logout, setInitialized]);
 
   // 2. Fetch User Profile, Team, and Notifications on authentication
   useEffect(() => {

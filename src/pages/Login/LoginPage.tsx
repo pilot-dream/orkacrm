@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import orkaLogo from '../../assets/orka_logo.png';
 import loginBg from '../../assets/login_bg.png';
@@ -9,7 +9,15 @@ import { useAuthStore } from '../../entities/usuario/model/store';
 export default function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isInitialized, isAuthenticated, navigate]);
+
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('admin@orka.ai');

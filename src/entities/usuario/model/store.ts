@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Profile, Notification, TeamMember } from './types';
 
 interface AuthState {
+  isInitialized: boolean;
   isAuthenticated: boolean;
   userEmail: string;
   userProfile: Profile | null;
@@ -11,6 +12,7 @@ interface AuthState {
   
   login: (email: string) => void;
   logout: () => void;
+  setInitialized: (val: boolean) => void;
   setUserProfile: (profile: Profile | null) => void;
   setTeamMembers: (members: TeamMember[]) => void;
   setNotifications: (notifications: Notification[]) => void;
@@ -19,6 +21,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
+  isInitialized: false,
   isAuthenticated: false,
   userEmail: '',
   userProfile: null,
@@ -45,6 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
+  setInitialized: (val) => set({ isInitialized: val }),
   setUserProfile: (profile) => set({ userProfile: profile }),
   setTeamMembers: (members) => set({ teamMembers: members }),
   setNotifications: (notifications) => set({ notifications }),
