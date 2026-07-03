@@ -2190,10 +2190,16 @@ html {
 
   /* Drawer panels overrides */
   .drawer, .drawer-wide {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
     padding: 16px !important;
     gap: 16px !important;
+    overflow-x: hidden !important;
+  }
+  
+  .drawer *, .drawer-wide * {
+    max-width: 100%;
+    word-break: break-word;
   }
 
   /* Drawer modals size adjustment */
