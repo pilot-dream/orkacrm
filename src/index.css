@@ -326,7 +326,7 @@ html {
   background-color: rgba(11, 15, 20, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
-  height: 96px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
