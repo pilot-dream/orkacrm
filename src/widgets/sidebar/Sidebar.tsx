@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}
     >
-      <div className="sidebar-header" style={{ padding: '0 14px', height: '88px', display: 'flex', alignItems: 'center', justifyContent: effectiveExpanded ? 'space-between' : 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
+      <div className="sidebar-header" style={{ padding: '0 14px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: effectiveExpanded ? 'space-between' : 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
         {effectiveExpanded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img 
