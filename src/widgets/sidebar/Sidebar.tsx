@@ -33,6 +33,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPinToggle,
   onHoverChange
 }) => {
+  const effectiveExpanded = isOpen || isExpanded;
+
   const navigate = useNavigate();
   const userProfile = useAuthStore((state) => state.userProfile);
   const logout = useAuthStore((state) => state.logout);
@@ -74,12 +76,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside 
-      className={`sidebar ${isOpen ? 'open' : ''} ${isExpanded ? 'expanded' : 'collapsed'}`}
+      className={`sidebar ${isOpen ? 'open' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}
     >
-      <div className="sidebar-header" style={{ padding: '16px 14px', display: 'flex', alignItems: 'center', justifyContent: isExpanded ? 'space-between' : 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
-        {isExpanded ? (
+      <div className="sidebar-header" style={{ padding: '0 14px', height: '96px', display: 'flex', alignItems: 'center', justifyContent: effectiveExpanded ? 'space-between' : 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
+        {effectiveExpanded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img 
               src={orkaLogo} 
@@ -102,9 +104,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }} 
           />
         )}
-        {isExpanded && (
+        {effectiveExpanded && (
           <button
             type="button"
+            className="hide-on-mobile"
             onClick={onPinToggle}
             style={{
               background: 'none',
@@ -135,13 +138,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onMouseEnter={() => prefetchModule(item.id)}
                 onClick={() => onClose()}
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                title={!isExpanded ? item.label : undefined}
+                title={!effectiveExpanded ? item.label : undefined}
               >
                 <Icon size={18} style={{ flexShrink: 0 }} />
                 <div className="nav-link-text-wrapper">
                   <span className="nav-link-text">{item.label}</span>
                 </div>
-                {!isExpanded && (
+                {!effectiveExpanded && (
                   <span className="sidebar-tooltip">
                     {item.label}
                   </span>
@@ -159,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onMouseEnter={() => prefetchModule('settings')}
           className="nav-link" 
           style={{ padding: '10px 12px' }}
-          title={!isExpanded ? "Meu Perfil" : undefined}
+          title={!effectiveExpanded ? "Meu Perfil" : undefined}
         >
           <div style={{ position: 'relative', flexShrink: 0, width: '24px', height: '24px', borderRadius: '50%', overflow: 'hidden', marginLeft: '-3px' }}>
             {profileAvatar ? (
@@ -176,7 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{profileRole}</span>
             </div>
           </div>
-          {!isExpanded && <span className="sidebar-tooltip">Meu Perfil</span>}
+          {!effectiveExpanded && <span className="sidebar-tooltip">Meu Perfil</span>}
         </NavLink>
         
         <button 
@@ -188,7 +191,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="nav-link-text-wrapper">
             <span className="nav-link-text">Sair da Conta</span>
           </div>
-          {!isExpanded && <span className="sidebar-tooltip">Sair da Conta</span>}
+          {!effectiveExpanded && <span className="sidebar-tooltip">Sair da Conta</span>}
         </button>
       </div>
     </aside>

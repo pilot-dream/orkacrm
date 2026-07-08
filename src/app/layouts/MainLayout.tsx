@@ -46,6 +46,20 @@ export const MainLayout: React.FC = () => {
     }
   }, [isAuthenticated, tasks, projects]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 1024 && isPinned) {
+        setIsPinned(false);
+      }
+    };
+    
+    // Initial check
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isPinned]);
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

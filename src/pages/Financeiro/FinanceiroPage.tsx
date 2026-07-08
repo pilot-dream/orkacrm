@@ -32,7 +32,7 @@ const CATEGORIES_INCOME = ['Assinatura', 'Consultoria', 'Setup', 'Outros'];
 const CATEGORIES_EXPENSE = ['Infraestrutura', 'Marketing', 'Salários', 'Impostos', 'Serviços', 'Outros'];
 
 export default function FinanceiroPage() {
-  const { transactions, loading, error, fetchTransactions, addTransaction, updateTransaction, deleteTransaction } = useFinanceiroStore();
+  const { transactions, recurringExpenses, loading, error, fetchTransactions, addTransaction, updateTransaction, deleteTransaction, addRecurringExpense, deleteRecurringExpense } = useFinanceiroStore();
   const { clientes, fetchClientes } = useClienteStore();
   const teamMembers = useAuthStore((state) => state.teamMembers);
 
@@ -93,6 +93,8 @@ export default function FinanceiroPage() {
   const [formExpenseInstallmentsCount, setFormExpenseInstallmentsCount] = useState('1');
   const [formExpenseFirstInstallmentDate, setFormExpenseFirstInstallmentDate] = useState('');
   const [formFixedDueDay, setFormFixedDueDay] = useState('10');
+  const [formRecCurrency, setFormRecCurrency] = useState<'BRL' | 'USD'>('BRL');
+  const [formRecFrequency, setFormRecFrequency] = useState<'Mensal' | 'Anual'>('Mensal');
 
   useEffect(() => {
     fetchTransactions();
@@ -155,25 +157,35 @@ export default function FinanceiroPage() {
         const today = new Date();
         const baseYear = today.getFullYear();
         const baseMonth = today.getMonth();
-        
-        for (let i = 0; i < 12; i++) {
-          const d = new Date(baseYear, baseMonth + i, day);
-          if (d.getDate() !== day) {
-            d.setDate(0);
-          }
-          
-          transactionsToCreate.push({
-            id: `trx-expense-fixed-${Date.now()}-${i}`,
-            type: 'expense',
-            description: `${formDescription} (Recorrente Mês ${i+1}/12)`,
-            value: Number(formValue),
-            dueDate: formatDateBR(d),
-            paymentDate: null,
-            category: formCategory,
-            status: 'Pendente',
-            party: formParty
-          });
+        const nextGen = new Date(baseYear, baseMonth, day);
+        if (nextGen.getTime() < today.getTime()) {
+           if (formRecFrequency === 'Anual') {
+               nextGen.setFullYear(nextGen.getFullYear() + 1);
+           } else {
+               nextGen.setMonth(nextGen.getMonth() + 1);
+           }
         }
+        
+        const success = await addRecurringExpense({
+           id: `rec-${Date.now()}`,
+           tenant_id: '', 
+           name: formDescription,
+           category: formCategory,
+           originalValue: Number(formValue),
+           currency: formRecCurrency,
+           frequency: formRecFrequency,
+           dueDay: day,
+           paymentMethod: formParty,
+           status: 'Ativa',
+           nextGenerationDate: nextGen.toISOString().split('T')[0]
+        });
+        
+        if (success) {
+           setIsAddModalOpen(false);
+           resetAddForm();
+           fetchTransactions(); 
+        }
+        return;
       } else {
         if (formExpensePaymentMethod === 'parcelado') {
           const count = Math.max(Number(formExpenseInstallmentsCount) || 1, 1);
@@ -247,6 +259,8 @@ export default function FinanceiroPage() {
     setFormExpenseInstallmentsCount('1');
     setFormExpenseFirstInstallmentDate('');
     setFormFixedDueDay('10');
+    setFormRecCurrency('BRL');
+    setFormRecFrequency('Mensal');
   };
 
   const handleToggleStatus = async (t: Transaction) => {
@@ -434,24 +448,7 @@ export default function FinanceiroPage() {
   // Projected Net = (All Inflows active) - (All Outflows active)
   const projectedNet = totalInflows - totalOutflows;
 
-  // 4. Fixed Expenses virtual "Master" list
-  const fixedExpensesGroups = transactions
-    .filter(t => t.type === 'expense' && (t.id.includes('fixed') || t.description.toLowerCase().includes('recorrente') || t.description.toLowerCase().includes('mensalidade')))
-    .reduce((acc, t) => {
-      const baseDesc = t.description.replace(/\(Recorrente Mês \d+\/\d+\)/, '').replace(/\(Recorrente\)/, '').trim();
-      if (!acc[baseDesc]) {
-        acc[baseDesc] = {
-          description: baseDesc,
-          value: t.value,
-          category: t.category,
-          party: t.party,
-          dueDay: t.dueDate.split('/')[0] || '10'
-        };
-      }
-      return acc;
-    }, {} as Record<string, { description: string, value: number, category: string, party: string, dueDay: string }>);
-
-  const fixedExpensesList = Object.values(fixedExpensesGroups);
+  // 4. Removed fixedExpensesGroups calculation
 
   // Donut Chart - Expenses by Category Data
   const categoriesList = ['Infraestrutura', 'Marketing', 'Salários', 'Impostos', 'Serviços', 'Outros'];
@@ -506,7 +503,7 @@ export default function FinanceiroPage() {
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
   const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
-  const paginatedFixedExpenses = fixedExpensesList.slice(startIndex, endIndex);
+  const paginatedRecurring = recurringExpenses.slice(startIndex, endIndex);
 
   return (
     <PageContainer>
@@ -525,7 +522,7 @@ export default function FinanceiroPage() {
         {[
           { id: 'receber', label: 'Contas a Receber', icon: <ArrowUpRight size={16} /> },
           { id: 'pagar', label: 'Contas a Pagar', icon: <ArrowDownRight size={16} /> },
-          { id: 'fixas', label: 'Despesas Fixas (Mestre)', icon: <Calendar size={16} /> },
+          { id: 'fixas', label: 'Assinaturas', icon: <Calendar size={16} /> },
           { id: 'fluxo', label: 'Fluxo de Caixa & BI', icon: <TrendingUp size={16} /> }
         ].map(tab => (
           <button
@@ -633,28 +630,28 @@ export default function FinanceiroPage() {
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>CADASTROS DE CUSTO FIXO</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '8px' }}>
-                {fixedExpensesList.length}
+                {recurringExpenses.length}
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Despesas recorrentes ativas</span>
             </div>
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>VALOR MENSAL CONSOLIDADO</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-danger)', marginTop: '8px' }}>
-                {formatCurrency(fixedExpensesList.reduce((acc, curr) => acc + curr.value, 0))}
+                {formatCurrency(recurringExpenses.reduce((acc: number, curr: any) => acc + curr.originalValue, 0))}
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Custo fixo projetado p/ mês</span>
             </div>
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>MÉDIA POR DESPESA</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginTop: '8px' }}>
-                {formatCurrency(fixedExpensesList.length > 0 ? fixedExpensesList.reduce((acc, curr) => acc + curr.value, 0) / fixedExpensesList.length : 0)}
+                {formatCurrency(recurringExpenses.length > 0 ? recurringExpenses.reduce((acc: number, curr: any) => acc + curr.originalValue, 0) / recurringExpenses.length : 0)}
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Consolidado por cadastro master</span>
             </div>
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>PROJEÇÃO ANUAL (12M)</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-danger)', marginTop: '8px' }}>
-                {formatCurrency(fixedExpensesList.reduce((acc, curr) => acc + curr.value, 0) * 12)}
+                {formatCurrency(recurringExpenses.reduce((acc: number, curr: any) => acc + curr.originalValue, 0) * 12)}
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Comprometimento anual estimado</span>
             </div>
@@ -878,43 +875,51 @@ export default function FinanceiroPage() {
 
       {/* Main List Rendering based on activeTab */}
       {activeTab === 'fixas' ? (
-        /* Fixed Expenses Master List */
+        /* Recurring Expenses List */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Descrição (Cadastro Master)</th>
-                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Fornecedor</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Nome da Assinatura</th>
                   <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Categoria</th>
-                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Dia do Vencimento</th>
-                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Valor Mensal</th>
-                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Status da Projeção</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Moeda / Freq</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Dia Venc.</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Valor Original</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Próx. Geração</th>
+                  <th style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>Status</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right', color: 'var(--text-secondary)' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedFixedExpenses.map((item, idx) => (
+                {paginatedRecurring.map((item, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }} className="table-row-hover">
                     <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>
-                      {item.description}
+                      {item.name}
                     </td>
-                    <td style={{ padding: '14px 16px' }}>{item.party || '-'}</td>
                     <td style={{ padding: '14px 16px' }}>{item.category}</td>
+                    <td style={{ padding: '14px 16px' }}>{item.currency} ({item.frequency})</td>
                     <td style={{ padding: '14px 16px', fontWeight: 600 }}>Todo dia {item.dueDay}</td>
                     <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-danger)' }}>
-                      {formatCurrency(item.value)}
+                      {item.currency === 'USD' ? 'US$' : 'R$'} {item.originalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
+                    <td style={{ padding: '14px 16px' }}>{item.nextGenerationDate}</td>
                     <td style={{ padding: '14px 16px' }}>
-                      <span style={{ display: 'inline-flex', padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', backgroundColor: 'rgba(16, 185, 129, 0.08)', color: 'var(--color-success)', fontWeight: 600 }}>
-                        Recorrência Ativa
+                      <span style={{ display: 'inline-flex', padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', backgroundColor: item.status === 'Ativa' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)', color: item.status === 'Ativa' ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }}>
+                        {item.status}
                       </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                       <button className="icon-btn" onClick={() => deleteRecurringExpense(item.id)} title="Excluir">
+                          <Trash2 size={16} />
+                       </button>
                     </td>
                   </tr>
                 ))}
-                {fixedExpensesList.length === 0 && (
+                {recurringExpenses.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      Nenhuma despesa fixa master cadastrada. Clique em <b>Lançar Transação</b> para programar despesas fixas.
+                    <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Nenhuma assinatura recorrente encontrada.
                     </td>
                   </tr>
                 )}
@@ -922,10 +927,10 @@ export default function FinanceiroPage() {
             </table>
           </div>
           {/* Pagination Controls */}
-          {Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE) > 1 && (
+          {Math.ceil(recurringExpenses.length / ITEMS_PER_PAGE) > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Mostrando <b>{startIndex + 1}</b> a <b>{Math.min(endIndex, fixedExpensesList.length)}</b> de <b>{fixedExpensesList.length}</b> despesas fixas
+                Mostrando <b>{startIndex + 1}</b> a <b>{Math.min(endIndex, recurringExpenses.length)}</b> de <b>{recurringExpenses.length}</b> assinaturas
               </span>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button 
@@ -937,17 +942,14 @@ export default function FinanceiroPage() {
                 >
                   Anterior
                 </button>
-                <span style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 600 }}>
-                  Página {currentPage} de {Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE)}
-                </span>
                 <button 
                   type="button" 
-                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE), prev + 1))}
-                  disabled={currentPage === Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE)}
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(recurringExpenses.length / ITEMS_PER_PAGE), prev + 1))}
+                  disabled={currentPage >= Math.ceil(recurringExpenses.length / ITEMS_PER_PAGE)}
                   className="outline-btn"
-                  style={{ padding: '6px 12px', fontSize: '0.78rem', opacity: currentPage === Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE) ? 0.4 : 1, cursor: currentPage === Math.ceil(fixedExpensesList.length / ITEMS_PER_PAGE) ? 'not-allowed' : 'pointer' }}
+                  style={{ padding: '6px 12px', fontSize: '0.78rem', opacity: currentPage >= Math.ceil(recurringExpenses.length / ITEMS_PER_PAGE) ? 0.4 : 1, cursor: currentPage >= Math.ceil(recurringExpenses.length / ITEMS_PER_PAGE) ? 'not-allowed' : 'pointer' }}
                 >
-                  Próximo
+                  Próxima
                 </button>
               </div>
             </div>
@@ -1253,30 +1255,47 @@ export default function FinanceiroPage() {
               )}
 
               {formType === 'expense' && formExpenseRecurrence === 'fixa' && (
-                <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="input-group">
-                    <span className="input-label">Valor Mensal (R$) *</span>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      value={formValue} 
-                      onChange={(e) => setFormValue(e.target.value)} 
-                      required 
-                      placeholder="Ex: 500" 
-                    />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="input-group">
+                      <span className="input-label">Valor Original *</span>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        value={formValue} 
+                        onChange={(e) => setFormValue(e.target.value)} 
+                        required 
+                        placeholder="Ex: 500" 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <span className="input-label">Moeda</span>
+                      <select className="form-select" value={formRecCurrency} onChange={(e) => setFormRecCurrency(e.target.value as any)}>
+                        <option value="BRL">Real (BRL)</option>
+                        <option value="USD">Dólar (USD)</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="input-group">
-                    <span className="input-label">Dia do Vencimento (1 a 31) *</span>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      min="1" 
-                      max="31" 
-                      value={formFixedDueDay} 
-                      onChange={(e) => setFormFixedDueDay(e.target.value)} 
-                      required 
-                      placeholder="Ex: 10" 
-                    />
+                  <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="input-group">
+                      <span className="input-label">Frequência</span>
+                      <select className="form-select" value={formRecFrequency} onChange={(e) => setFormRecFrequency(e.target.value as any)}>
+                        <option value="Mensal">Mensal</option>
+                        <option value="Anual">Anual</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <span className="input-label">Dia do Vencimento *</span>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        min="1" 
+                        max="31" 
+                        value={formFixedDueDay} 
+                        onChange={(e) => setFormFixedDueDay(e.target.value)} 
+                        required 
+                      />
+                    </div>
                   </div>
                 </div>
               )}

@@ -16,7 +16,11 @@ export const mapTransactionFromDb = (db: any): Transaction => ({
   projectId: db.project_id,
   installmentNumber: db.installment_number,
   paymentValue: db.payment_value !== undefined && db.payment_value !== null ? Number(db.payment_value) : null,
-  paidBy: db.paid_by || null
+  paidBy: db.paid_by || null,
+  originalValue: db.original_value !== null && db.original_value !== undefined ? Number(db.original_value) : undefined,
+  currency: db.currency || 'BRL',
+  exchangeRate: db.exchange_rate !== null && db.exchange_rate !== undefined ? Number(db.exchange_rate) : undefined,
+  recurringExpenseId: db.recurring_expense_id || undefined
 });
 
 export const mapTransactionToDb = (t: Transaction) => ({
@@ -33,7 +37,11 @@ export const mapTransactionToDb = (t: Transaction) => ({
   installment_number: t.installmentNumber || null,
   tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai',
   payment_value: t.paymentValue !== undefined ? t.paymentValue : null,
-  paid_by: t.paidBy || null
+  paid_by: t.paidBy || null,
+  original_value: t.originalValue !== undefined ? t.originalValue : null,
+  currency: t.currency || 'BRL',
+  exchange_rate: t.exchangeRate !== undefined ? t.exchangeRate : null,
+  recurring_expense_id: t.recurringExpenseId || null
 });
 
 export const financeiroService = {
@@ -104,6 +112,96 @@ export const financeiroService = {
     }
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (error) console.error('Erro ao deletar transação no Supabase:', error);
+    return !error;
+  }
+};
+
+export const mapRecurringExpenseFromDb = (db: any): any => ({
+  id: db.id,
+  tenant_id: db.tenant_id,
+  name: db.name,
+  category: db.category,
+  originalValue: Number(db.original_value || 0),
+  currency: db.currency,
+  frequency: db.frequency,
+  dueDay: db.due_day,
+  paymentMethod: db.payment_method,
+  observations: db.observations,
+  status: db.status,
+  nextGenerationDate: db.next_generation_date,
+  createdAt: db.created_at
+});
+
+export const mapRecurringExpenseToDb = (t: any) => ({
+  id: t.id,
+  tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai',
+  name: t.name,
+  category: t.category,
+  original_value: t.originalValue,
+  currency: t.currency,
+  frequency: t.frequency,
+  due_day: t.dueDay,
+  payment_method: t.paymentMethod,
+  observations: t.observations,
+  status: t.status,
+  next_generation_date: t.nextGenerationDate
+});
+
+export const recurringExpenseService = {
+  fetch: async (): Promise<any[]> => {
+    const tenant = useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai';
+    if (!isSupabaseActive()) {
+      const saved = localStorage.getItem('orka_recurring_expenses');
+      if (saved) {
+        const list = JSON.parse(saved);
+        return list.filter((item: any) => item.tenant_id === tenant);
+      }
+      return [];
+    }
+    const { data, error } = await supabase.from('recurring_expenses').select('*').eq('tenant_id', tenant);
+    if (error) {
+      console.error('Erro ao buscar recurring expenses no Supabase:', error);
+      return [];
+    }
+    return (data || []).map(mapRecurringExpenseFromDb);
+  },
+  
+  insert: async (t: any): Promise<boolean> => {
+    if (!isSupabaseActive()) {
+      const saved = localStorage.getItem('orka_recurring_expenses');
+      const list = saved ? JSON.parse(saved) : [];
+      list.push(t);
+      localStorage.setItem('orka_recurring_expenses', JSON.stringify(list));
+      return true;
+    }
+    const { error } = await supabase.from('recurring_expenses').insert([mapRecurringExpenseToDb(t)]);
+    if (error) console.error('Erro ao inserir recurring expense no Supabase:', error);
+    return !error;
+  },
+  
+  update: async (t: any): Promise<boolean> => {
+    if (!isSupabaseActive()) {
+      const saved = localStorage.getItem('orka_recurring_expenses');
+      let list = saved ? JSON.parse(saved) : [];
+      list = list.map((item: any) => item.id === t.id ? t : item);
+      localStorage.setItem('orka_recurring_expenses', JSON.stringify(list));
+      return true;
+    }
+    const { error } = await supabase.from('recurring_expenses').update(mapRecurringExpenseToDb(t)).eq('id', t.id);
+    if (error) console.error('Erro ao atualizar recurring expense no Supabase:', error);
+    return !error;
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    if (!isSupabaseActive()) {
+      const saved = localStorage.getItem('orka_recurring_expenses');
+      let list = saved ? JSON.parse(saved) : [];
+      list = list.filter((item: any) => item.id !== id);
+      localStorage.setItem('orka_recurring_expenses', JSON.stringify(list));
+      return true;
+    }
+    const { error } = await supabase.from('recurring_expenses').delete().eq('id', id);
+    if (error) console.error('Erro ao deletar recurring expense no Supabase:', error);
     return !error;
   }
 };

@@ -57,9 +57,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set((state) => ({ notifications: [notification, ...state.notifications] })),
     
   markNotificationAsRead: (id) =>
-    set((state) => ({
-      notifications: state.notifications.map((n) =>
+    set((state) => {
+      const updated = state.notifications.map((n) =>
         n.id === id ? { ...n, read: true } : n
-      ),
-    })),
+      );
+      if (state.userEmail) {
+        localStorage.setItem(`orka_notifs_${state.userEmail}`, JSON.stringify(updated));
+      }
+      return { notifications: updated };
+    }),
 }));
