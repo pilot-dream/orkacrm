@@ -80,11 +80,7 @@ export default function CashFlowChartWidget() {
   };
 
   return (
-    <div style={{
-      backgroundColor: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: 'var(--border-radius-lg)',
-      padding: '20px',
+    <div className="card" style={{
       display: 'flex',
       flexDirection: 'column',
       height: '340px',

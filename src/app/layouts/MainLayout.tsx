@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Sidebar } from '../../widgets/sidebar/Sidebar';
-import { Navbar } from '../../widgets/navbar/Navbar';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
@@ -162,8 +161,7 @@ export const MainLayout: React.FC = () => {
       />
 
       <div className="main-canvas">
-        <Navbar />
-        <main style={{ flexGrow: 1, backgroundColor: 'var(--bg-main)' }}>
+        <main style={{ flexGrow: 1, backgroundColor: 'var(--bg-main)', position: 'relative' }}>
           <Outlet />
         </main>
       </div>
