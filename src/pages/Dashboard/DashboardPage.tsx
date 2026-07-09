@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Responsive } from 'react-grid-layout/legacy';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
-import { useDashboardStore } from '../../entities/dashboard/model/store';
+import { useDashboardStore, DEFAULT_DASHBOARD_LAYOUT } from '../../entities/dashboard/model/store';
 import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
 import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
@@ -57,7 +57,20 @@ export default function DashboardPage() {
 
   const layouts = React.useMemo(() => {
     if (!activeDashboard) return { lg: [] };
-    const baseLayout = activeDashboard.layout_data;
+    
+    let baseLayout = activeDashboard.layout_data;
+    const isCorrupted = baseLayout.length > 3 && baseLayout.every(l => l.w === 1 && l.x === 0);
+    
+    if (isCorrupted) {
+      baseLayout = baseLayout.map(item => {
+        const defaultItem = DEFAULT_DASHBOARD_LAYOUT.find(d => d.widgetId === item.widgetId);
+        if (defaultItem) {
+          return { ...item, w: defaultItem.w, h: defaultItem.h, x: defaultItem.x, y: defaultItem.y };
+        }
+        return item;
+      });
+    }
+    
     return {
       lg: baseLayout,
       md: baseLayout,
@@ -67,12 +80,15 @@ export default function DashboardPage() {
     };
   }, [activeDashboard]);
 
-  const handleLayoutChange = (layout: any) => {
+  const handleLayoutChange = (layout: any, allLayouts: any) => {
     if (!activeDashboard) return;
+    
+    // Always use the 'lg' layout as the source of truth for saving
+    const lgLayout = allLayouts.lg || layout;
     
     // Map layout back to our format
     const newLayout = activeDashboard.layout_data.map(item => {
-      const match = layout.find((l: any) => l.i === item.i);
+      const match = lgLayout.find((l: any) => l.i === item.i);
       if (match) {
         return { ...item, x: match.x, y: match.y, w: match.w, h: match.h };
       }
