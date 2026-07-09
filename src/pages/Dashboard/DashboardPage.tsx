@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Responsive } from 'react-grid-layout';
+import React, { useEffect, useState } from 'react';
+import { Responsive, WidthProvider } from 'react-grid-layout';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
 import { useDashboardStore } from '../../entities/dashboard/model/store';
@@ -9,25 +9,20 @@ import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLi
 import { DashboardSelector } from '../../widgets/dashboard/components/DashboardSelector';
 import { Settings, Plus } from 'lucide-react';
 
-const ResponsiveGridLayout = (props: any) => {
-  return (
-    <div ref={props.innerRef} style={{ width: '100%' }}>
-      <Responsive width={props.width} {...props} />
-    </div>
-  );
-};
-
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage() {
   const { activeDashboard, loading, fetchDashboards, updateLayout, saveLayout, isEditMode, setIsEditMode } = useDashboardStore();
 
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  
-  const [containerWidth, setContainerWidth] = useState(1200);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     fetchDashboards();
+    
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const generateMobileLayout = (baseLayout: any[]) => {
@@ -51,19 +46,6 @@ export default function DashboardPage() {
       xxs: generateMobileLayout(baseLayout)
     };
   }, [activeDashboard]);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        setContainerWidth(entries[0].contentRect.width);
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const isMobile = containerWidth < 768;
 
   const handleLayoutChange = (layout: any[]) => {
     if (!activeDashboard) return;
@@ -117,8 +99,6 @@ export default function DashboardPage() {
       </div>
 
       <ResponsiveGridLayout
-        innerRef={containerRef}
-        width={containerWidth}
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
         layouts={layouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -130,6 +110,7 @@ export default function DashboardPage() {
         isDraggable={isEditMode}
         isResizable={isEditMode}
         margin={[20, 20]}
+        measureBeforeMount={false}
         useCSSTransforms={true}
         draggableHandle={isMobile ? ".widget-wrapper" : ".widget-drag-handle"}
       >
