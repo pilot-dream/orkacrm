@@ -99,13 +99,7 @@ export default function DashboardPage() {
     // Only save when drag stops, handled by onDragStop/onResizeStop
   };
 
-  const handleDragStop = () => {
-    saveLayout();
-  };
 
-  const handleResizeStop = () => {
-    saveLayout();
-  };
 
   if (loading) {
     return <PageContainer><div style={{ padding: '40px', color: '#fff' }}>Carregando sua Dashboard...</div></PageContainer>;
@@ -125,10 +119,25 @@ export default function DashboardPage() {
           <DashboardSelector />
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          {isEditMode && (
+            <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+              if (window.confirm('Tem certeza que deseja restaurar o layout padrão?')) {
+                updateLayout(DEFAULT_DASHBOARD_LAYOUT);
+                setTimeout(() => saveLayout(), 100);
+              }
+            }}>
+              Restaurar Padrão
+            </button>
+          )}
           <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
             <Plus size={14} /> Adicionar Widget
           </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsEditMode(!isEditMode)}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+            if (isEditMode) {
+              saveLayout();
+            }
+            setIsEditMode(!isEditMode);
+          }}>
             <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
           </button>
         </div>
@@ -141,8 +150,6 @@ export default function DashboardPage() {
         cols={{ lg: 12, md: 10, sm: 6, xs: 1, xxs: 1 }}
         rowHeight={30}
         onLayoutChange={handleLayoutChange}
-        onDragStop={handleDragStop}
-        onResizeStop={handleResizeStop}
         isDraggable={isEditMode}
         isResizable={isEditMode}
         margin={[20, 20]}
