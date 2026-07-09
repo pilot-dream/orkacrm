@@ -30,6 +30,28 @@ export default function DashboardPage() {
     fetchDashboards();
   }, []);
 
+  const generateMobileLayout = (baseLayout: any[]) => {
+    return baseLayout.map((item, index) => ({
+      ...item,
+      x: 0,
+      y: index * 10,
+      w: 1,
+      minW: 1
+    }));
+  };
+
+  const layouts = React.useMemo(() => {
+    if (!activeDashboard) return { lg: [] };
+    const baseLayout = activeDashboard.layout_data;
+    return {
+      lg: baseLayout,
+      md: baseLayout,
+      sm: baseLayout,
+      xs: generateMobileLayout(baseLayout),
+      xxs: generateMobileLayout(baseLayout)
+    };
+  }, [activeDashboard]);
+
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -98,7 +120,7 @@ export default function DashboardPage() {
         innerRef={containerRef}
         width={containerWidth}
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
-        layouts={{ lg: activeDashboard.layout_data }}
+        layouts={layouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 1, xxs: 1 }}
         rowHeight={30}
@@ -109,7 +131,7 @@ export default function DashboardPage() {
         isResizable={isEditMode}
         margin={[20, 20]}
         useCSSTransforms={true}
-        draggableHandle=".widget-drag-handle"
+        draggableHandle={isMobile ? ".widget-wrapper" : ".widget-drag-handle"}
       >
         {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
           const manifest = WIDGET_REGISTRY[item.widgetId];
@@ -118,7 +140,7 @@ export default function DashboardPage() {
           const WidgetComponent = manifest.component;
           
           return (
-            <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: isMobile ? 1 : manifest.minWidth, minH: manifest.minHeight }}>
+            <div key={item.i}>
               <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
                 <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
                   <WidgetComponent config={item.config} />
