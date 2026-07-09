@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { DollarSign, RefreshCw, AlertCircle, ShoppingBag, Plus } from 'lucide-react';
+import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 
 export default function RecentSalesWidget() {
   const navigate = useNavigate();
@@ -16,11 +17,15 @@ export default function RecentSalesWidget() {
     fetchTransactions(true);
   };
 
+  const { startDate, endDate } = useFilterStore();
+
   const handleCreateSale = () => {
     navigate('/financeiro');
   };
 
-  const sales = transactions.filter(t => t.type === 'income').slice(0, 4);
+  const sales = transactions
+    .filter(t => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate))
+    .slice(0, 4);
 
   const status = (loading && transactions.length === 0)
     ? 'loading'

@@ -50,7 +50,7 @@ export default function RevenueProductChartWidget() {
     <div className="card" style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '340px',
+      height: '100%',
       justifyContent: 'space-between'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)', marginBottom: '12px' }}>

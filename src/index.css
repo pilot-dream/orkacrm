@@ -1,6 +1,10 @@
 /* ORKA CRM Global Design System
    Matches Premium, Modern, Minimalist, Dark-Mode and AI-First Specs */
 
+@import "react-grid-layout/css/styles.css";
+@import "react-resizable/css/styles.css";
+@import "./widgets/dashboard/core/widget.css";
+
 :root {
   --bg-main: #0a0a0a;
   --bg-sidebar: #0e0e0e;

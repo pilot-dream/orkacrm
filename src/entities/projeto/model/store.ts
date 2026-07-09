@@ -27,9 +27,11 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   abortController: null,
   
   fetchProjects: async (force = false) => {
-    const { projects, lastFetch, abortController } = get();
+    const { projects, lastFetch, abortController, loading } = get();
     const now = Date.now();
     const TTL = 5 * 60 * 1000;
+
+    if (!force && loading) return;
 
     if (!force && projects.length > 0 && (now - lastFetch) < TTL) {
       return;

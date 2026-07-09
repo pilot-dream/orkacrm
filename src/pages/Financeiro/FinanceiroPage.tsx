@@ -369,11 +369,11 @@ export default function FinanceiroPage() {
     }
 
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
-    const matchesMonth = !monthFilter || t.dueDate.includes(`/${monthFilter}/`);
+    const matchesMonth = !monthFilter || (t.dueDate && t.dueDate.includes(`/${monthFilter}/`));
 
     let matchesDate = true;
     if (datePeriod !== 'all') {
-      const tDate = parseDueDate(t.dueDate);
+      const tDate = parseDueDate(t.dueDate || '');
       if (!tDate) {
         matchesDate = false;
       } else {
@@ -484,6 +484,7 @@ export default function FinanceiroPage() {
     const total = transactions
       .filter(t => {
         if (t.type !== 'expense' || t.status === 'Cancelado') return false;
+        if (!t.dueDate) return false;
         const parts = t.dueDate.split('/');
         if (parts.length === 3) {
           return parts[1] === m.monthIndex && parts[2] === m.year;

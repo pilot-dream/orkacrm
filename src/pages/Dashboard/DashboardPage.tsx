@@ -1,85 +1,132 @@
-import { lazy, Suspense } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Responsive } from 'react-grid-layout';
 import { PageContainer } from '../../shared/components/PageContainer';
-import { ChartSkeleton } from '../../widgets/skeletons/WidgetSkeletons';
-
-// Static widgets (fast, light, no Recharts)
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
-import { PremiumKpiRow } from '../../widgets/dashboard/components/PremiumKpiRow';
-import { AlertsCenterWidget } from '../../widgets/dashboard/components/AlertsCenterWidget';
-import { InsightsWidget } from '../../widgets/dashboard/components/InsightsWidget';
-import FinancialOverviewWidget from '../../widgets/dashboard/components/FinancialOverviewWidget';
-import ActivityTimelineWidget from '../../widgets/dashboard/components/ActivityTimelineWidget';
-import AgendaWidget from '../../widgets/dashboard/components/AgendaWidget';
-import TaskListWidget from '../../widgets/dashboard/components/TaskListWidget';
-import CriticalProjectsWidget from '../../widgets/dashboard/components/CriticalProjectsWidget';
-import RecentSalesWidget from '../../widgets/dashboard/components/RecentSalesWidget';
+import { useDashboardStore } from '../../entities/dashboard/model/store';
+import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
+import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
+import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
+import { DashboardSelector } from '../../widgets/dashboard/components/DashboardSelector';
+import { Settings, Plus } from 'lucide-react';
 
-// Lazy loaded charts (heavy, Recharts)
-const GoalProgressWidget = lazy(() => import('../../widgets/dashboard/components/GoalProgressWidget'));
-const CashFlowChartWidget = lazy(() => import('../../widgets/dashboard/components/CashFlowChartWidget'));
-const MrrEvolutionChartWidget = lazy(() => import('../../widgets/dashboard/components/MrrEvolutionChartWidget'));
-const RevenueProductChartWidget = lazy(() => import('../../widgets/dashboard/components/RevenueProductChartWidget'));
-const FunnelConversionChartWidget = lazy(() => import('../../widgets/dashboard/components/FunnelConversionChartWidget'));
+const ResponsiveGridLayout = (props: any) => {
+  const [width, setWidth] = useState(1200);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setWidth(entries[0].contentRect.width);
+      }
+    });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <Responsive width={width} {...props} />
+    </div>
+  );
+};
+
 
 export default function DashboardPage() {
+  const { activeDashboard, loading, fetchDashboards, updateLayout, saveLayout } = useDashboardStore();
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+
+  useEffect(() => {
+    fetchDashboards();
+  }, []);
+
+  const handleLayoutChange = (layout: any[]) => {
+    if (!activeDashboard) return;
+    
+    // Map layout back to our format
+    const newLayout = activeDashboard.layout_data.map(item => {
+      const match = layout.find(l => l.i === item.i);
+      if (match) {
+        return { ...item, x: match.x, y: match.y, w: match.w, h: match.h };
+      }
+      return item;
+    });
+
+    updateLayout(newLayout);
+    // Only save when drag stops, handled by onDragStop/onResizeStop
+  };
+
+  const handleDragStop = () => {
+    saveLayout();
+  };
+
+  const handleResizeStop = () => {
+    saveLayout();
+  };
+
+  if (loading) {
+    return <PageContainer><div style={{ padding: '40px', color: '#fff' }}>Carregando sua Dashboard...</div></PageContainer>;
+  }
+
+  if (!activeDashboard) {
+    return <PageContainer><div style={{ padding: '40px', color: '#fff' }}>Nenhuma Dashboard encontrada.</div></PageContainer>;
+  }
+
   return (
     <PageContainer>
       <DashboardHeader />
 
-      <PremiumKpiRow />
-
-      {/* Grid Principal: Alertas, Insights e Meta */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '28px' }}>
-        <AlertsCenterWidget />
-        <InsightsWidget />
-        <Suspense fallback={<ChartSkeleton height="320px" />} >
-          <GoalProgressWidget />
-        </Suspense>
-      </div>
-
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '32px 0' }} />
-
-      {/* Seção: Financeiro & Receita */}
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px', color: '#fff' }}>Financeiro & Receita</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '32px' }}>
-        <FinancialOverviewWidget />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-          <Suspense fallback={<ChartSkeleton height="340px" />}>
-            <CashFlowChartWidget />
-          </Suspense>
-          <Suspense fallback={<ChartSkeleton height="340px" />}>
-            <MrrEvolutionChartWidget />
-          </Suspense>
+      {/* Toolbar for Dashboard management */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: 'var(--bg-card)', padding: '12px 20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <DashboardSelector />
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
+            <Plus size={14} /> Adicionar Widget
+          </button>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsEditMode(!isEditMode)}>
+            <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
+          </button>
         </div>
       </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '32px 0' }} />
+      <ResponsiveGridLayout
+        className={`layout ${isEditMode ? 'edit-mode' : ''}`}
+        layouts={{ lg: activeDashboard.layout_data }}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        rowHeight={30}
+        onLayoutChange={handleLayoutChange}
+        onDragStop={handleDragStop}
+        onResizeStop={handleResizeStop}
+        isDraggable={isEditMode}
+        isResizable={isEditMode}
+        margin={[20, 20]}
+        useCSSTransforms={true}
+        draggableHandle=".widget-drag-handle"
+      >
+        {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
+          const manifest = WIDGET_REGISTRY[item.widgetId];
+          if (!manifest) return null;
+          
+          const WidgetComponent = manifest.component;
+          
+          return (
+            <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
+              <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
+                <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
+                  <WidgetComponent config={item.config} />
+                </React.Suspense>
+              </WidgetWrapper>
+            </div>
+          );
+        })}
+      </ResponsiveGridLayout>
 
-      {/* Seção: Comercial & Pipeline */}
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px', color: '#fff' }}>Comercial & Vendas</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-        <Suspense fallback={<ChartSkeleton height="340px" />}>
-          <RevenueProductChartWidget />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton height="340px" />}>
-          <FunnelConversionChartWidget />
-        </Suspense>
-      </div>
-
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '32px 0' }} />
-
-      {/* Seção: Operação & Projetos */}
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px', color: '#fff' }}>Operação & Projetos</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-        <CriticalProjectsWidget />
-        <TaskListWidget />
-        <AgendaWidget />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' }}>
-        <RecentSalesWidget />
-        <ActivityTimelineWidget />
-      </div>
+      <WidgetLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
     </PageContainer>
   );
 }

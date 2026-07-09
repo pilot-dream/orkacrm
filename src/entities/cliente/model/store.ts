@@ -25,9 +25,11 @@ export const useClienteStore = create<ClienteState>((set, get) => ({
   abortController: null,
   
   fetchClientes: async (force = false) => {
-    const { clientes, lastFetch, abortController } = get();
+    const { clientes, lastFetch, abortController, loading } = get();
     const now = Date.now();
     const TTL = 5 * 60 * 1000;
+
+    if (!force && loading) return;
 
     if (!force && clientes.length > 0 && (now - lastFetch) < TTL) {
       return;

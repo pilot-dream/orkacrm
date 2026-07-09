@@ -33,9 +33,11 @@ export const useFinanceiroStore = create<FinanceiroState>((set, get) => ({
   abortController: null,
   
   fetchTransactions: async (force = false) => {
-    const { transactions, lastFetch, abortController } = get();
+    const { transactions, lastFetch, abortController, loading } = get();
     const now = Date.now();
     const TTL = 5 * 60 * 1000;
+
+    if (!force && loading) return;
 
     if (!force && transactions.length > 0 && (now - lastFetch) < TTL) {
       return;
@@ -69,6 +71,7 @@ export const useFinanceiroStore = create<FinanceiroState>((set, get) => ({
 
       const updatedData = await Promise.all(data.map(async (t) => {
         if (t.status === 'Pendente') {
+          if (!t.dueDate) return t;
           const parsedDue = parseDate(t.dueDate);
           if (parsedDue < todayStr) {
             const updated = { ...t, status: 'Atrasado' as const };

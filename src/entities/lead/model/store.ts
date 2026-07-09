@@ -27,9 +27,11 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   abortController: null,
   
   fetchLeads: async (force = false) => {
-    const { leads, lastFetch, abortController } = get();
+    const { leads, lastFetch, abortController, loading } = get();
     const now = Date.now();
     const TTL = 5 * 60 * 1000; // 5 minutes
+
+    if (!force && loading) return;
 
     if (!force && leads.length > 0 && (now - lastFetch) < TTL) {
       return; // Valid cache, return immediately
