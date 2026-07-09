@@ -10,23 +10,9 @@ import { DashboardSelector } from '../../widgets/dashboard/components/DashboardS
 import { Settings, Plus } from 'lucide-react';
 
 const ResponsiveGridLayout = (props: any) => {
-  const [width, setWidth] = useState(1200);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        setWidth(entries[0].contentRect.width);
-      }
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <div ref={ref} style={{ width: '100%' }}>
-      <Responsive width={width} {...props} />
+    <div ref={props.innerRef} style={{ width: '100%' }}>
+      <Responsive width={props.width} {...props} />
     </div>
   );
 };
@@ -36,10 +22,26 @@ export default function DashboardPage() {
   const { activeDashboard, loading, fetchDashboards, updateLayout, saveLayout, isEditMode, setIsEditMode } = useDashboardStore();
 
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  
+  const [containerWidth, setContainerWidth] = useState(1200);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchDashboards();
   }, []);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setContainerWidth(entries[0].contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const isMobile = containerWidth < 768;
 
   const handleLayoutChange = (layout: any[]) => {
     if (!activeDashboard) return;
@@ -93,6 +95,8 @@ export default function DashboardPage() {
       </div>
 
       <ResponsiveGridLayout
+        innerRef={containerRef}
+        width={containerWidth}
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
         layouts={{ lg: activeDashboard.layout_data }}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -114,7 +118,7 @@ export default function DashboardPage() {
           const WidgetComponent = manifest.component;
           
           return (
-            <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
+            <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: isMobile ? 1 : manifest.minWidth, minH: manifest.minHeight }}>
               <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
                 <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
                   <WidgetComponent config={item.config} />
