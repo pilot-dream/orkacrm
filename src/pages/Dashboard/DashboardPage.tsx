@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
 import { useDashboardStore } from '../../entities/dashboard/model/store';
@@ -47,12 +47,12 @@ export default function DashboardPage() {
     };
   }, [activeDashboard]);
 
-  const handleLayoutChange = (layout: any[]) => {
+  const handleLayoutChange = (layout: any) => {
     if (!activeDashboard) return;
     
     // Map layout back to our format
     const newLayout = activeDashboard.layout_data.map(item => {
-      const match = layout.find(l => l.i === item.i);
+      const match = layout.find((l: any) => l.i === item.i);
       if (match) {
         return { ...item, x: match.x, y: match.y, w: match.w, h: match.h };
       }
