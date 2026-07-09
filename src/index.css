@@ -1344,6 +1344,16 @@ html {
   gap: 12px;
 }
 
+@media (max-width: 480px) {
+  .notification-panel {
+    position: fixed;
+    top: 70px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
+
 .notification-header {
   font-weight: 700;
   font-size: 0.85rem;
