@@ -132,11 +132,80 @@
 }
 
 .react-resizable-handle {
+  position: absolute;
   opacity: 0;
   transition: opacity 0.2s;
+  background: none;
+  border: none;
 }
 
-.widget-wrapper:hover .react-resizable-handle {
+.react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  background: var(--color-primary);
+}
+
+/* Diagonal Handle (Bottom Right) */
+.react-resizable-handle-se {
+  width: 20px;
+  height: 20px;
+  right: -5px;
+  bottom: -5px;
+  cursor: se-resize;
+  z-index: 101;
+}
+.react-resizable-handle-se::after {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  right: 4px;
+  bottom: 4px;
+}
+
+/* Horizontal Handle (Right) */
+.react-resizable-handle-e {
+  width: 20px;
+  height: 100%;
+  right: -10px;
+  top: 0;
+  cursor: e-resize;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+.react-resizable-handle-e::after {
+  width: 6px;
+  height: 24px;
+  border-radius: 4px;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Vertical Handle (Bottom) */
+.react-resizable-handle-s {
+  width: 100%;
+  height: 20px;
+  bottom: -10px;
+  left: 0;
+  cursor: s-resize;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+}
+.react-resizable-handle-s::after {
+  width: 24px;
+  height: 6px;
+  border-radius: 4px;
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.widget-wrapper:hover .react-resizable-handle,
+.edit-mode .widget-wrapper .react-resizable-handle {
   opacity: 1;
 }
 

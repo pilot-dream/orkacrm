@@ -152,6 +152,7 @@ export default function DashboardPage() {
         onLayoutChange={handleLayoutChange}
         isDraggable={isEditMode}
         isResizable={isEditMode}
+        resizeHandles={['s', 'e', 'se']}
         margin={[20, 20]}
         measureBeforeMount={false}
         useCSSTransforms={true}
