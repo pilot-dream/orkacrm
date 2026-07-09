@@ -42,12 +42,16 @@ interface DashboardState {
   updateWidgetConfig: (instanceId: string, config: any) => void;
   createDashboard: (name: string, layoutOption?: 'empty' | 'default') => Promise<void>;
   deleteDashboard: (id: string) => Promise<void>;
+  isEditMode: boolean;
+  setIsEditMode: (isEditMode: boolean) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   dashboards: [],
   activeDashboard: null,
   loading: false,
+  isEditMode: false,
+  setIsEditMode: (isEditMode) => set({ isEditMode }),
 
   fetchDashboards: async () => {
     const userEmail = useAuthStore.getState().userEmail;

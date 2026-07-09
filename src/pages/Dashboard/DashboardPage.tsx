@@ -33,9 +33,8 @@ const ResponsiveGridLayout = (props: any) => {
 
 
 export default function DashboardPage() {
-  const { activeDashboard, loading, fetchDashboards, updateLayout, saveLayout } = useDashboardStore();
+  const { activeDashboard, loading, fetchDashboards, updateLayout, saveLayout, isEditMode, setIsEditMode } = useDashboardStore();
 
-  const [isEditMode, setIsEditMode] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   useEffect(() => {
@@ -97,7 +96,7 @@ export default function DashboardPage() {
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
         layouts={{ lg: activeDashboard.layout_data }}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 1, xxs: 1 }}
         rowHeight={30}
         onLayoutChange={handleLayoutChange}
         onDragStop={handleDragStop}

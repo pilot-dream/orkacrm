@@ -3,6 +3,7 @@ import {
   MoreVertical, Copy, EyeOff, Trash2, Maximize2, 
   Settings, RefreshCw, Download, Pin, Share2
 } from 'lucide-react';
+import { useLongPress } from '../../../hooks/useLongPress';
 import { useDashboardStore } from '../../../entities/dashboard/model/store';
 import type { WidgetConfig } from '../../../entities/dashboard/model/types';
 
@@ -18,6 +19,16 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
   const [showMenu, setShowMenu] = useState(false);
   const removeWidget = useDashboardStore((state: any) => state.removeWidget);
   const addWidget = useDashboardStore((state: any) => state.addWidget);
+  const setIsEditMode = useDashboardStore((state: any) => state.setIsEditMode);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+
+  const longPressProps = useLongPress(() => {
+    setIsEditMode(true);
+    setIsLongPressing(true);
+    setTimeout(() => setIsLongPressing(false), 2000); // Visual feedback removes after 2s or when drag stops
+  }, () => {
+    // Normal click handler if needed
+  }, { delay: 600 });
 
   const handleDuplicate = () => {
     addWidget(widgetId);
@@ -30,7 +41,11 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
   };
 
   return (
-    <div className={`widget-wrapper ${isEditMode ? 'edit-mode' : ''}`} style={{ height: '100%', position: 'relative' }}>
+    <div 
+      className={`widget-wrapper ${isEditMode ? 'edit-mode' : ''} ${isLongPressing ? 'widget-dragging-active' : ''}`} 
+      style={{ height: '100%', position: 'relative' }}
+      {...(!isEditMode ? longPressProps : {})}
+    >
       {/* The component itself */}
       <div style={{ height: '100%', pointerEvents: isEditMode ? 'none' : 'auto' }}>
         {children}
