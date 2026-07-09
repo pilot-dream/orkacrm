@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, Filter, RefreshCw, Bell } from 'lucide-react';
+import { Calendar, RefreshCw, Bell } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { useClienteStore } from '../../../entities/cliente/model/store';
 import { useProjectStore } from '../../../entities/projeto/model/store';
 import { useLeadStore } from '../../../entities/lead/model/store';
-import { useDashboardStore } from '../../../entities/dashboard/model/store';
 import { useFilterStore } from '../../../entities/dashboard/model/filterStore';
 import { useAuthStore } from '../../../entities/usuario/model/store';
 import { supabaseNotifications } from '../../../lib/supabaseService';

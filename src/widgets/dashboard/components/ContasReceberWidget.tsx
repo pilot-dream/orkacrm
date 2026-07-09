@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowDownRight, TrendingUp } from 'lucide-react';
+import { ArrowDownRight } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
 

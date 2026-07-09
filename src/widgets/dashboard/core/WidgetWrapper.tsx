@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  MoreVertical, Edit2, Copy, EyeOff, Trash2, Maximize2, 
+  MoreVertical, Copy, EyeOff, Trash2, Maximize2, 
   Settings, RefreshCw, Download, Pin, Share2
 } from 'lucide-react';
 import { useDashboardStore } from '../../../entities/dashboard/model/store';
@@ -14,7 +14,7 @@ interface WidgetWrapperProps {
   children: React.ReactNode;
 }
 
-export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widgetId, config, isEditMode, children }) => {
+export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widgetId, isEditMode, children }) => {
   const [showMenu, setShowMenu] = useState(false);
   const removeWidget = useDashboardStore((state: any) => state.removeWidget);
   const addWidget = useDashboardStore((state: any) => state.addWidget);

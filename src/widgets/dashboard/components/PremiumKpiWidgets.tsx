@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { DollarSign, TrendingUp, Users, FolderKanban, Target, HeartPulse } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, FolderKanban, Target } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 // Real Stores
@@ -103,7 +103,7 @@ export const RevenueKpiWidget = ({ config }: { config?: any }) => {
 };
 
 export const MrrKpiWidget = ({ config }: { config?: any }) => {
-  const { transactions, loading, fetchTransactions } = useFinanceiroStore();
+  const { loading, fetchTransactions } = useFinanceiroStore();
   
   useEffect(() => { fetchTransactions(); }, []);
   
@@ -176,6 +176,6 @@ export const LeadsKpiWidget = ({ config }: { config?: any }) => {
   );
 };
 
-export const HealthKpiWidget = ({ config }: { config?: any }) => {
+export const HealthKpiWidget = () => {
   return <PlaceholderWidget title="Health Score" />;
 };

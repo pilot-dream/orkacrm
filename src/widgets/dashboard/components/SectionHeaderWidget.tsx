@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, LayoutDashboard } from 'lucide-react';
 
 export default function SectionHeaderWidget({ config }: any) {

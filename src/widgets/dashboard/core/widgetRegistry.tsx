@@ -8,14 +8,11 @@ import {
 } from 'lucide-react';
 
 // Import existing components
-import { AlertsCenterWidget } from '../components/AlertsCenterWidget';
-import InsightsWidget from '../components/InsightsWidget';
 import CashFlowChartWidget from '../components/CashFlowChartWidget';
 import MrrEvolutionChartWidget from '../components/MrrEvolutionChartWidget';
 import RevenueProductChartWidget from '../components/RevenueProductChartWidget';
 import FunnelConversionChartWidget from '../components/FunnelConversionChartWidget';
 import SectionHeaderWidget from '../components/SectionHeaderWidget';
-import GoalProgressWidget from '../components/GoalProgressWidget';
 import FinancialOverviewWidget, {
   MrrContratadoWidget,
   ReceitaRecebidaWidget,
