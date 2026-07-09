@@ -131,7 +131,7 @@ export const DashboardHeader: React.FC = () => {
           </button>
 
           <button 
-            className="icon-btn"
+            className="icon-btn hide-on-mobile"
             onClick={() => setShowNotifications(!showNotifications)}
             style={{ position: 'relative', border: '1px solid var(--border-color)', cursor: 'pointer', background: 'transparent', color: 'var(--text-secondary)' }}
             title="Notificações"

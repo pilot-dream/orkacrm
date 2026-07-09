@@ -1405,6 +1405,12 @@ html {
   }
 }
 
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
 /* Login Screen Styles */
 .login-container {
   display: grid;
