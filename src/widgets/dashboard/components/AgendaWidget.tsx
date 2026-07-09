@@ -30,7 +30,7 @@ export default function AgendaWidget() {
       padding: '20px',
       display: 'flex',
       flexDirection: 'column',
-      height: '360px',
+      height: '100%',
       justifyContent: 'space-between'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-warning)', marginBottom: '12px' }}>

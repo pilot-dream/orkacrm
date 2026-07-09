@@ -41,7 +41,7 @@ export default function GoalProgressWidget() {
       padding: '20px',
       display: 'flex',
       flexDirection: 'column',
-      height: '320px',
+      height: '100%',
       justifyContent: 'space-between'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#C084FC' }}>

@@ -46,7 +46,7 @@ export default function RecentSalesWidget() {
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--border-radius-lg)',
         padding: '20px',
-        height: '360px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px'
@@ -71,7 +71,7 @@ export default function RecentSalesWidget() {
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--border-radius-lg)',
         padding: '20px',
-        height: '360px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -92,7 +92,7 @@ export default function RecentSalesWidget() {
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--border-radius-lg)',
         padding: '20px',
-        height: '360px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -121,7 +121,7 @@ export default function RecentSalesWidget() {
       padding: '20px',
       display: 'flex',
       flexDirection: 'column',
-      height: '360px',
+      height: '100%',
       justifyContent: 'space-between'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>

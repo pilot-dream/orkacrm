@@ -33,7 +33,7 @@ export default function TaskListWidget() {
       padding: '20px',
       display: 'flex',
       flexDirection: 'column',
-      height: '360px',
+      height: '100%',
       justifyContent: 'space-between'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)', marginBottom: '12px' }}>
