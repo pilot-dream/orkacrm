@@ -104,13 +104,21 @@ export const runInWorker = <T, R>(type: string, payload: T): Promise<R> => {
         throw new Error('Web Workers are not supported in this environment');
       }
       const worker = new Worker(workerUrl);
+      
+      const timeoutId = setTimeout(() => {
+        worker.terminate();
+        reject(new Error('Web Worker execution timed out after 5 seconds'));
+      }, 5000);
+
       worker.onmessage = (e) => {
         if (e.data && e.data.type === `${type}_RESULT`) {
+          clearTimeout(timeoutId);
           resolve(e.data.data);
           worker.terminate();
         }
       };
       worker.onerror = (err) => {
+        clearTimeout(timeoutId);
         reject(err);
         worker.terminate();
       };
