@@ -29,8 +29,19 @@ export const FinanceSummaryWidget = React.memo(() => {
     return transactions
       .filter((t: any) => t.type === 'expense' && t.status === 'Pendente')
       .map((t: any) => {
-        const dueDateStr = t.dueDate?.includes('T') ? t.dueDate : `${t.dueDate}T00:00:00`;
-        const dueDate = new Date(dueDateStr);
+        let dueDate: Date;
+        if (t.dueDate?.includes('/')) {
+          const parts = t.dueDate.split('/');
+          if (parts.length === 3) {
+            dueDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+          } else {
+            dueDate = new Date();
+          }
+        } else {
+          const dueDateStr = t.dueDate?.includes('T') ? t.dueDate : `${t.dueDate}T00:00:00`;
+          dueDate = new Date(dueDateStr);
+        }
+        
         let days = 0;
         if (!isNaN(dueDate.getTime())) {
           const diffTime = dueDate.getTime() - today.getTime();
