@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { TrendingUp, Users, Target, Wallet, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, Users, Target, FolderKanban, DollarSign } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { useClienteStore } from '../../../entities/cliente/model/store';
+import { useProjectStore } from '../../../entities/projeto/model/store';
 import { useLeadStore } from '../../../entities/lead/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 import TaskListWidget from '../../../widgets/dashboard/components/TaskListWidget';
@@ -40,12 +41,14 @@ const MobileKpiCard: React.FC<{
 export const MobileDashboard: React.FC = () => {
   const { transactions, loading: loadingFin, fetchTransactions } = useFinanceiroStore();
   const { clientes, loading: loadingCli, fetchClientes } = useClienteStore();
+  const { projects, loading: loadingProj, fetchProjects } = useProjectStore();
   const { leads, loading: loadingLead, fetchLeads } = useLeadStore();
   const { startDate, endDate } = useFilterStore();
   
   useEffect(() => { 
     fetchTransactions();
     fetchClientes();
+    fetchProjects();
     fetchLeads();
   }, []);
   
@@ -54,44 +57,29 @@ export const MobileDashboard: React.FC = () => {
     .filter(t => t.type === 'income' && t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
     .reduce((acc, curr) => acc + curr.value, 0);
 
-  const fluxoCaixa = transactions
-    .filter(t => t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
-    .reduce((acc, curr) => curr.type === 'income' ? acc + curr.value : acc - curr.value, 0);
-
-  const despesasPagas = transactions
-    .filter(t => t.type === 'expense' && t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
-    .reduce((acc, curr) => acc + curr.value, 0);
+  const mrr = 0; // Se houver campo recorrente usaríamos aqui.
+  const ativos = projects.filter(p => p.stage === 'desenvolvimento').length;
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   return (
     <div className="mobile-dashboard-layout">
       {/* KPI Cards */}
       <MobileKpiCard 
-        title="SALDO TOTAL" 
-        value={formatCurrency(fluxoCaixa)} 
-        subtitle="Momento Atual"
-        icon={<Wallet size={16} />} 
-        color="var(--color-primary)" 
-        loading={loadingFin}
-      />
-
-      <MobileKpiCard 
-        title="RECEITAS LÍQUIDAS" 
+        title="RECEITA LÍQUIDA" 
         value={formatCurrency(receitasRealizadas)} 
-        subtitle={`Total recebido (${currentMonth})`}
-        icon={<TrendingUp size={16} />} 
+        subtitle="Total recebido no período"
+        icon={<DollarSign size={16} />} 
         color="var(--color-success)" 
         loading={loadingFin}
       />
 
       <MobileKpiCard 
-        title="DESPESAS PAGAS" 
-        value={formatCurrency(despesasPagas)} 
-        subtitle={`Total gasto (${currentMonth})`}
-        icon={<ArrowDownRight size={16} />} 
-        color="var(--color-danger)" 
+        title="MRR" 
+        value={formatCurrency(mrr)} 
+        subtitle="Receita Recorrente"
+        icon={<TrendingUp size={16} />} 
+        color="var(--color-primary)" 
         loading={loadingFin}
       />
 
@@ -101,6 +89,14 @@ export const MobileDashboard: React.FC = () => {
         icon={<Users size={16} />} 
         color="var(--color-purple)" 
         loading={loadingCli}
+      />
+
+      <MobileKpiCard 
+        title="PROJETOS ATIVOS" 
+        value={ativos} 
+        icon={<FolderKanban size={16} />} 
+        color="var(--color-warning)" 
+        loading={loadingProj}
       />
 
       <MobileKpiCard 
