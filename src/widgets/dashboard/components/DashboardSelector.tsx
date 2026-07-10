@@ -32,6 +32,9 @@ export const DashboardSelector: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [dashboardToDelete, setDashboardToDelete] = useState<string | null>(null);
+
   if (!activeDashboard) return null;
 
   const handleApply = () => {
@@ -45,9 +48,6 @@ export const DashboardSelector: React.FC = () => {
     setActiveDashboard(id);
     setIsOpen(false);
   };
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [dashboardToDelete, setDashboardToDelete] = useState<string | null>(null);
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
