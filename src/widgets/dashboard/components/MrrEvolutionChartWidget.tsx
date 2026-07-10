@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -27,45 +27,42 @@ const CustomDot = (props: any) => {
   return null;
 };
 
+import { runInWorker } from '../../../shared/lib/workerHelper';
+
 export const MrrEvolutionChartWidget = React.memo(() => {
   const { data: clientes = [], isLoading: loadingClientes } = useClientesQuery();
+  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [loadingWorker, setLoadingWorker] = React.useState(true);
   
-  const chartData = useMemo(() => {
-    // Generate last 6 months array
-    const months = [];
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        date: d,
-        name: d.toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
-        mrr: 0
-      });
+  React.useEffect(() => {
+    if (clientes.length === 0) {
+      const months = [];
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          name: d.toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
+          mrr: 0
+        });
+      }
+      setChartData(months);
+      setLoadingWorker(false);
+      return;
     }
 
-    // Calculate MRR for each month
-    months.forEach(month => {
-      const eom = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0); // end of month
-      
-      const mrrForMonth = clientes.reduce((acc: number, client: any) => {
-        const clientStart = client.startDate || client.createdAt || client.conversionDate;
-        if (!clientStart) return acc;
-        
-        const sd = new Date(clientStart);
-        // If client started before or during this month, and is active
-        if (sd <= eom && client.status === 'active') {
-          return acc + (client.mrrValue || client.monthlySpend || client.monthlyRevenue || 0);
-        }
-        return acc;
-      }, 0);
-      
-      month.mrr = mrrForMonth;
-    });
-
-    return months;
+    setLoadingWorker(true);
+    runInWorker<any, any>('COMPUTE_MRR_EVOLUTION', { clientes })
+      .then((res) => {
+        setChartData(res);
+        setLoadingWorker(false);
+      })
+      .catch((err) => {
+        console.error('Error running MRR calculation in Web Worker:', err);
+        setLoadingWorker(false);
+      });
   }, [clientes]);
 
-  const isInitialLoading = loadingClientes;
+  const isInitialLoading = loadingClientes || loadingWorker;
 
   if (isInitialLoading) {
     return <ChartSkeleton height="340px" />;

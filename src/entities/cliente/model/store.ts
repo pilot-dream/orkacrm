@@ -4,13 +4,14 @@ import { clienteService } from '../api/service';
 
 interface ClienteState {
   clientes: Cliente[];
+  totalCount: number;
   loading: boolean;
   error: string | null;
   isRefreshing: boolean;
   lastFetch: number;
   abortController: AbortController | null;
   
-  fetchClientes: (force?: boolean) => Promise<void>;
+  fetchClientes: (force?: boolean, page?: number, limit?: number, search?: string, plan?: string) => Promise<void>;
   addCliente: (cliente: Cliente) => Promise<boolean>;
   updateCliente: (cliente: Cliente) => Promise<boolean>;
   deleteCliente: (id: string) => Promise<boolean>;
@@ -18,20 +19,23 @@ interface ClienteState {
 
 export const useClienteStore = create<ClienteState>((set, get) => ({
   clientes: [],
+  totalCount: 0,
   loading: false,
   error: null,
   isRefreshing: false,
   lastFetch: 0,
   abortController: null,
   
-  fetchClientes: async (force = false) => {
+  fetchClientes: async (force = false, page, limit, search, plan) => {
     const { clientes, lastFetch, abortController, loading } = get();
     const now = Date.now();
     const TTL = 5 * 60 * 1000;
 
+    const isPaginated = page !== undefined && limit !== undefined;
+
     if (!force && loading) return;
 
-    if (!force && clientes.length > 0 && (now - lastFetch) < TTL) {
+    if (!force && !isPaginated && clientes.length > 0 && (now - lastFetch) < TTL) {
       return;
     }
 
@@ -49,11 +53,21 @@ export const useClienteStore = create<ClienteState>((set, get) => ({
     }
 
     try {
-      const data = await clienteService.fetch();
+      let data: Cliente[];
+      let count = 0;
+
+      if (isPaginated) {
+        const res = await clienteService.fetchPaginated(page!, limit!, search, plan);
+        data = res.data;
+        count = res.count;
+      } else {
+        data = await clienteService.fetch();
+        count = data.length;
+      }
       
       if (newAbortController.signal.aborted) return;
 
-      set({ clientes: data, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
+      set({ clientes: data, totalCount: count, loading: false, isRefreshing: false, lastFetch: Date.now(), abortController: null });
     } catch (err: any) {
       if (newAbortController.signal.aborted) return;
       set({ error: err.message || 'Erro ao carregar clientes', loading: false, isRefreshing: false, abortController: null });

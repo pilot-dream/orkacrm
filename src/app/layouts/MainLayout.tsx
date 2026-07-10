@@ -114,7 +114,7 @@ export const MainLayout: React.FC = () => {
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               {userProfile.avatar ? (
-                <img src={userProfile.avatar} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                <img src={userProfile.avatar} alt="Avatar" loading="lazy" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
               ) : (
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
                   {userProfile.name.charAt(0).toUpperCase()}

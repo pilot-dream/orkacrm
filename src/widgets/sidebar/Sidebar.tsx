@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <div style={{ position: 'relative', flexShrink: 0, width: '24px', height: '24px', borderRadius: '50%', overflow: 'hidden', marginLeft: '-3px' }}>
             {profileAvatar ? (
-              <img src={profileAvatar} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={profileAvatar} alt={profileName} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-primary-dark)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {initials}

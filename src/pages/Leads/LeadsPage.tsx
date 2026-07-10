@@ -83,12 +83,21 @@ export default function LeadsPage() {
   // UI state
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [tempSearchQuery, setTempSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(tempSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [tempSearchQuery]);
 
   useEffect(() => {
     const stage = searchParams.get('stage');
@@ -903,7 +912,7 @@ export default function LeadsPage() {
 
       {/* Filter and Search Section */}
       <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
-        <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar por empresa, contato ou e-mail..." />
+        <SearchBar value={tempSearchQuery} onChange={setTempSearchQuery} placeholder="Buscar por empresa, contato ou e-mail..." />
         
         <div className="mobile-filters-row" style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <select 

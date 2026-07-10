@@ -17,7 +17,7 @@ const getPriorityColor = (priority: 'baixa' | 'media' | 'alta') => {
   }
 };
 
-export const TaskKanbanCard: React.FC<TaskKanbanCardProps> = ({ task, onClick }) => {
+export const TaskKanbanCard: React.FC<TaskKanbanCardProps> = React.memo(({ task, onClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
@@ -184,4 +184,4 @@ export const TaskKanbanCard: React.FC<TaskKanbanCardProps> = ({ task, onClick })
       </div>
     </div>
   );
-};
+});

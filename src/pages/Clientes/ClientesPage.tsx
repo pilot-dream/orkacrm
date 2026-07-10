@@ -14,10 +14,14 @@ import { isSupabaseActive, supabase } from '../../shared/api/supabaseClient';
 import { FileUploadSection } from '../../shared/components/FileUploadSection';
 
 export default function ClientesPage() {
-  const { clientes, loading, error, fetchClientes, addCliente, deleteCliente } = useClienteStore();
+  const { clientes, totalCount, loading, error, fetchClientes, addCliente, deleteCliente } = useClienteStore();
 
+  const [tempSearchQuery, setTempSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   // Modals / Drawer
@@ -57,9 +61,24 @@ export default function ClientesPage() {
 
   const selectedCustomer = clientes.find(c => c.id === selectedCustomerId);
 
+  // Debounce search query
   useEffect(() => {
-    fetchClientes();
-  }, []);
+    const timer = setTimeout(() => {
+      setSearchQuery(tempSearchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [tempSearchQuery]);
+
+  // Reset page when plan filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [planFilter]);
+
+  // Fetch paginated clientes
+  useEffect(() => {
+    fetchClientes(true, currentPage, itemsPerPage, searchQuery, planFilter);
+  }, [currentPage, searchQuery, planFilter]);
 
   // Fetch associated customer details when selectedCustomerId changes
   useEffect(() => {
@@ -149,6 +168,7 @@ export default function ClientesPage() {
         setIsAddModalOpen(false);
         resetForm();
         showToast('Cliente cadastrado com sucesso! 🎉');
+        fetchClientes(true, currentPage, itemsPerPage, searchQuery, planFilter);
       }
     } catch (err: any) {
       setModalError(err.message || 'Erro ao cadastrar cliente.');
@@ -163,7 +183,10 @@ export default function ClientesPage() {
 
   const handleConfirmDelete = async () => {
     if (customerToDeleteId) {
-      await deleteCliente(customerToDeleteId);
+      const success = await deleteCliente(customerToDeleteId);
+      if (success) {
+        fetchClientes(true, currentPage, itemsPerPage, searchQuery, planFilter);
+      }
     }
     setIsDeleteConfirmOpen(false);
     setCustomerToDeleteId(null);
@@ -179,12 +202,8 @@ export default function ClientesPage() {
     setModalError(null);
   };
 
-  const filteredCustomers = clientes.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.poc && c.poc.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesPlan = planFilter === 'all' || c.plan === planFilter;
-    return matchesSearch && matchesPlan;
-  });
+  const filteredCustomers = clientes;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <PageContainer>
@@ -201,7 +220,7 @@ export default function ClientesPage() {
 
       {/* Filter and Search */}
       <section style={{ display: 'flex', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
-        <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar clientes por empresa ou ponto de contato..." />
+        <SearchBar value={tempSearchQuery} onChange={setTempSearchQuery} placeholder="Buscar clientes por empresa ou ponto de contato..." />
         
         <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end' }}>
           <select 
@@ -297,6 +316,34 @@ export default function ClientesPage() {
         {filteredCustomers.length === 0 && (
           <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum cliente cadastrado.</div>
         )}
+      </div>
+
+      {/* Pagination Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '0 8px' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          Mostrando {filteredCustomers.length} de {totalCount} clientes
+        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            className="outline-btn" 
+            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+            Página {currentPage} de {Math.max(totalPages, 1)}
+          </span>
+          <button 
+            className="outline-btn" 
+            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          >
+            Próxima
+          </button>
+        </div>
       </div>
 
       {/* Profile Detail Drawer (Complete 360 Customer Profile) */}

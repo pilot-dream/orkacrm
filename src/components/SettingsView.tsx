@@ -324,7 +324,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               {profileForm.avatar ? (
-                <img src={profileForm.avatar} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
+                <img src={profileForm.avatar} alt="Avatar" loading="lazy" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
               ) : (
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%)', color: '#fff', fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {profileForm.name ? profileForm.name.charAt(0).toUpperCase() : '?'}
@@ -453,6 +453,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     key={idx} 
                     src={presetUrl} 
                     alt={`Preset ${idx}`} 
+                    loading="lazy"
                     onClick={() => setProfileForm({ ...profileForm, avatar: presetUrl })}
                     style={{ 
                       width: '40px', 

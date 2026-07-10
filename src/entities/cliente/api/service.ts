@@ -149,5 +149,52 @@ export const clienteService = {
     }
     console.log('✅ Cliente deletado:', id);
     return true;
+  },
+
+  fetchPaginated: async (page: number, limit: number, search?: string, plan?: string): Promise<{ data: Cliente[]; count: number }> => {
+    const tenant = useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai';
+    if (!isSupabaseActive()) {
+      const saved = localStorage.getItem('orka_customers');
+      const list: Cliente[] = saved ? JSON.parse(saved) : [];
+      let filtered = list.filter(item => item.tenant_id === tenant);
+      if (search) {
+        filtered = filtered.filter(c => 
+          c.name.toLowerCase().includes(search.toLowerCase()) || 
+          (c.poc && c.poc.toLowerCase().includes(search.toLowerCase()))
+        );
+      }
+      if (plan && plan !== 'all') {
+        filtered = filtered.filter(c => c.plan === plan);
+      }
+      const from = (page - 1) * limit;
+      const to = from + limit;
+      return {
+        data: filtered.slice(from, to),
+        count: filtered.length
+      };
+    }
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabase.from('customers').select('*', { count: 'exact' }).eq('tenant_id', tenant);
+    
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,poc.ilike.%${search}%`);
+    }
+    if (plan && plan !== 'all') {
+      query = query.eq('plan', plan);
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('Erro ao buscar clientes paginados no Supabase:', error);
+      return { data: [], count: 0 };
+    }
+    return {
+      data: (data || []).map(mapCustomerFromDb),
+      count: count || 0
+    };
   }
 };

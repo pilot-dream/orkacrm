@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinanceiroQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
-import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
+import { useFilterStore } from '../../../entities/dashboard/model/filterStore';
+
+import { runInWorker } from '../../../shared/lib/workerHelper';
 
 export const RevenueForecastChartWidget = React.memo(() => {
   const { data: transactions = [], isLoading: loading } = useFinanceiroQuery();
@@ -10,35 +12,29 @@ export const RevenueForecastChartWidget = React.memo(() => {
   const dateRangeLabel = useFilterStore((s) => s.dateRangeLabel);
   const setDateRange = useFilterStore((s) => s.setDateRange);
   
-  const data = useMemo(() => {
-    const validTransactions = transactions.filter((t: any) => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate));
-    
-    // Group by date
-    const byDate = validTransactions.reduce((acc: any, t: any) => {
-      const date = t.dueDate;
-      if (!acc[date]) acc[date] = { previsto: 0, realizado: 0 };
-      acc[date].previsto += t.value; // all income (paid + pending)
-      if (t.status === 'Pago') acc[date].realizado += t.value;
-      return acc;
-    }, {} as Record<string, { previsto: number; realizado: number }>);
+  const [data, setData] = React.useState<any[]>([]);
+  const [loadingWorker, setLoadingWorker] = React.useState(true);
 
-    // Sort by date and accumulate
-    const sortedDates = Object.keys(byDate).sort();
-    let cumPrevisto = 0;
-    let cumRealizado = 0;
+  React.useEffect(() => {
+    if (transactions.length === 0) {
+      setData([]);
+      setLoadingWorker(false);
+      return;
+    }
 
-    return sortedDates.map(date => {
-      cumPrevisto += byDate[date].previsto;
-      cumRealizado += byDate[date].realizado;
-      const d = new Date(date.includes('T') ? date : date + 'T00:00:00');
-      const name = `${d.getDate().toString().padStart(2, '0')} ${d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '')}`;
-      return {
-        name,
-        previsto: cumPrevisto,
-        realizado: cumRealizado
-      };
-    });
+    setLoadingWorker(true);
+    runInWorker<any, any>('COMPUTE_REVENUE_FORECAST', { transactions, startDate, endDate })
+      .then((res) => {
+        setData(res);
+        setLoadingWorker(false);
+      })
+      .catch((err) => {
+        console.error('Error running forecast calculation in Web Worker:', err);
+        setLoadingWorker(false);
+      });
   }, [transactions, startDate, endDate]);
+
+  const isInitialLoading = loading || loadingWorker;
 
   return (
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
@@ -85,7 +81,7 @@ export const RevenueForecastChartWidget = React.memo(() => {
       </div>
 
       <div style={{ flexGrow: 1, width: '100%', minHeight: '300px' }}>
-        {loading ? (
+        {isInitialLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)' }}>Carregando dados...</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

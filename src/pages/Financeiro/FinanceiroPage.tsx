@@ -37,6 +37,7 @@ export default function FinanceiroPage() {
   const teamMembers = useAuthStore((state) => state.teamMembers);
 
   const [searchParams] = useSearchParams();
+  const [tempSearchQuery, setTempSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | TransactionStatus>('all');
@@ -44,6 +45,14 @@ export default function FinanceiroPage() {
   const [datePeriod, setDatePeriod] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('month');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(tempSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [tempSearchQuery]);
   
   // Custom Navigation Active Tab
   const [activeTab, setActiveTab] = useState<'receber' | 'pagar' | 'fixas' | 'fluxo'>('receber');
@@ -792,7 +801,7 @@ export default function FinanceiroPage() {
       {/* Filter and Search Bar (only for receivables, payables, and consolidated flow) */}
       {activeTab !== 'fixas' && (
         <section style={{ display: 'flex', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
-          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar por descrição, cliente/fornecedor ou categoria..." />
+          <SearchBar value={tempSearchQuery} onChange={setTempSearchQuery} placeholder="Buscar por descrição, cliente/fornecedor ou categoria..." />
           
           <div style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end' }}>
             <select 
