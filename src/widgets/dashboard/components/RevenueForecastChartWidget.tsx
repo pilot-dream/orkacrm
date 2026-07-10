@@ -44,6 +44,7 @@ export const RevenueForecastChartWidget = () => {
         <select 
           value={dateRangeLabel}
           onChange={(e) => setDateRange(e.target.value as any)}
+          onClick={(e) => e.stopPropagation()}
           style={{ 
             appearance: 'none', 
             WebkitAppearance: 'none', 

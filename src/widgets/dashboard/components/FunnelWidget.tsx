@@ -40,12 +40,13 @@ export const FunnelWidget = () => {
     return total > 0 ? ((closed / total) * 100).toFixed(1) : '0.0';
   }, [leads, startDate, endDate]);
   return (
-    <div className="card" onClick={() => navigate('/app/leads')} style={{ cursor: 'pointer', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
+    <div className="card" onClick={() => navigate('/leads')} style={{ cursor: 'pointer', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Funil de Vendas</h3>
         <select 
           value={dateRangeLabel}
           onChange={(e) => setDateRange(e.target.value as any)}
+          onClick={(e) => e.stopPropagation()}
           style={{ 
             appearance: 'none', 
             WebkitAppearance: 'none', 

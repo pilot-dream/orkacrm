@@ -48,7 +48,7 @@ export const TaskListWidget = () => {
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Minhas Tarefas</h3>
         <span 
           style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
-          onClick={() => navigate('/app/leads')}
+          onClick={() => navigate('/leads')}
         >
           Ver todas
         </span>

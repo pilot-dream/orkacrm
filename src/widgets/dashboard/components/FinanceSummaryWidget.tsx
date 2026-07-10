@@ -45,6 +45,7 @@ export const FinanceSummaryWidget = () => {
         <select 
           value={dateRangeLabel}
           onChange={(e) => setDateRange(e.target.value as any)}
+          onClick={(e) => e.stopPropagation()}
           style={{ 
             appearance: 'none', 
             WebkitAppearance: 'none', 
@@ -109,7 +110,7 @@ export const FinanceSummaryWidget = () => {
           <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Contas a Pagar</h4>
           <span 
             style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
-            onClick={() => navigate('/app/financeiro')}
+            onClick={() => navigate('/financeiro')}
           >
             Ver todas
           </span>
