@@ -76,6 +76,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }
       } else {
         const active = data.find(d => d.is_active) || data[0];
+        
+        // --- FORCE MIGRATION FOR OLD DASHBOARDS ---
+        // Força todos os usuários que ainda têm a dashboard padrão antiga (com os widgets removidos)
+        // a migrarem para o novo layout enxuto.
+        if (active.name === 'Dashboard Padrão' && active.layout_data.some((w: any) => w.widgetId === 'FinKpi_MrrContratado')) {
+          active.layout_data = DEFAULT_DASHBOARD_LAYOUT;
+          // Update the database in the background
+          dashboardService.updateDashboardLayout(active.id, DEFAULT_DASHBOARD_LAYOUT).catch(console.error);
+        }
+
         set({ dashboards: data, activeDashboard: active, loading: false });
       }
     } catch (e) {
