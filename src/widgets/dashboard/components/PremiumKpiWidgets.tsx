@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { DollarSign, TrendingUp, Users, FolderKanban, Target } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 // Real Stores
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
@@ -21,9 +22,14 @@ export const KpiCard: React.FC<{
   color: string;
   config?: any;
   loading?: boolean;
-}> = ({ title, value, trend, isPositive, icon, color, config, loading }) => {
+  onClick?: () => void;
+}> = ({ title, value, trend, isPositive, icon, color, config, loading, onClick }) => {
   return (
-    <div className="card premium-kpi-card" style={{ padding: '16px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' }}>
+    <div 
+      className="card premium-kpi-card" 
+      onClick={onClick}
+      style={{ padding: '16px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', cursor: onClick ? 'pointer' : 'default' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: `${color}15`, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -80,7 +86,7 @@ export const KpiCard: React.FC<{
   );
 };
 
-export const RevenueKpiWidget = ({ config }: { config?: any }) => {
+export const RevenueKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
   const { transactions, loading, fetchTransactions } = useFinanceiroStore();
   const { startDate, endDate } = useFilterStore();
   
@@ -98,11 +104,12 @@ export const RevenueKpiWidget = ({ config }: { config?: any }) => {
       color="var(--color-success)" 
       config={config} 
       loading={loading}
+      onClick={onClick}
     />
   );
 };
 
-export const MrrKpiWidget = ({ config }: { config?: any }) => {
+export const MrrKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
   const { loading, fetchTransactions } = useFinanceiroStore();
   
   useEffect(() => { fetchTransactions(); }, []);
@@ -119,11 +126,12 @@ export const MrrKpiWidget = ({ config }: { config?: any }) => {
       color="var(--color-primary)" 
       config={config} 
       loading={loading}
+      onClick={onClick}
     />
   );
 };
 
-export const ClientsKpiWidget = ({ config }: { config?: any }) => {
+export const ClientsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
   const { clientes, loading, fetchClientes } = useClienteStore();
   
   useEffect(() => { fetchClientes(); }, []);
@@ -136,11 +144,12 @@ export const ClientsKpiWidget = ({ config }: { config?: any }) => {
       color="var(--color-purple)" 
       config={config} 
       loading={loading}
+      onClick={onClick}
     />
   );
 };
 
-export const ProjectsKpiWidget = ({ config }: { config?: any }) => {
+export const ProjectsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
   const { projects, loading, fetchProjects } = useProjectStore();
   
   useEffect(() => { fetchProjects(); }, []);
@@ -155,11 +164,12 @@ export const ProjectsKpiWidget = ({ config }: { config?: any }) => {
       color="var(--color-warning)" 
       config={config} 
       loading={loading}
+      onClick={onClick}
     />
   );
 };
 
-export const LeadsKpiWidget = ({ config }: { config?: any }) => {
+export const LeadsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
   const { leads, loading, fetchLeads } = useLeadStore();
   
   useEffect(() => { fetchLeads(); }, []);
@@ -172,10 +182,21 @@ export const LeadsKpiWidget = ({ config }: { config?: any }) => {
       color="#ec4899" 
       config={config} 
       loading={loading}
+      onClick={onClick}
     />
   );
 };
 
-export const HealthKpiWidget = () => {
-  return <PlaceholderWidget title="Health Score" />;
+export const PremiumKpiRow = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <RevenueKpiWidget config={{}} onClick={() => navigate('/app/financeiro')} />
+      <MrrKpiWidget config={{}} onClick={() => navigate('/app/financeiro')} />
+      <ClientsKpiWidget config={{}} onClick={() => navigate('/app/clientes')} />
+      <ProjectsKpiWidget config={{}} onClick={() => navigate('/app/projetos')} />
+      <LeadsKpiWidget config={{}} onClick={() => navigate('/app/leads')} />
+    </>
+  );
 };

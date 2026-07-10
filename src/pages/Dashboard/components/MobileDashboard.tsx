@@ -5,7 +5,7 @@ import { useClienteStore } from '../../../entities/cliente/model/store';
 import { useProjectStore } from '../../../entities/projeto/model/store';
 import { useLeadStore } from '../../../entities/lead/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
-import TaskListWidget from '../../../widgets/dashboard/components/TaskListWidget';
+import { TaskListWidget } from '../../../widgets/dashboard/components/TaskListWidget';
 
 const MobileKpiCard: React.FC<{ 
   title: string; 

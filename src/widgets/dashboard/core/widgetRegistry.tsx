@@ -9,7 +9,7 @@ import {
 
 // Import existing components
 import CashFlowChartWidget from '../components/CashFlowChartWidget';
-import MrrEvolutionChartWidget from '../components/MrrEvolutionChartWidget';
+import { MrrEvolutionChartWidget } from '../components/MrrEvolutionChartWidget';
 import RevenueProductChartWidget from '../components/RevenueProductChartWidget';
 import FunnelConversionChartWidget from '../components/FunnelConversionChartWidget';
 import SectionHeaderWidget from '../components/SectionHeaderWidget';
@@ -23,7 +23,7 @@ import FinancialOverviewWidget, {
   DespesasAtrasadasWidget,
   FluxoCaixaWidget
 } from '../components/FinancialOverviewWidget';
-import TaskListWidget from '../components/TaskListWidget';
+import { TaskListWidget } from '../components/TaskListWidget';
 import AgendaWidget from '../components/AgendaWidget';
 import ActivityTimelineWidget from '../components/ActivityTimelineWidget';
 import ContasReceberWidget from '../components/ContasReceberWidget';
@@ -33,8 +33,7 @@ import {
   MrrKpiWidget, 
   ClientsKpiWidget, 
   ProjectsKpiWidget, 
-  LeadsKpiWidget, 
-  HealthKpiWidget 
+  LeadsKpiWidget 
 } from '../components/PremiumKpiWidgets';
 
 // Import placeholder
@@ -95,7 +94,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetManifest> = {
   },
   'PremiumKpiRow_Health': {
     id: 'PremiumKpiRow_Health', title: 'Health Score', description: 'Saúde geral da base de clientes.', category: 'KPIs',
-    icon: <HeartPulse size={20} />, component: HealthKpiWidget, defaultWidth: 3, defaultHeight: 3, minWidth: 2, minHeight: 2
+    icon: <HeartPulse size={20} />, component: createPlaceholder('Health Score'), defaultWidth: 3, defaultHeight: 3, minWidth: 2, minHeight: 2
   },
   'Kpi_TicketMedio': {
     id: 'Kpi_TicketMedio', title: 'Ticket Médio', description: 'Valor médio por cliente.', category: 'KPIs',

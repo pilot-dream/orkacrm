@@ -1,0 +1,106 @@
+import React, { useEffect } from 'react';
+import { ChevronDown, DollarSign, Wallet, Activity, CircleAlert } from 'lucide-react';
+import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
+
+const formatCurrency = (val: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+};
+
+export const FinanceSummaryWidget = ({ config }: { config?: any }) => {
+  const { fetchTransactions } = useFinanceiroStore();
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const receitas = 48750;
+  const despesas = 21230;
+  const lucro = 27520;
+
+  const contasAPagar = [
+    { name: 'Google Workspace', value: 68.90, days: 3 },
+    { name: 'Vercel Pro', value: 120.00, days: 5 },
+  ];
+
+  return (
+    <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Financeiro</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
+          Este Mês <ChevronDown size={14} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)', padding: '6px', borderRadius: '6px' }}><DollarSign size={16} /></div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Receitas</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(receitas)}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 18.6%</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', padding: '6px', borderRadius: '6px' }}><Wallet size={16} /></div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Despesas</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(despesas)}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 6.3%</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: 'rgba(139, 92, 246, 0.1)', color: 'var(--color-purple)', padding: '6px', borderRadius: '6px' }}><Activity size={16} /></div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Lucro Líquido</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(lucro)}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 24.1%</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Contas a Pagar</h4>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}>Ver todas</span>
+        </div>
+
+        {contasAPagar.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {contasAPagar.map((conta, idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx % 2 === 0 ? 'var(--color-primary)' : 'var(--color-success)' }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>{conta.name}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Vence em {conta.days} dias</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(conta.value)}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-danger)' }}>A vencer</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, color: 'var(--text-muted)', gap: '8px' }}>
+            <CircleAlert size={24} style={{ opacity: 0.5 }} />
+            <span style={{ fontSize: '0.85rem' }}>Nenhuma conta a pagar.</span>
+            <span style={{ fontSize: '0.75rem' }}>Sua operação está organizada.</span>
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+};
