@@ -131,6 +131,8 @@ export const RevenueForecastChartWidget = React.memo(() => {
       <div style={{ flexGrow: 1, width: '100%', minHeight: '300px' }}>
         {isInitialLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)' }}>Carregando dados...</div>
+        ) : data.length === 0 ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)' }}>Sem transações de receita no período</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
