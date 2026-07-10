@@ -16,6 +16,8 @@ const SplashLoader = () => (
   </div>
 );
 
+import { GlobalErrorBoundary } from './app/providers/GlobalErrorBoundary';
+
 function AppContent() {
   useInitializeAuth();
   const isInitialized = useAuthStore(state => state.isInitialized);
@@ -38,7 +40,11 @@ function AppContent() {
 
   if (!isInitialized) return <SplashLoader />;
   
-  return <AppRoutes />;
+  return (
+    <GlobalErrorBoundary>
+      <AppRoutes />
+    </GlobalErrorBoundary>
+  );
 }
 
 function App() {
