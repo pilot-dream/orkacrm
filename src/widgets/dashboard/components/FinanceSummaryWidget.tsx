@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Wallet, DollarSign, Activity, CircleAlert } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
+import { useNavigate } from 'react-router-dom';
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -9,8 +10,8 @@ const formatCurrency = (val: number) => {
 
 export const FinanceSummaryWidget = () => {
   const { transactions } = useFinanceiroStore();
-  const { startDate, endDate, dateRangeLabel } = useFilterStore();
-
+  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
+  const navigate = useNavigate();
   const { receitas, despesas, lucro } = useMemo(() => {
     const validTransactions = transactions.filter(t => isDateInRange(t.dueDate, startDate, endDate));
     const rec = validTransactions.filter(t => t.type === 'income' && t.status === 'Pago').reduce((acc, curr) => acc + curr.value, 0);
@@ -24,9 +25,13 @@ export const FinanceSummaryWidget = () => {
     return transactions
       .filter(t => t.type === 'expense' && t.status === 'Pendente')
       .map(t => {
-        const dueDate = new Date(t.dueDate + 'T00:00:00');
-        const diffTime = dueDate.getTime() - today.getTime();
-        const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const dueDateStr = t.dueDate?.includes('T') ? t.dueDate : `${t.dueDate}T00:00:00`;
+        const dueDate = new Date(dueDateStr);
+        let days = 0;
+        if (!isNaN(dueDate.getTime())) {
+          const diffTime = dueDate.getTime() - today.getTime();
+          days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
         return { name: t.description, value: t.value, days, isOverdue: days < 0 };
       })
       .sort((a, b) => a.days - b.days)
@@ -37,9 +42,32 @@ export const FinanceSummaryWidget = () => {
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Financeiro</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
-          {dateRangeLabel}
-        </div>
+        <select 
+          value={dateRangeLabel}
+          onChange={(e) => setDateRange(e.target.value as any)}
+          style={{ 
+            appearance: 'none', 
+            WebkitAppearance: 'none', 
+            border: 'none', 
+            outline: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)',
+            color: 'var(--text-secondary)',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontFamily: 'inherit',
+            textAlign: 'right'
+          }}
+        >
+          <option value="Este Mês">Este Mês</option>
+          <option value="Mês Passado">Mês Passado</option>
+          <option value="Últimos 30 Dias">Últimos 30 Dias</option>
+          <option value="Este Ano">Este Ano</option>
+          <option value="Últimos 12 Meses">Últimos 12 Meses</option>
+          <option value="Todo o Período">Todo o Período</option>
+        </select>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
@@ -79,7 +107,12 @@ export const FinanceSummaryWidget = () => {
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Contas a Pagar</h4>
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}>Ver todas</span>
+          <span 
+            style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/app/financeiro')}
+          >
+            Ver todas
+          </span>
         </div>
 
         {contasAPagar.length > 0 ? (

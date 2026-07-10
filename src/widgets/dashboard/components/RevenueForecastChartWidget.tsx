@@ -5,7 +5,7 @@ import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model
 
 export const RevenueForecastChartWidget = () => {
   const { loading, transactions } = useFinanceiroStore();
-  const { startDate, endDate, dateRangeLabel } = useFilterStore();
+  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
   
   const data = useMemo(() => {
     const validTransactions = transactions.filter(t => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate));
@@ -27,7 +27,7 @@ export const RevenueForecastChartWidget = () => {
     return sortedDates.map(date => {
       cumPrevisto += byDate[date].previsto;
       cumRealizado += byDate[date].realizado;
-      const d = new Date(date + 'T00:00:00');
+      const d = new Date(date.includes('T') ? date : date + 'T00:00:00');
       const name = `${d.getDate().toString().padStart(2, '0')} ${d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '')}`;
       return {
         name,
@@ -41,9 +41,32 @@ export const RevenueForecastChartWidget = () => {
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Receita: Previsto vs Realizado</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px' }}>
-          {dateRangeLabel}
-        </div>
+        <select 
+          value={dateRangeLabel}
+          onChange={(e) => setDateRange(e.target.value as any)}
+          style={{ 
+            appearance: 'none', 
+            WebkitAppearance: 'none', 
+            border: 'none', 
+            outline: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)',
+            color: 'var(--text-secondary)',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontFamily: 'inherit',
+            textAlign: 'right'
+          }}
+        >
+          <option value="Este Mês">Este Mês</option>
+          <option value="Mês Passado">Mês Passado</option>
+          <option value="Últimos 30 Dias">Últimos 30 Dias</option>
+          <option value="Este Ano">Este Ano</option>
+          <option value="Últimos 12 Meses">Últimos 12 Meses</option>
+          <option value="Todo o Período">Todo o Período</option>
+        </select>
       </div>
 
       <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', fontSize: '0.8rem', fontWeight: 600 }}>

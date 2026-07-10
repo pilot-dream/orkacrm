@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 export const FunnelWidget = () => {
   const navigate = useNavigate();
   const { leads } = useLeadStore();
-  const { startDate, endDate, dateRangeLabel } = useFilterStore();
+  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
 
   const funnelData = useMemo(() => {
     const filteredLeads = leads.filter(l => isDateInRange(l.createdAt || l.dateAdded || '', startDate, endDate));
@@ -43,9 +43,32 @@ export const FunnelWidget = () => {
     <div className="card" onClick={() => navigate('/app/leads')} style={{ cursor: 'pointer', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Funil de Vendas</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px' }}>
-          {dateRangeLabel}
-        </div>
+        <select 
+          value={dateRangeLabel}
+          onChange={(e) => setDateRange(e.target.value as any)}
+          style={{ 
+            appearance: 'none', 
+            WebkitAppearance: 'none', 
+            border: 'none', 
+            outline: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)',
+            color: 'var(--text-secondary)',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontFamily: 'inherit',
+            textAlign: 'right'
+          }}
+        >
+          <option value="Este Mês">Este Mês</option>
+          <option value="Mês Passado">Mês Passado</option>
+          <option value="Últimos 30 Dias">Últimos 30 Dias</option>
+          <option value="Este Ano">Este Ano</option>
+          <option value="Últimos 12 Meses">Últimos 12 Meses</option>
+          <option value="Todo o Período">Todo o Período</option>
+        </select>
       </div>
 
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center' }}>

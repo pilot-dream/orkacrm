@@ -48,7 +48,7 @@ export const TaskListWidget = () => {
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Minhas Tarefas</h3>
         <span 
           style={{ fontSize: '0.75rem', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
-          onClick={() => navigate('/app/tarefas')}
+          onClick={() => navigate('/app/leads')}
         >
           Ver todas
         </span>
@@ -70,7 +70,9 @@ export const TaskListWidget = () => {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.7rem' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Hoje</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  {t.deadline ? new Date(t.deadline.includes('T') ? t.deadline : t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data'}
+                </span>
                 <span style={{ color: getStatusColor(t.status) }}>{t.status.replace('_', ' ').toUpperCase()}</span>
               </div>
             </div>
