@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTaskStore } from '../../../entities/tarefa/model/store';
-import { CheckSquare, CircleCheck } from 'lucide-react';
+import { CircleCheck } from 'lucide-react';
 import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
 import { useNavigate } from 'react-router-dom';
 
-export const TaskListWidget = ({ config }: { config?: any }) => {
+export const TaskListWidget = () => {
   const { tasks, fetchTasks, loading } = useTaskStore();
   const navigate = useNavigate();
 

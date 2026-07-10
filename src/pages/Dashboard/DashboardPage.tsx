@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { Bell, RefreshCw, ChevronDown } from 'lucide-react';
 import { PremiumKpiRow } from '../../widgets/dashboard/components/PremiumKpiWidgets';
@@ -74,14 +74,14 @@ export default function DashboardPage() {
         <div className="dashboard-v3-row-2">
           <RevenueForecastChartWidget />
           
-          <MrrEvolutionChartWidget config={{}} />
+          <MrrEvolutionChartWidget />
         </div>
 
         {/* Row 3: Widgets */}
         <div className="dashboard-v3-row-3">
-          <FunnelWidget config={{}} />
-          <FinanceSummaryWidget config={{}} />
-          <TaskListWidget config={{}} />
+          <FunnelWidget />
+          <FinanceSummaryWidget />
+          <TaskListWidget />
         </div>
 
       </div>

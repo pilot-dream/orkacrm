@@ -5,21 +5,13 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  Dot
+  ResponsiveContainer
 } from 'recharts';
 import { useClienteStore } from '../../../entities/cliente/model/store';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { ChevronDown } from 'lucide-react';
 import { useEffect } from 'react';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
-
-const getLast6Months = () => {
-  const months = [];
-  const monthNames = ['Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
-  // Hardcoded for visual matching for now, would be dynamic
-  return monthNames.map(m => ({ label: m }));
-};
 
 const CustomDot = (props: any) => {
   const { cx, cy, index, dataLength, value } = props;
@@ -37,7 +29,7 @@ const CustomDot = (props: any) => {
   return null;
 };
 
-export const MrrEvolutionChartWidget = ({ config }: { config?: any }) => {
+export const MrrEvolutionChartWidget = () => {
   const { loading: loadingClientes, fetchClientes } = useClienteStore();
   const { loading: loadingFinanceiro, fetchTransactions } = useFinanceiroStore();
 

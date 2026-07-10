@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { ChevronDown, DollarSign, Wallet, Activity, CircleAlert } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 
@@ -6,7 +6,7 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 };
 
-export const FinanceSummaryWidget = ({ config }: { config?: any }) => {
+export const FinanceSummaryWidget = () => {
   const { fetchTransactions } = useFinanceiroStore();
 
   useEffect(() => {

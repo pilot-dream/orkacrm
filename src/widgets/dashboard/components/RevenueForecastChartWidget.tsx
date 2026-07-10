@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { ChevronDown } from 'lucide-react';
 
-export const RevenueForecastChartWidget = ({ config }: { config?: any }) => {
+export const RevenueForecastChartWidget = () => {
   const { loading, fetchTransactions } = useFinanceiroStore();
   
   useEffect(() => {

@@ -1,8 +1,8 @@
-import React from 'react';
+
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export const FunnelWidget = ({ config }: { config?: any }) => {
+export const FunnelWidget = () => {
   const navigate = useNavigate();
   const funnelData = [
     { label: 'Novos Leads', value: 250, percent: '100%', width: '100%' },

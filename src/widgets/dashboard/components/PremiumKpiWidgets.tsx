@@ -10,8 +10,6 @@ import { useProjectStore } from '../../../entities/projeto/model/store';
 import { useLeadStore } from '../../../entities/lead/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 
-// Placeholder for widgets with no data
-import { PlaceholderWidget } from './PlaceholderWidget';
 
 export const KpiCard: React.FC<{ 
   title: string; 
