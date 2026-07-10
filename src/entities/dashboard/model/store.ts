@@ -4,28 +4,16 @@ import { dashboardService } from '../api/service';
 import { useAuthStore } from '../../usuario/model/store';
 
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutItem[] = [
+  // Top Row: Principais KPIs do CRM
   { i: 'kpi_revenue', x: 0, y: 0, w: 2, h: 3, widgetId: 'PremiumKpiRow_Revenue' },
   { i: 'kpi_mrr', x: 2, y: 0, w: 2, h: 3, widgetId: 'PremiumKpiRow_MRR' },
   { i: 'kpi_clients', x: 4, y: 0, w: 3, h: 3, widgetId: 'PremiumKpiRow_Clients' },
   { i: 'kpi_projects', x: 7, y: 0, w: 3, h: 3, widgetId: 'PremiumKpiRow_Projects' },
   { i: 'kpi_leads', x: 10, y: 0, w: 2, h: 3, widgetId: 'PremiumKpiRow_Leads' },
   
-  { i: 'header_receitas', x: 0, y: 3, w: 12, h: 1, widgetId: 'SectionHeaderWidget', config: { title: 'Controle de Receitas & Entradas', icon: 'trending-up', color: '#10B981' } },
-  { i: 'fin_kpi_mrr', x: 0, y: 4, w: 3, h: 3, widgetId: 'FinKpi_MrrContratado' },
-  { i: 'fin_kpi_rec_rec', x: 3, y: 4, w: 3, h: 3, widgetId: 'FinKpi_ReceitaRecebida' },
-  { i: 'fin_kpi_rec_prev', x: 6, y: 4, w: 3, h: 3, widgetId: 'FinKpi_ReceitaPrevista' },
-  { i: 'fin_kpi_rec_atr', x: 9, y: 4, w: 3, h: 3, widgetId: 'FinKpi_ReceitaAtrasada' },
-  
-  { i: 'header_despesas', x: 0, y: 7, w: 12, h: 1, widgetId: 'SectionHeaderWidget', config: { title: 'Controle de Despesas & Caixa', icon: 'trending-down', color: '#EF4444' } },
-  { i: 'fin_kpi_desp_pagas', x: 0, y: 8, w: 3, h: 3, widgetId: 'FinKpi_DespesasPagas' },
-  { i: 'fin_kpi_desp_apagar', x: 3, y: 8, w: 3, h: 3, widgetId: 'FinKpi_DespesasAPagar' },
-  { i: 'fin_kpi_desp_atr', x: 6, y: 8, w: 3, h: 3, widgetId: 'FinKpi_DespesasAtrasadas' },
-  { i: 'fin_kpi_fluxo', x: 9, y: 8, w: 3, h: 3, widgetId: 'FinKpi_FluxoCaixa' },
-
-  { i: 'cashflow_chart', x: 0, y: 11, w: 6, h: 10, widgetId: 'CashFlowChartWidget' },
-  { i: 'mrr_chart', x: 6, y: 11, w: 6, h: 10, widgetId: 'MrrEvolutionChartWidget' },
-  { i: 'revenue_product_chart', x: 0, y: 21, w: 6, h: 10, widgetId: 'RevenueProductChartWidget' },
-  { i: 'funnel_chart', x: 6, y: 21, w: 6, h: 10, widgetId: 'FunnelConversionChartWidget' },
+  // Middle Row: Gráficos Principais
+  { i: 'cashflow_chart', x: 0, y: 3, w: 6, h: 10, widgetId: 'CashFlowChartWidget' },
+  { i: 'mrr_chart', x: 6, y: 3, w: 6, h: 10, widgetId: 'MrrEvolutionChartWidget' },
 ];
 
 interface DashboardState {
