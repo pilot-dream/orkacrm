@@ -36,7 +36,6 @@ export const mapTransactionToDb = (t: Transaction) => ({
   project_id: t.projectId || null,
   installment_number: t.installmentNumber || null,
   tenant_id: t.tenant_id || useAuthStore.getState().userProfile?.tenant_id || useAuthStore.getState().userEmail.split('@')[1] || 'orka.ai',
-  payment_value: t.paymentValue !== undefined ? t.paymentValue : null,
   original_value: t.originalValue !== undefined ? t.originalValue : null,
   currency: t.currency || 'BRL',
   exchange_rate: t.exchangeRate !== undefined ? t.exchangeRate : null,
