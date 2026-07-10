@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -7,8 +8,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { useClienteStore } from '../../../entities/cliente/model/store';
-import { useMemo } from 'react';
+import { useClientesQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
 
 const CustomDot = (props: any) => {
@@ -27,8 +27,8 @@ const CustomDot = (props: any) => {
   return null;
 };
 
-export const MrrEvolutionChartWidget = () => {
-  const { loading: loadingClientes, clientes } = useClienteStore();
+export const MrrEvolutionChartWidget = React.memo(() => {
+  const { data: clientes = [], isLoading: loadingClientes } = useClientesQuery();
   
   const chartData = useMemo(() => {
     // Generate last 6 months array
@@ -47,7 +47,7 @@ export const MrrEvolutionChartWidget = () => {
     months.forEach(month => {
       const eom = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0); // end of month
       
-      const mrrForMonth = clientes.reduce((acc, client) => {
+      const mrrForMonth = clientes.reduce((acc: number, client: any) => {
         const clientStart = client.startDate || client.createdAt || client.conversionDate;
         if (!clientStart) return acc;
         
@@ -127,4 +127,4 @@ export const MrrEvolutionChartWidget = () => {
       </div>
     </div>
   );
-};
+});

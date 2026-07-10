@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
+import { useFinanceiroQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 
-export const RevenueForecastChartWidget = () => {
-  const { loading, transactions } = useFinanceiroStore();
-  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
+export const RevenueForecastChartWidget = React.memo(() => {
+  const { data: transactions = [], isLoading: loading } = useFinanceiroQuery();
+  const startDate = useFilterStore((s) => s.startDate);
+  const endDate = useFilterStore((s) => s.endDate);
+  const dateRangeLabel = useFilterStore((s) => s.dateRangeLabel);
+  const setDateRange = useFilterStore((s) => s.setDateRange);
   
   const data = useMemo(() => {
-    const validTransactions = transactions.filter(t => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate));
+    const validTransactions = transactions.filter((t: any) => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate));
     
     // Group by date
-    const byDate = validTransactions.reduce((acc, t) => {
+    const byDate = validTransactions.reduce((acc: any, t: any) => {
       const date = t.dueDate;
       if (!acc[date]) acc[date] = { previsto: 0, realizado: 0 };
       acc[date].previsto += t.value; // all income (paid + pending)
@@ -123,4 +126,4 @@ export const RevenueForecastChartWidget = () => {
       </div>
     </div>
   );
-};
+});

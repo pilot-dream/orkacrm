@@ -1,29 +1,27 @@
-import { useEffect } from 'react';
-import { useTaskStore } from '../../../entities/tarefa/model/store';
+import React from 'react';
+import { useTasksQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { CircleCheck } from 'lucide-react';
 import { CardSkeleton } from '../../skeletons/WidgetSkeletons';
 import { useNavigate } from 'react-router-dom';
 
-export const TaskListWidget = () => {
-  const { tasks, fetchTasks, loading } = useTaskStore();
+export const TaskListWidget = React.memo(() => {
+  const { data: tasks = [], isLoading } = useTasksQuery();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  if (loading && tasks.length === 0) {
+  if (isLoading && tasks.length === 0) {
     return <CardSkeleton height="360px" />;
   }
 
-  const pendingTasks = tasks
-    .filter(t => t.status !== 'concluida')
-    .sort((a, b) => {
-      const dateA = a.deadline ? new Date(a.deadline).getTime() : 0;
-      const dateB = b.deadline ? new Date(b.deadline).getTime() : 0;
-      return dateA - dateB;
-    })
-    .slice(0, 5);
+  const pendingTasks = React.useMemo(() => {
+    return tasks
+      .filter((t: any) => t.status !== 'concluida')
+      .sort((a: any, b: any) => {
+        const dateA = a.deadline ? new Date(a.deadline).getTime() : 0;
+        const dateB = b.deadline ? new Date(b.deadline).getTime() : 0;
+        return dateA - dateB;
+      })
+      .slice(0, 5);
+  }, [tasks]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -56,7 +54,7 @@ export const TaskListWidget = () => {
 
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {pendingTasks.length > 0 ? (
-          pendingTasks.map((t) => (
+          pendingTasks.map((t: any) => (
             <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(t.status) }}></div>
@@ -85,7 +83,7 @@ export const TaskListWidget = () => {
             <button 
               className="primary-btn" 
               style={{ marginTop: '8px', padding: '6px 12px', fontSize: '0.75rem' }}
-              onClick={() => navigate('/app/tarefas')}
+              onClick={() => navigate('/leads')}
             >
               Criar tarefa
             </button>
@@ -94,4 +92,4 @@ export const TaskListWidget = () => {
       </div>
     </div>
   );
-};
+});

@@ -1,15 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DollarSign, TrendingUp, Users, FolderKanban, Target } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
-// Real Stores
-import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
-import { useClienteStore } from '../../../entities/cliente/model/store';
-import { useProjectStore } from '../../../entities/projeto/model/store';
-import { useLeadStore } from '../../../entities/lead/model/store';
+// TanStack Query Hooks
+import { 
+  useFinanceiroQuery, 
+  useClientesQuery, 
+  useProjectsQuery, 
+  useLeadsQuery 
+} from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
-
 
 export const KpiCard: React.FC<{
   title: string;
@@ -21,7 +22,7 @@ export const KpiCard: React.FC<{
   config?: any;
   loading?: boolean;
   onClick?: () => void;
-}> = ({ title, value, trend, isPositive, icon, color, config, loading, onClick }) => {
+}> = React.memo(({ title, value, trend, isPositive, icon, color, config, loading, onClick }) => {
   return (
     <div
       className="card premium-kpi-card"
@@ -59,7 +60,7 @@ export const KpiCard: React.FC<{
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45px', opacity: 0.4 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={[{ v: Math.random() * 10 }, { v: Math.random() * 20 }, { v: Math.random() * 15 }, { v: Math.random() * 30 }, { v: Math.random() * 25 }]}>
+          <AreaChart data={[{ v: 10 }, { v: 15 }, { v: 12 }, { v: 22 }, { v: 18 }]}>
             <defs>
               <linearGradient id={`color-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.5} />
@@ -82,17 +83,18 @@ export const KpiCard: React.FC<{
       </div>
     </div>
   );
-};
+});
 
-export const RevenueKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { transactions, loading, fetchTransactions } = useFinanceiroStore();
-  const { startDate, endDate } = useFilterStore();
+export const RevenueKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
+  const { data: transactions = [], isLoading } = useFinanceiroQuery();
+  const startDate = useFilterStore((s) => s.startDate);
+  const endDate = useFilterStore((s) => s.endDate);
 
-  useEffect(() => { fetchTransactions(); }, []);
-
-  const receitasRealizadas = transactions
-    .filter(t => t.type === 'income' && t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
-    .reduce((acc, curr) => acc + curr.value, 0);
+  const receitasRealizadas = React.useMemo(() => {
+    return transactions
+      .filter((t: any) => t.type === 'income' && t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
+      .reduce((acc: number, curr: any) => acc + curr.value, 0);
+  }, [transactions, startDate, endDate]);
 
   return (
     <KpiCard
@@ -101,20 +103,15 @@ export const RevenueKpiWidget = ({ config, onClick }: { config?: any, onClick?: 
       icon={<DollarSign size={16} />}
       color="var(--color-success)"
       config={config}
-      loading={loading}
+      loading={isLoading}
       onClick={onClick}
     />
   );
-};
+});
 
-export const MrrKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { loading, fetchTransactions } = useFinanceiroStore();
-
-  useEffect(() => { fetchTransactions(); }, []);
-
-  // Exemplo simplificado: transações recorrentes ou apenas uma métrica aproximada. 
-  // Sem dados fictícios, se não temos MRR flag no banco, exibimos 0 ou placeholder.
-  const mrr = 0; // Se houver campo recorrente usaríamos aqui.
+export const MrrKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
+  const { isLoading } = useFinanceiroQuery();
+  const mrr = 0; // Exemplo simplificado
 
   return (
     <KpiCard
@@ -123,16 +120,14 @@ export const MrrKpiWidget = ({ config, onClick }: { config?: any, onClick?: () =
       icon={<TrendingUp size={16} />}
       color="var(--color-primary)"
       config={config}
-      loading={loading}
+      loading={isLoading}
       onClick={onClick}
     />
   );
-};
+});
 
-export const ClientsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { clientes, loading, fetchClientes } = useClienteStore();
-
-  useEffect(() => { fetchClientes(); }, []);
+export const ClientsKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
+  const { data: clientes = [], isLoading } = useClientesQuery();
 
   return (
     <KpiCard
@@ -141,18 +136,18 @@ export const ClientsKpiWidget = ({ config, onClick }: { config?: any, onClick?: 
       icon={<Users size={16} />}
       color="var(--color-purple)"
       config={config}
-      loading={loading}
+      loading={isLoading}
       onClick={onClick}
     />
   );
-};
+});
 
-export const ProjectsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { projects, loading, fetchProjects } = useProjectStore();
+export const ProjectsKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
+  const { data: projects = [], isLoading } = useProjectsQuery();
 
-  useEffect(() => { fetchProjects(); }, []);
-
-  const ativos = projects.filter(p => p.stage === 'desenvolvimento').length;
+  const ativos = React.useMemo(() => {
+    return projects.filter((p: any) => p.stage === 'desenvolvimento').length;
+  }, [projects]);
 
   return (
     <KpiCard
@@ -161,16 +156,14 @@ export const ProjectsKpiWidget = ({ config, onClick }: { config?: any, onClick?:
       icon={<FolderKanban size={16} />}
       color="var(--color-warning)"
       config={config}
-      loading={loading}
+      loading={isLoading}
       onClick={onClick}
     />
   );
-};
+});
 
-export const LeadsKpiWidget = ({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { leads, loading, fetchLeads } = useLeadStore();
-
-  useEffect(() => { fetchLeads(); }, []);
+export const LeadsKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
+  const { data: leads = [], isLoading } = useLeadsQuery();
 
   return (
     <KpiCard
@@ -179,22 +172,22 @@ export const LeadsKpiWidget = ({ config, onClick }: { config?: any, onClick?: ()
       icon={<Target size={16} />}
       color="#ec4899"
       config={config}
-      loading={loading}
+      loading={isLoading}
       onClick={onClick}
     />
   );
-};
+});
 
-export const PremiumKpiRow = () => {
+export const PremiumKpiRow = React.memo(() => {
   const navigate = useNavigate();
 
   return (
     <>
-      <RevenueKpiWidget config={{}} onClick={() => navigate('/app/financeiro')} />
-      <MrrKpiWidget config={{}} onClick={() => navigate('/app/financeiro')} />
-      <ClientsKpiWidget config={{}} onClick={() => navigate('/app/clientes')} />
-      <ProjectsKpiWidget config={{}} onClick={() => navigate('/app/projetos')} />
-      <LeadsKpiWidget config={{}} onClick={() => navigate('/app/leads')} />
+      <RevenueKpiWidget config={{}} onClick={() => navigate('/financeiro')} />
+      <MrrKpiWidget config={{}} onClick={() => navigate('/financeiro')} />
+      <ClientsKpiWidget config={{}} onClick={() => navigate('/clientes')} />
+      <ProjectsKpiWidget config={{}} onClick={() => navigate('/projetos')} />
+      <LeadsKpiWidget config={{}} onClick={() => navigate('/leads')} />
     </>
   );
-};
+});

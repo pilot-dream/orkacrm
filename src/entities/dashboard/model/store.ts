@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { DashboardConfig, DashboardLayoutItem } from './types';
 import { dashboardService } from '../api/service';
 import { useAuthStore } from '../../usuario/model/store';
+import { queryClient } from '../../../shared/api/queryClient';
 
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutItem[] = [
   // Top Row: Principais KPIs do CRM
@@ -139,6 +140,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     if (!activeDashboard || activeDashboard.id === 'default') return;
 
     await dashboardService.updateDashboardLayout(activeDashboard.id, activeDashboard.layout_data);
+    queryClient.invalidateQueries({ queryKey: ['dashboardConfig'] });
   },
 
   addWidget: (widgetId: string, defaultW = 4, defaultH = 6) => {

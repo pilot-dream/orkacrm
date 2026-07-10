@@ -1,27 +1,27 @@
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLeadStore } from '../../../entities/lead/model/store';
+import { useLeadsQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
-import { useMemo } from 'react';
 
-export const FunnelWidget = () => {
+export const FunnelWidget = React.memo(() => {
   const navigate = useNavigate();
-  const { leads } = useLeadStore();
-  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
+  const { data: leads = [] } = useLeadsQuery();
+  const startDate = useFilterStore((s) => s.startDate);
+  const endDate = useFilterStore((s) => s.endDate);
+  const dateRangeLabel = useFilterStore((s) => s.dateRangeLabel);
+  const setDateRange = useFilterStore((s) => s.setDateRange);
 
   const funnelData = useMemo(() => {
-    const filteredLeads = leads.filter(l => isDateInRange(l.createdAt || l.dateAdded || '', startDate, endDate));
+    const filteredLeads = leads.filter((l: any) => isDateInRange(l.createdAt || l.dateAdded || '', startDate, endDate));
     
-    const countStage = (stage: string) => filteredLeads.filter(l => l.stage === stage).length;
+    const countStage = (stage: string) => filteredLeads.filter((l: any) => l.stage === stage).length;
     
-    // Funnel logic: each step usually contains the sum of itself and subsequent successful steps, or just strictly its own if we just want raw numbers. 
-    // Usually in CRM, funnel shows how many passed through that stage. Let's do a strict count for simplicity and visual matching.
     const prospeccao = countStage('prospeccao');
     const qualificacao = countStage('qualificacao');
     const negociacao = countStage('negociacao');
     const contrato = countStage('contrato');
     const fechado = countStage('fechado');
     
-    // To avoid zero-width bars, we calculate width relative to max, or minimum 5%
     const max = Math.max(prospeccao, qualificacao, negociacao, contrato, fechado, 1);
     
     return [
@@ -34,11 +34,12 @@ export const FunnelWidget = () => {
   }, [leads, startDate, endDate]);
 
   const conversionRate = useMemo(() => {
-    const filteredLeads = leads.filter(l => isDateInRange(l.createdAt || l.dateAdded || '', startDate, endDate));
-    const closed = filteredLeads.filter(l => l.stage === 'fechado').length;
+    const filteredLeads = leads.filter((l: any) => isDateInRange(l.createdAt || l.dateAdded || '', startDate, endDate));
+    const closed = filteredLeads.filter((l: any) => l.stage === 'fechado').length;
     const total = filteredLeads.length;
     return total > 0 ? ((closed / total) * 100).toFixed(1) : '0.0';
   }, [leads, startDate, endDate]);
+
   return (
     <div className="card" onClick={() => navigate('/leads')} style={{ cursor: 'pointer', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -103,4 +104,4 @@ export const FunnelWidget = () => {
       </div>
     </div>
   );
-};
+});

@@ -1,20 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PageContainer } from '../../shared/components/PageContainer';
-import { Bell, RefreshCw, ChevronDown } from 'lucide-react';
+import { Bell, RefreshCw, ChevronDown, Settings, Plus } from 'lucide-react';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import { useFilterStore } from '../../entities/dashboard/model/filterStore';
-import { useFinanceiroStore } from '../../entities/financeiro/model/store';
-import { useClienteStore } from '../../entities/cliente/model/store';
-import { useTaskStore } from '../../entities/tarefa/model/store';
-import { useLeadStore } from '../../entities/lead/model/store';
-import { useProjectStore } from '../../entities/projeto/model/store';
-// Future imports for charts and widgets
-import { Responsive } from 'react-grid-layout/legacy';
+import { useDashboardConfigQuery } from '../../entities/dashboard/hooks/useDashboardQueries';
 import { useDashboardStore } from '../../entities/dashboard/model/store';
+import { queryClient } from '../../shared/api/queryClient';
+import { Responsive } from 'react-grid-layout/legacy';
 import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
 import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
-import { Settings, Plus } from 'lucide-react';
 import { MobileDashboard } from './components/MobileDashboard';
 
 const ResponsiveGridLayout = (props: any) => {
@@ -50,21 +45,18 @@ export default function DashboardPage() {
   const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const { dateRangeLabel, setDateRange } = useFilterStore();
-  const { fetchTransactions } = useFinanceiroStore();
-  const { fetchClientes } = useClienteStore();
-  const { fetchTasks } = useTaskStore();
-  const { fetchLeads } = useLeadStore();
-  const { fetchProjects } = useProjectStore();
+  const dateRangeLabel = useFilterStore((state) => state.dateRangeLabel);
+  const setDateRange = useFilterStore((state) => state.setDateRange);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await Promise.all([
-      fetchTransactions(),
-      fetchClientes(),
-      fetchTasks(),
-      fetchLeads(),
-      fetchProjects()
+      queryClient.invalidateQueries({ queryKey: ['dashboardConfig'] }),
+      queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+      queryClient.invalidateQueries({ queryKey: ['clientes'] }),
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+      queryClient.invalidateQueries({ queryKey: ['leads'] }),
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
     ]);
     setTimeout(() => setIsRefreshing(false), 500);
   };
@@ -83,12 +75,19 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const { activeDashboard, loading, updateLayout, saveLayout, isEditMode, setIsEditMode, fetchDashboards } = useDashboardStore();
+  const { isLoading: loadingConfig } = useDashboardConfigQuery();
+  const activeDashboard = useDashboardStore((state) => state.activeDashboard);
+  const loading = loadingConfig || !activeDashboard;
+
+  const isEditMode = useDashboardStore((state) => state.isEditMode);
+  const setIsEditMode = useDashboardStore((state) => state.setIsEditMode);
+  const updateLayout = useDashboardStore((state) => state.updateLayout);
+  const saveLayout = useDashboardStore((state) => state.saveLayout);
+
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    fetchDashboards();
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);

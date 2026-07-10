@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Wallet, DollarSign, Activity, CircleAlert } from 'lucide-react';
-import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
+import { useFinanceiroQuery } from '../../../entities/dashboard/hooks/useDashboardQueries';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,14 +8,18 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 };
 
-export const FinanceSummaryWidget = () => {
-  const { transactions } = useFinanceiroStore();
-  const { startDate, endDate, dateRangeLabel, setDateRange } = useFilterStore();
+export const FinanceSummaryWidget = React.memo(() => {
+  const { data: transactions = [] } = useFinanceiroQuery();
+  const startDate = useFilterStore((s) => s.startDate);
+  const endDate = useFilterStore((s) => s.endDate);
+  const dateRangeLabel = useFilterStore((s) => s.dateRangeLabel);
+  const setDateRange = useFilterStore((s) => s.setDateRange);
   const navigate = useNavigate();
+
   const { receitas, despesas, lucro } = useMemo(() => {
-    const validTransactions = transactions.filter(t => isDateInRange(t.dueDate, startDate, endDate));
-    const rec = validTransactions.filter(t => t.type === 'income' && t.status === 'Pago').reduce((acc, curr) => acc + curr.value, 0);
-    const desp = validTransactions.filter(t => t.type === 'expense' && t.status === 'Pago').reduce((acc, curr) => acc + curr.value, 0);
+    const validTransactions = transactions.filter((t: any) => isDateInRange(t.dueDate, startDate, endDate));
+    const rec = validTransactions.filter((t: any) => t.type === 'income' && t.status === 'Pago').reduce((acc: number, curr: any) => acc + curr.value, 0);
+    const desp = validTransactions.filter((t: any) => t.type === 'expense' && t.status === 'Pago').reduce((acc: number, curr: any) => acc + curr.value, 0);
     return { receitas: rec, despesas: desp, lucro: rec - desp };
   }, [transactions, startDate, endDate]);
 
@@ -23,8 +27,8 @@ export const FinanceSummaryWidget = () => {
     const today = new Date();
     today.setHours(0,0,0,0);
     return transactions
-      .filter(t => t.type === 'expense' && t.status === 'Pendente')
-      .map(t => {
+      .filter((t: any) => t.type === 'expense' && t.status === 'Pendente')
+      .map((t: any) => {
         const dueDateStr = t.dueDate?.includes('T') ? t.dueDate : `${t.dueDate}T00:00:00`;
         const dueDate = new Date(dueDateStr);
         let days = 0;
@@ -34,7 +38,7 @@ export const FinanceSummaryWidget = () => {
         }
         return { name: t.description, value: t.value, days, isOverdue: days < 0 };
       })
-      .sort((a, b) => a.days - b.days)
+      .sort((a: any, b: any) => a.days - b.days)
       .slice(0, 3); // top 3
   }, [transactions]);
 
@@ -118,7 +122,7 @@ export const FinanceSummaryWidget = () => {
 
         {contasAPagar.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {contasAPagar.map((conta, idx) => (
+            {contasAPagar.map((conta: any, idx: number) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx % 2 === 0 ? 'var(--color-primary)' : 'var(--color-success)' }}></div>
@@ -145,4 +149,4 @@ export const FinanceSummaryWidget = () => {
 
     </div>
   );
-};
+});
