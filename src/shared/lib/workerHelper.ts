@@ -93,20 +93,23 @@ const workerCode = () => {
   };
 };
 
-const code = `(${workerCode.toString()})()`;
-const blob = new Blob([code], { type: 'application/javascript' });
-const workerUrl = URL.createObjectURL(blob);
-
 export const runInWorker = <T, R>(type: string, payload: T): Promise<R> => {
   return new Promise((resolve, reject) => {
+    let worker: Worker | null = null;
+    let workerUrl: string | null = null;
     try {
       if (typeof Worker === 'undefined') {
         throw new Error('Web Workers are not supported in this environment');
       }
-      const worker = new Worker(workerUrl);
+      
+      const code = `(${workerCode.toString()})()`;
+      const blob = new Blob([code], { type: 'application/javascript' });
+      workerUrl = URL.createObjectURL(blob);
+      worker = new Worker(workerUrl);
       
       const timeoutId = setTimeout(() => {
-        worker.terminate();
+        worker?.terminate();
+        if (workerUrl) URL.revokeObjectURL(workerUrl);
         reject(new Error('Web Worker execution timed out after 5 seconds'));
       }, 5000);
 
@@ -114,16 +117,20 @@ export const runInWorker = <T, R>(type: string, payload: T): Promise<R> => {
         if (e.data && e.data.type === `${type}_RESULT`) {
           clearTimeout(timeoutId);
           resolve(e.data.data);
-          worker.terminate();
+          worker?.terminate();
+          if (workerUrl) URL.revokeObjectURL(workerUrl);
         }
       };
       worker.onerror = (err) => {
         clearTimeout(timeoutId);
         reject(err);
-        worker.terminate();
+        worker?.terminate();
+        if (workerUrl) URL.revokeObjectURL(workerUrl);
       };
       worker.postMessage({ type, payload });
     } catch (err) {
+      if (worker) worker.terminate();
+      if (workerUrl) URL.revokeObjectURL(workerUrl);
       reject(err);
     }
   });
