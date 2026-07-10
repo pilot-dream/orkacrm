@@ -1409,6 +1409,71 @@ html {
   .hide-on-mobile {
     display: none !important;
   }
+  
+  .mobile-dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0;
+    margin-bottom: 24px;
+  }
+
+  .mobile-kpi-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .mobile-kpi-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mobile-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-kpi-title {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .mobile-kpi-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-kpi-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .mobile-kpi-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .mobile-task-section {
+    margin-top: 8px;
+    min-height: 400px;
+  }
 }
 
 /* Login Screen Styles */

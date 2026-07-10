@@ -7,6 +7,7 @@ import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
 import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
 import { DashboardSelector } from '../../widgets/dashboard/components/DashboardSelector';
+import { MobileDashboard } from './components/MobileDashboard';
 import { Settings, Plus } from 'lucide-react';
 
 const ResponsiveGridLayout = (props: any) => {
@@ -113,68 +114,74 @@ export default function DashboardPage() {
     <PageContainer>
       <DashboardHeader />
 
-      {/* Toolbar for Dashboard management */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: 'var(--bg-card)', padding: '12px 20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', gap: '16px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
-          <DashboardSelector />
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          {isEditMode && (
-            <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
-              if (window.confirm('Tem certeza que deseja restaurar o layout padrão?')) {
-                updateLayout(DEFAULT_DASHBOARD_LAYOUT);
-                setTimeout(() => saveLayout(), 100);
-              }
-            }}>
-              Restaurar Padrão
+      {/* Toolbar for Dashboard management (hidden on mobile) */}
+      {!isMobile && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: 'var(--bg-card)', padding: '12px 20px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', gap: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+            <DashboardSelector />
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {isEditMode && (
+              <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+                if (window.confirm('Tem certeza que deseja restaurar o layout padrão?')) {
+                  updateLayout(DEFAULT_DASHBOARD_LAYOUT);
+                  setTimeout(() => saveLayout(), 100);
+                }
+              }}>
+                Restaurar Padrão
+              </button>
+            )}
+            <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
+              <Plus size={14} /> Adicionar Widget
             </button>
-          )}
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
-            <Plus size={14} /> Adicionar Widget
-          </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
-            if (isEditMode) {
-              saveLayout();
-            }
-            setIsEditMode(!isEditMode);
-          }}>
-            <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
-          </button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+              if (isEditMode) {
+                saveLayout();
+              }
+              setIsEditMode(!isEditMode);
+            }}>
+              <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      <ResponsiveGridLayout
-        className={`layout ${isEditMode ? 'edit-mode' : ''}`}
-        layouts={layouts}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
-        rowHeight={30}
-        onLayoutChange={handleLayoutChange}
-        isDraggable={isEditMode}
-        isResizable={isEditMode}
-        resizeHandles={['s', 'e', 'se']}
-        margin={[20, 20]}
-        measureBeforeMount={false}
-        useCSSTransforms={true}
-        draggableHandle={isMobile ? ".widget-wrapper" : ".widget-drag-handle"}
-      >
-        {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
-          const manifest = WIDGET_REGISTRY[item.widgetId];
-          if (!manifest) return null;
-          
-          const WidgetComponent = manifest.component;
-          
-          return (
-            <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
-              <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
-                <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
-                  <WidgetComponent config={item.config} />
-                </React.Suspense>
-              </WidgetWrapper>
-            </div>
-          );
-        })}
-      </ResponsiveGridLayout>
+      {isMobile ? (
+        <MobileDashboard />
+      ) : (
+        <ResponsiveGridLayout
+          className={`layout ${isEditMode ? 'edit-mode' : ''}`}
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
+          rowHeight={30}
+          onLayoutChange={handleLayoutChange}
+          isDraggable={isEditMode}
+          isResizable={isEditMode}
+          resizeHandles={['s', 'e', 'se']}
+          margin={[20, 20]}
+          measureBeforeMount={false}
+          useCSSTransforms={true}
+          draggableHandle=".widget-drag-handle"
+        >
+          {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
+            const manifest = WIDGET_REGISTRY[item.widgetId];
+            if (!manifest) return null;
+            
+            const WidgetComponent = manifest.component;
+            
+            return (
+              <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
+                <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
+                  <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
+                    <WidgetComponent config={item.config} />
+                  </React.Suspense>
+                </WidgetWrapper>
+              </div>
+            );
+          })}
+        </ResponsiveGridLayout>
+      )}
 
       <WidgetLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
     </PageContainer>
