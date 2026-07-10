@@ -34,6 +34,42 @@ export const MrrEvolutionChartWidget = React.memo(() => {
   const [chartData, setChartData] = React.useState<any[]>([]);
   const [loadingWorker, setLoadingWorker] = React.useState(true);
   
+  const runMrrFallback = (clientesList: any[]) => {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        name: d.toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
+        mrr: 0,
+        date: d
+      });
+    }
+
+    months.forEach(month => {
+      const eom = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0);
+      const mrrForMonth = clientesList.reduce((acc: number, client: any) => {
+        const clientStart = client.startDate || client.createdAt || client.conversionDate;
+        if (!clientStart) return acc;
+        
+        let sd: Date;
+        if (clientStart.includes('/')) {
+          const parts = clientStart.split('/');
+          sd = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        } else {
+          sd = new Date(clientStart);
+        }
+        
+        if (sd <= eom && client.status === 'active') {
+          return acc + (client.mrrValue || client.monthlySpend || client.monthlyRevenue || 0);
+        }
+        return acc;
+      }, 0);
+      month.mrr = mrrForMonth;
+    });
+    return months;
+  };
+
   React.useEffect(() => {
     if (clientes.length === 0) {
       const months = [];
@@ -57,7 +93,9 @@ export const MrrEvolutionChartWidget = React.memo(() => {
         setLoadingWorker(false);
       })
       .catch((err) => {
-        console.error('Error running MRR calculation in Web Worker:', err);
+        console.error('Error running MRR calculation in Web Worker, running fallback:', err);
+        const fallbackData = runMrrFallback(clientes);
+        setChartData(fallbackData);
         setLoadingWorker(false);
       });
   }, [clientes]);

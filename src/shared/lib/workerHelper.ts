@@ -99,17 +99,24 @@ const workerUrl = URL.createObjectURL(blob);
 
 export const runInWorker = <T, R>(type: string, payload: T): Promise<R> => {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(workerUrl);
-    worker.onmessage = (e) => {
-      if (e.data && e.data.type === `${type}_RESULT`) {
-        resolve(e.data.data);
-        worker.terminate();
+    try {
+      if (typeof Worker === 'undefined') {
+        throw new Error('Web Workers are not supported in this environment');
       }
-    };
-    worker.onerror = (err) => {
+      const worker = new Worker(workerUrl);
+      worker.onmessage = (e) => {
+        if (e.data && e.data.type === `${type}_RESULT`) {
+          resolve(e.data.data);
+          worker.terminate();
+        }
+      };
+      worker.onerror = (err) => {
+        reject(err);
+        worker.terminate();
+      };
+      worker.postMessage({ type, payload });
+    } catch (err) {
       reject(err);
-      worker.terminate();
-    };
-    worker.postMessage({ type, payload });
+    }
   });
 };

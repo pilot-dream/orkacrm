@@ -6,7 +6,7 @@ import { useFilterStore } from '../../entities/dashboard/model/filterStore';
 import { useDashboardConfigQuery } from '../../entities/dashboard/hooks/useDashboardQueries';
 import { useDashboardStore } from '../../entities/dashboard/model/store';
 import { queryClient } from '../../shared/api/queryClient';
-import { Responsive } from 'react-grid-layout/legacy';
+import { Responsive } from 'react-grid-layout';
 import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
 import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';

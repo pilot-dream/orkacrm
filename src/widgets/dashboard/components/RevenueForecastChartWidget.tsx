@@ -15,6 +15,51 @@ export const RevenueForecastChartWidget = React.memo(() => {
   const [data, setData] = React.useState<any[]>([]);
   const [loadingWorker, setLoadingWorker] = React.useState(true);
 
+  const runForecastFallback = (trxList: any[], start: string, end: string) => {
+    const parseDate = (dStr: string): Date => {
+      if (dStr.includes('/')) {
+        const parts = dStr.split('/');
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
+      return new Date(dStr);
+    };
+
+    const isDateInRangeLocal = (dateStr: string, startStr: string, endStr: string) => {
+      if (!dateStr) return false;
+      const d = parseDate(dateStr);
+      if (isNaN(d.getTime())) return false;
+      const startDateObj = new Date(startStr);
+      const endDateObj = new Date(endStr);
+      return d >= startDateObj && d <= endDateObj;
+    };
+
+    const validTransactions = trxList.filter((t: any) => t.type === 'income' && isDateInRangeLocal(t.dueDate, start, end));
+    
+    const byDate = validTransactions.reduce((acc: any, t: any) => {
+      const date = t.dueDate;
+      if (!acc[date]) acc[date] = { previsto: 0, realizado: 0 };
+      acc[date].previsto += t.value;
+      if (t.status === 'Pago' || t.status === 'Recebido') acc[date].realizado += t.value;
+      return acc;
+    }, {} as Record<string, { previsto: number; realizado: number }>);
+
+    const sortedDates = Object.keys(byDate).sort();
+    let cumPrevisto = 0;
+    let cumRealizado = 0;
+
+    return sortedDates.map(date => {
+      cumPrevisto += byDate[date].previsto;
+      cumRealizado += byDate[date].realizado;
+      const d = parseDate(date);
+      const name = `${d.getDate().toString().padStart(2, '0')} ${d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '')}`;
+      return {
+        name,
+        previsto: cumPrevisto,
+        realizado: cumRealizado
+      };
+    });
+  };
+
   React.useEffect(() => {
     if (transactions.length === 0) {
       setData([]);
@@ -29,7 +74,9 @@ export const RevenueForecastChartWidget = React.memo(() => {
         setLoadingWorker(false);
       })
       .catch((err) => {
-        console.error('Error running forecast calculation in Web Worker:', err);
+        console.error('Error running forecast calculation in Web Worker, running fallback:', err);
+        const fallbackData = runForecastFallback(transactions, startDate, endDate);
+        setData(fallbackData);
         setLoadingWorker(false);
       });
   }, [transactions, startDate, endDate]);
