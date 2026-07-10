@@ -8,10 +8,6 @@ export const TaskListWidget = React.memo(() => {
   const { data: tasks = [], isLoading } = useTasksQuery();
   const navigate = useNavigate();
 
-  if (isLoading && tasks.length === 0) {
-    return <CardSkeleton height="360px" />;
-  }
-
   const pendingTasks = React.useMemo(() => {
     return tasks
       .filter((t: any) => t.status !== 'concluida')
@@ -22,6 +18,10 @@ export const TaskListWidget = React.memo(() => {
       })
       .slice(0, 5);
   }, [tasks]);
+
+  if (isLoading && tasks.length === 0) {
+    return <CardSkeleton height="360px" />;
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {

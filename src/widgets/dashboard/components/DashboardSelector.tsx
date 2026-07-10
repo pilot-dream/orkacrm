@@ -35,6 +35,10 @@ export const DashboardSelector: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [dashboardToDelete, setDashboardToDelete] = useState<string | null>(null);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newDashboardName, setNewDashboardName] = useState('');
+  const [newDashboardType, setNewDashboardType] = useState<'empty' | 'default'>('empty');
+
   if (!activeDashboard) return null;
 
   const handleApply = () => {
@@ -62,10 +66,6 @@ export const DashboardSelector: React.FC = () => {
       setDashboardToDelete(null);
     }
   };
-
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newDashboardName, setNewDashboardName] = useState('');
-  const [newDashboardType, setNewDashboardType] = useState<'empty' | 'default'>('empty');
 
   const handleCreate = () => {
     setIsCreateModalOpen(true);
