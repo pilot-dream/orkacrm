@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { DollarSign, TrendingUp, Users, Target, Wallet, ArrowDownRight, FolderKanban } from 'lucide-react';
+import { TrendingUp, Users, Target, Wallet, ArrowDownRight } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { useClienteStore } from '../../../entities/cliente/model/store';
 import { useLeadStore } from '../../../entities/lead/model/store';
