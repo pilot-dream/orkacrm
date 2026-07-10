@@ -1,8 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Wallet, DollarSign, Activity, CircleAlert } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
-import { useNavigate } from 'react-router-dom';
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
