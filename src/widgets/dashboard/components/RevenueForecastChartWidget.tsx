@@ -1,32 +1,48 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
-import { ChevronDown } from 'lucide-react';
+import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 
 export const RevenueForecastChartWidget = () => {
-  const { loading, fetchTransactions } = useFinanceiroStore();
+  const { loading, transactions } = useFinanceiroStore();
+  const { startDate, endDate, dateRangeLabel } = useFilterStore();
   
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  const data = useMemo(() => {
+    const validTransactions = transactions.filter(t => t.type === 'income' && isDateInRange(t.dueDate, startDate, endDate));
+    
+    // Group by date
+    const byDate = validTransactions.reduce((acc, t) => {
+      const date = t.dueDate;
+      if (!acc[date]) acc[date] = { previsto: 0, realizado: 0 };
+      acc[date].previsto += t.value; // all income (paid + pending)
+      if (t.status === 'Pago') acc[date].realizado += t.value;
+      return acc;
+    }, {} as Record<string, { previsto: number; realizado: number }>);
 
-  // Fake data based on the requested visual
-  const data = [
-    { name: '01 Mai', previsto: 4000, realizado: 4000 },
-    { name: '05 Mai', previsto: 10000, realizado: 9500 },
-    { name: '10 Mai', previsto: 18000, realizado: 17800 },
-    { name: '15 Mai', previsto: 25000, realizado: 26000 },
-    { name: '20 Mai', previsto: 35000, realizado: 34500 },
-    { name: '25 Mai', previsto: 45000, realizado: null }, // Future
-    { name: '30 Mai', previsto: 50000, realizado: null }, // Future
-  ];
+    // Sort by date and accumulate
+    const sortedDates = Object.keys(byDate).sort();
+    let cumPrevisto = 0;
+    let cumRealizado = 0;
+
+    return sortedDates.map(date => {
+      cumPrevisto += byDate[date].previsto;
+      cumRealizado += byDate[date].realizado;
+      const d = new Date(date + 'T00:00:00');
+      const name = `${d.getDate().toString().padStart(2, '0')} ${d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '')}`;
+      return {
+        name,
+        previsto: cumPrevisto,
+        realizado: cumRealizado
+      };
+    });
+  }, [transactions, startDate, endDate]);
 
   return (
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Receita: Previsto vs Realizado</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
-          Este Mês <ChevronDown size={14} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px' }}>
+          {dateRangeLabel}
         </div>
       </div>
 

@@ -10,6 +10,9 @@ import {
 // Import existing components
 import CashFlowChartWidget from '../components/CashFlowChartWidget';
 import { MrrEvolutionChartWidget } from '../components/MrrEvolutionChartWidget';
+import { RevenueForecastChartWidget } from '../components/RevenueForecastChartWidget';
+import { FunnelWidget } from '../components/FunnelWidget';
+import { FinanceSummaryWidget } from '../components/FinanceSummaryWidget';
 import RevenueProductChartWidget from '../components/RevenueProductChartWidget';
 import FunnelConversionChartWidget from '../components/FunnelConversionChartWidget';
 import SectionHeaderWidget from '../components/SectionHeaderWidget';
@@ -194,6 +197,14 @@ export const WIDGET_REGISTRY: Record<string, WidgetManifest> = {
     id: 'FinancialOverviewWidget', title: 'Visão Financeira', description: 'Resumo detalhado de receitas e despesas.', category: 'Financeiro',
     icon: <PieChart size={20} />, component: FinancialOverviewWidget, defaultWidth: 12, defaultHeight: 5, minWidth: 6, minHeight: 4
   },
+  'FinanceSummaryWidget': {
+    id: 'FinanceSummaryWidget', title: 'Resumo Financeiro', description: 'Resumo de receitas, despesas e contas a pagar.', category: 'Financeiro',
+    icon: <Wallet size={20} />, component: FinanceSummaryWidget, defaultWidth: 4, defaultHeight: 6, minWidth: 3, minHeight: 4
+  },
+  'RevenueForecastChartWidget': {
+    id: 'RevenueForecastChartWidget', title: 'Previsão de Receita', description: 'Comparativo de receita prevista vs realizada.', category: 'Financeiro',
+    icon: <TrendingUp size={20} />, component: RevenueForecastChartWidget, defaultWidth: 6, defaultHeight: 8, minWidth: 4, minHeight: 6
+  },
 
   // --- Clientes ---
   'PremiumKpiRow_Clients': {
@@ -237,6 +248,10 @@ export const WIDGET_REGISTRY: Record<string, WidgetManifest> = {
   'FunnelConversionChartWidget': {
     id: 'FunnelConversionChartWidget', title: 'Conversão de Funil', description: 'Análise de conversão do funil de vendas.', category: 'Comercial',
     icon: <BarChart size={20} />, component: FunnelConversionChartWidget, defaultWidth: 6, defaultHeight: 8, minWidth: 4, minHeight: 6
+  },
+  'FunnelWidget': {
+    id: 'FunnelWidget', title: 'Funil de Vendas V3', description: 'Funil de vendas simplificado.', category: 'Comercial',
+    icon: <Filter size={20} />, component: FunnelWidget, defaultWidth: 4, defaultHeight: 8, minWidth: 3, minHeight: 6
   },
   'OportunidadesWidget': {
     id: 'OportunidadesWidget', title: 'Oportunidades', description: 'Negócios quentes no pipeline.', category: 'Comercial',

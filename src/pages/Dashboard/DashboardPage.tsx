@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PageContainer } from '../../shared/components/PageContainer';
 import { Bell, RefreshCw, ChevronDown } from 'lucide-react';
-import { PremiumKpiRow } from '../../widgets/dashboard/components/PremiumKpiWidgets';
 import { useAuthStore } from '../../entities/usuario/model/store';
 import { useFilterStore } from '../../entities/dashboard/model/filterStore';
 import { useFinanceiroStore } from '../../entities/financeiro/model/store';
@@ -9,12 +8,36 @@ import { useClienteStore } from '../../entities/cliente/model/store';
 import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useLeadStore } from '../../entities/lead/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
-import { MrrEvolutionChartWidget } from '../../widgets/dashboard/components/MrrEvolutionChartWidget';
-import { TaskListWidget } from '../../widgets/dashboard/components/TaskListWidget';
 // Future imports for charts and widgets
-import { RevenueForecastChartWidget } from '../../widgets/dashboard/components/RevenueForecastChartWidget';
-import { FunnelWidget } from '../../widgets/dashboard/components/FunnelWidget';
-import { FinanceSummaryWidget } from '../../widgets/dashboard/components/FinanceSummaryWidget';
+import { Responsive } from 'react-grid-layout/legacy';
+import { useDashboardStore } from '../../entities/dashboard/model/store';
+import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
+import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
+import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
+import { Settings, Plus } from 'lucide-react';
+import { MobileDashboard } from './components/MobileDashboard';
+
+const ResponsiveGridLayout = (props: any) => {
+  const [width, setWidth] = useState(1200);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setWidth(entries[0].contentRect.width);
+      }
+    });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <Responsive width={width} {...props} />
+    </div>
+  );
+};
 
 export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,6 +82,67 @@ export default function DashboardPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const { activeDashboard, loading, updateLayout, saveLayout, isEditMode, setIsEditMode, fetchDashboards } = useDashboardStore();
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    fetchDashboards();
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const generateMobileLayout = (baseLayout: any[]) => {
+    return baseLayout.map((item, index) => ({
+      ...item,
+      x: 0,
+      y: index * 10,
+      w: 1,
+      minW: 1
+    }));
+  };
+
+  const layouts = React.useMemo(() => {
+    if (!activeDashboard) return { lg: [] };
+    
+    let baseLayout = activeDashboard.layout_data;
+    
+    return {
+      lg: baseLayout,
+      md: baseLayout,
+      sm: baseLayout,
+      xs: generateMobileLayout(baseLayout),
+      xxs: generateMobileLayout(baseLayout)
+    };
+  }, [activeDashboard]);
+
+  const handleLayoutChange = (layout: any, allLayouts: any) => {
+    if (!activeDashboard) return;
+    
+    // Always use the 'lg' layout as the source of truth for saving
+    const lgLayout = allLayouts.lg || layout;
+    
+    // Map layout back to our format
+    const newLayout = activeDashboard.layout_data.map(item => {
+      const match = lgLayout.find((l: any) => l.i === item.i);
+      if (match) {
+        return { ...item, x: match.x, y: match.y, w: match.w, h: match.h };
+      }
+      return item;
+    });
+
+    updateLayout(newLayout);
+  };
+
+  if (loading) {
+    return <PageContainer><div style={{ padding: '40px', color: '#fff' }}>Carregando sua Dashboard...</div></PageContainer>;
+  }
+
+  if (!activeDashboard) {
+    return <PageContainer><div style={{ padding: '40px', color: '#fff' }}>Nenhuma Dashboard encontrada.</div></PageContainer>;
+  }
 
   const dateOptions = [
     { value: 'Últimos 7 Dias', label: 'Últimos 7 dias' },
@@ -157,24 +241,72 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Row 1: KPIs */}
-        <div className="dashboard-v3-row-1">
-          <PremiumKpiRow />
-        </div>
+        {/* Toolbar for Dashboard management (hidden on mobile) */}
+        {!isMobile && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px', padding: '0', gap: '16px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {isEditMode && (
+                <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+                  if (window.confirm('Tem certeza que deseja restaurar o layout padrão?')) {
+                    // Update is handled automatically by the store forcing reload
+                  }
+                }}>
+                  Restaurar Padrão
+                </button>
+              )}
+              <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
+                <Plus size={14} /> Adicionar Widget
+              </button>
+              <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
+                if (isEditMode) {
+                  saveLayout();
+                }
+                setIsEditMode(!isEditMode);
+              }}>
+                <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* Row 2: Charts */}
-        <div className="dashboard-v3-row-2">
-          <RevenueForecastChartWidget />
-          
-          <MrrEvolutionChartWidget />
-        </div>
+        {isMobile ? (
+          <MobileDashboard />
+        ) : (
+          <ResponsiveGridLayout
+            className={`layout ${isEditMode ? 'edit-mode' : ''}`}
+            layouts={layouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
+            rowHeight={40}
+            onLayoutChange={handleLayoutChange}
+            isDraggable={isEditMode}
+            isResizable={isEditMode}
+            resizeHandles={['s', 'e', 'se']}
+            margin={[20, 20]}
+            measureBeforeMount={false}
+            useCSSTransforms={true}
+            draggableHandle=".widget-drag-handle"
+          >
+            {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
+              const manifest = WIDGET_REGISTRY[item.widgetId];
+              if (!manifest) return null;
+              
+              const WidgetComponent = manifest.component;
+              
+              return (
+                <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
+                  <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
+                    <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
+                      <WidgetComponent config={item.config} />
+                    </React.Suspense>
+                  </WidgetWrapper>
+                </div>
+              );
+            })}
+          </ResponsiveGridLayout>
+        )}
 
-        {/* Row 3: Widgets */}
-        <div className="dashboard-v3-row-3">
-          <FunnelWidget />
-          <FinanceSummaryWidget />
-          <TaskListWidget />
-        </div>
+        <WidgetLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
 
       </div>
     </PageContainer>

@@ -1,33 +1,45 @@
-import { useEffect } from 'react';
-import { ChevronDown, DollarSign, Wallet, Activity, CircleAlert } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { Wallet, DollarSign, Activity, CircleAlert } from 'lucide-react';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
+import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
+import { useNavigate } from 'react-router-dom';
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 };
 
 export const FinanceSummaryWidget = () => {
-  const { fetchTransactions } = useFinanceiroStore();
+  const { transactions } = useFinanceiroStore();
+  const { startDate, endDate, dateRangeLabel } = useFilterStore();
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  const { receitas, despesas, lucro } = useMemo(() => {
+    const validTransactions = transactions.filter(t => isDateInRange(t.dueDate, startDate, endDate));
+    const rec = validTransactions.filter(t => t.type === 'income' && t.status === 'Pago').reduce((acc, curr) => acc + curr.value, 0);
+    const desp = validTransactions.filter(t => t.type === 'expense' && t.status === 'Pago').reduce((acc, curr) => acc + curr.value, 0);
+    return { receitas: rec, despesas: desp, lucro: rec - desp };
+  }, [transactions, startDate, endDate]);
 
-  const receitas = 48750;
-  const despesas = 21230;
-  const lucro = 27520;
-
-  const contasAPagar = [
-    { name: 'Google Workspace', value: 68.90, days: 3 },
-    { name: 'Vercel Pro', value: 120.00, days: 5 },
-  ];
+  const contasAPagar = useMemo(() => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return transactions
+      .filter(t => t.type === 'expense' && t.status === 'Pendente')
+      .map(t => {
+        const dueDate = new Date(t.dueDate + 'T00:00:00');
+        const diffTime = dueDate.getTime() - today.getTime();
+        const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return { name: t.description, value: t.value, days, isOverdue: days < 0 };
+      })
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 3); // top 3
+  }, [transactions]);
 
   return (
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Financeiro</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
-          Este Mês <ChevronDown size={14} />
+          {dateRangeLabel}
         </div>
       </div>
 
@@ -40,7 +52,6 @@ export const FinanceSummaryWidget = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(receitas)}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 18.6%</span>
           </div>
         </div>
 
@@ -51,7 +62,6 @@ export const FinanceSummaryWidget = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(despesas)}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 6.3%</span>
           </div>
         </div>
 
@@ -62,7 +72,6 @@ export const FinanceSummaryWidget = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(lucro)}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>↑ 24.1%</span>
           </div>
         </div>
 
@@ -87,7 +96,7 @@ export const FinanceSummaryWidget = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{formatCurrency(conta.value)}</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--color-danger)' }}>A vencer</span>
+                  <span style={{ fontSize: '0.7rem', color: conta.isOverdue ? 'var(--color-danger)' : 'var(--color-warning)' }}>{conta.isOverdue ? 'Atrasada' : 'A vencer'}</span>
                 </div>
               </div>
             ))}

@@ -8,9 +8,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { useClienteStore } from '../../../entities/cliente/model/store';
-import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
-import { ChevronDown } from 'lucide-react';
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
 
 const CustomDot = (props: any) => {
@@ -30,35 +28,55 @@ const CustomDot = (props: any) => {
 };
 
 export const MrrEvolutionChartWidget = () => {
-  const { loading: loadingClientes, fetchClientes } = useClienteStore();
-  const { loading: loadingFinanceiro, fetchTransactions } = useFinanceiroStore();
+  const { loading: loadingClientes, clientes } = useClienteStore();
+  
+  const chartData = useMemo(() => {
+    // Generate last 6 months array
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        date: d,
+        name: d.toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
+        mrr: 0
+      });
+    }
 
-  useEffect(() => {
-    fetchClientes();
-    fetchTransactions();
-  }, []);
+    // Calculate MRR for each month
+    months.forEach(month => {
+      const eom = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0); // end of month
+      
+      const mrrForMonth = clientes.reduce((acc, client) => {
+        const clientStart = client.startDate || client.createdAt || client.conversionDate;
+        if (!clientStart) return acc;
+        
+        const sd = new Date(clientStart);
+        // If client started before or during this month, and is active
+        if (sd <= eom && client.status === 'active') {
+          return acc + (client.mrrValue || client.monthlySpend || client.monthlyRevenue || 0);
+        }
+        return acc;
+      }, 0);
+      
+      month.mrr = mrrForMonth;
+    });
 
-  const isInitialLoading = loadingClientes || loadingFinanceiro;
+    return months;
+  }, [clientes]);
+
+  const isInitialLoading = loadingClientes;
 
   if (isInitialLoading) {
     return <ChartSkeleton height="340px" />;
   }
 
-  const chartData = [
-    { name: 'Dez', mrr: 10000 },
-    { name: 'Jan', mrr: 14000 },
-    { name: 'Fev', mrr: 18000 },
-    { name: 'Mar', mrr: 22000 },
-    { name: 'Abr', mrr: 26000 },
-    { name: 'Mai', mrr: 32480 },
-  ];
-
   return (
     <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>MRR (Receita Recorrente)</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
-          Últimos 6 meses <ChevronDown size={14} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px' }}>
+          Últimos 6 meses
         </div>
       </div>
 

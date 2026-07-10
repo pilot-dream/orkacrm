@@ -12,8 +12,13 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutItem[] = [
   { i: 'kpi_leads', x: 10, y: 0, w: 2, h: 3, widgetId: 'PremiumKpiRow_Leads' },
   
   // Middle Row: Gráficos Principais
-  { i: 'cashflow_chart', x: 0, y: 3, w: 6, h: 10, widgetId: 'CashFlowChartWidget' },
-  { i: 'mrr_chart', x: 6, y: 3, w: 6, h: 10, widgetId: 'MrrEvolutionChartWidget' },
+  { i: 'cashflow_chart', x: 0, y: 3, w: 6, h: 9, widgetId: 'RevenueForecastChartWidget' },
+  { i: 'mrr_chart', x: 6, y: 3, w: 6, h: 9, widgetId: 'MrrEvolutionChartWidget' },
+  
+  // Bottom Row: Resumos e Funil
+  { i: 'funnel_widget', x: 0, y: 12, w: 4, h: 10, widgetId: 'FunnelWidget' },
+  { i: 'finance_summary', x: 4, y: 12, w: 4, h: 10, widgetId: 'FinanceSummaryWidget' },
+  { i: 'task_list', x: 8, y: 12, w: 4, h: 10, widgetId: 'TaskListWidget' },
 ];
 
 interface DashboardState {
@@ -77,13 +82,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       } else {
         const active = data.find(d => d.is_active) || data[0];
         
-        // --- FORCE MIGRATION FOR OLD DASHBOARDS ---
         // Força todos os usuários que ainda têm a dashboard padrão antiga (com os widgets removidos)
         // a migrarem para o novo layout enxuto.
-        if (active.name === 'Dashboard Padrão' && active.layout_data.some((w: any) => w.widgetId === 'FinKpi_MrrContratado')) {
-          active.layout_data = DEFAULT_DASHBOARD_LAYOUT;
-          // Update the database in the background
-          dashboardService.updateDashboardLayout(active.id, DEFAULT_DASHBOARD_LAYOUT).catch(console.error);
+        if (active.name === 'Dashboard Padrão') {
+          const hasOldWidget = active.layout_data.some((w: any) => w.widgetId === 'FinKpi_MrrContratado' || w.widgetId === 'CashFlowChartWidget' || w.widgetId === 'FunnelConversionChartWidget');
+          const isMissingV3Widgets = !active.layout_data.some((w: any) => w.widgetId === 'RevenueForecastChartWidget' || w.widgetId === 'FunnelWidget');
+          
+          if (hasOldWidget || isMissingV3Widgets) {
+            active.layout_data = DEFAULT_DASHBOARD_LAYOUT;
+            dashboardService.updateDashboardLayout(active.id, DEFAULT_DASHBOARD_LAYOUT).catch(console.error);
+          }
         }
 
         set({ dashboards: data, activeDashboard: active, loading: false });
