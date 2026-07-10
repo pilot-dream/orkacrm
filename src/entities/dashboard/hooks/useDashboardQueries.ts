@@ -47,12 +47,13 @@ export const useDashboardConfigQuery = () => {
         
         // Auto-migration V3 layout
         if (active.name === 'Dashboard Padrão') {
-          const hasOldWidget = active.layout_data.some((w: any) => 
+          const layoutData = Array.isArray(active.layout_data) ? active.layout_data : [];
+          const hasOldWidget = layoutData.some((w: any) => 
             w.widgetId === 'FinKpi_MrrContratado' || 
             w.widgetId === 'CashFlowChartWidget' || 
             w.widgetId === 'FunnelConversionChartWidget'
           );
-          const isMissingV3Widgets = !active.layout_data.some((w: any) => 
+          const isMissingV3Widgets = !layoutData.some((w: any) => 
             w.widgetId === 'RevenueForecastChartWidget' || 
             w.widgetId === 'FunnelWidget'
           );

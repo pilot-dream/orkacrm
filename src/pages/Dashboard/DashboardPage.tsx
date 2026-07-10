@@ -94,6 +94,7 @@ export default function DashboardPage() {
   }, []);
 
   const generateMobileLayout = (baseLayout: any[]) => {
+    if (!Array.isArray(baseLayout)) return [];
     return baseLayout.map((item, index) => ({
       ...item,
       x: 0,
@@ -106,7 +107,7 @@ export default function DashboardPage() {
   const layouts = React.useMemo(() => {
     if (!activeDashboard) return { lg: [] };
     
-    let baseLayout = activeDashboard.layout_data;
+    let baseLayout = Array.isArray(activeDashboard.layout_data) ? activeDashboard.layout_data : [];
     
     return {
       lg: baseLayout,
@@ -123,8 +124,9 @@ export default function DashboardPage() {
     // Always use the 'lg' layout as the source of truth for saving
     const lgLayout = allLayouts.lg || layout;
     
+    const layoutData = Array.isArray(activeDashboard.layout_data) ? activeDashboard.layout_data : [];
     // Map layout back to our format
-    const newLayout = activeDashboard.layout_data.map(item => {
+    const newLayout = layoutData.map(item => {
       const match = lgLayout.find((l: any) => l.i === item.i);
       if (match) {
         return { ...item, x: match.x, y: match.y, w: match.w, h: match.h };
@@ -286,22 +288,25 @@ export default function DashboardPage() {
             useCSSTransforms={true}
             draggableHandle=".widget-drag-handle"
           >
-            {activeDashboard.layout_data.filter(i => !i.isHidden).map(item => {
-              const manifest = WIDGET_REGISTRY[item.widgetId];
-              if (!manifest) return null;
-              
-              const WidgetComponent = manifest.component;
-              
-              return (
-                <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
-                  <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
-                    <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
-                      <WidgetComponent config={item.config} />
-                    </React.Suspense>
-                  </WidgetWrapper>
-                </div>
-              );
-            })}
+            {(() => {
+              const layoutData = Array.isArray(activeDashboard.layout_data) ? activeDashboard.layout_data : [];
+              return layoutData.filter(i => !i.isHidden).map(item => {
+                const manifest = WIDGET_REGISTRY[item.widgetId];
+                if (!manifest) return null;
+                
+                const WidgetComponent = manifest.component;
+                
+                return (
+                  <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
+                    <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
+                      <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
+                        <WidgetComponent config={item.config} />
+                      </React.Suspense>
+                    </WidgetWrapper>
+                  </div>
+                );
+              });
+            })()}
           </ResponsiveGridLayout>
         )}
 

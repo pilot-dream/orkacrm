@@ -86,8 +86,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         // Força todos os usuários que ainda têm a dashboard padrão antiga (com os widgets removidos)
         // a migrarem para o novo layout enxuto.
         if (active.name === 'Dashboard Padrão') {
-          const hasOldWidget = active.layout_data.some((w: any) => w.widgetId === 'FinKpi_MrrContratado' || w.widgetId === 'CashFlowChartWidget' || w.widgetId === 'FunnelConversionChartWidget');
-          const isMissingV3Widgets = !active.layout_data.some((w: any) => w.widgetId === 'RevenueForecastChartWidget' || w.widgetId === 'FunnelWidget');
+          const layoutData = Array.isArray(active.layout_data) ? active.layout_data : [];
+          const hasOldWidget = layoutData.some((w: any) => w.widgetId === 'FinKpi_MrrContratado' || w.widgetId === 'CashFlowChartWidget' || w.widgetId === 'FunnelConversionChartWidget');
+          const isMissingV3Widgets = !layoutData.some((w: any) => w.widgetId === 'RevenueForecastChartWidget' || w.widgetId === 'FunnelWidget');
           
           if (hasOldWidget || isMissingV3Widgets) {
             active.layout_data = DEFAULT_DASHBOARD_LAYOUT;
