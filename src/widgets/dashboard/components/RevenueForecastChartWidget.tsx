@@ -15,7 +15,7 @@ export const RevenueForecastChartWidget = React.memo(() => {
   const [data, setData] = React.useState<any[]>([]);
   const [loadingWorker, setLoadingWorker] = React.useState(true);
 
-  const runForecastFallback = (trxList: any[], start: string, end: string) => {
+  const runForecastFallback = (trxList: any[], start: string | null, end: string | null) => {
     const parseDate = (dStr: string): Date => {
       if (dStr.includes('/')) {
         const parts = dStr.split('/');
@@ -24,10 +24,11 @@ export const RevenueForecastChartWidget = React.memo(() => {
       return new Date(dStr);
     };
 
-    const isDateInRangeLocal = (dateStr: string, startStr: string, endStr: string) => {
+    const isDateInRangeLocal = (dateStr: string, startStr: string | null, endStr: string | null) => {
       if (!dateStr) return false;
       const d = parseDate(dateStr);
       if (isNaN(d.getTime())) return false;
+      if (!startStr || !endStr) return true;
       const startDateObj = new Date(startStr);
       const endDateObj = new Date(endStr);
       return d >= startDateObj && d <= endDateObj;
