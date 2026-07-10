@@ -14,7 +14,8 @@ import {
   Terminal,
   User,
   DollarSign,
-  Upload
+  Upload,
+  Palette
 } from 'lucide-react';
 import { isSupabaseActive, supabase } from '../shared/api/supabaseClient';
 import type { Profile } from '../entities/usuario/model/types';
@@ -168,7 +169,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [newKeyScope, setNewKeyScope] = useState<ApiKeyRegistry['scope']>('Full Access');
 
   // Theme preference
-  const [themePref, setThemePref] = useState<'dark' | 'light'>('dark');
+  const [themePref, setThemePref] = useState<'dark' | 'light' | 'orka'>('dark');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('orka_theme') as 'dark' | 'light' | 'orka';
+    if (savedTheme) {
+      setThemePref(savedTheme);
+    }
+  }, []);
 
   // Notifications State
   const [notifLeadEmail, setNotifLeadEmail] = useState(true);
@@ -186,8 +194,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [sessions, setSessions] = useState<ActiveSession[]>(initialSessions);
 
   // Dynamic style theme switcher
-  const handleThemeChange = (theme: 'dark' | 'light') => {
+  const handleThemeChange = (theme: 'dark' | 'light' | 'orka') => {
     setThemePref(theme);
+    localStorage.setItem('orka_theme', theme);
+    
+    if (theme === 'orka') {
+      document.documentElement.classList.add('theme-orka');
+    } else {
+      document.documentElement.classList.remove('theme-orka');
+    }
+
     if (theme === 'light') {
       document.documentElement.style.setProperty('--bg-main', '#F3F4F6');
       document.documentElement.style.setProperty('--bg-sidebar', '#FFFFFF');
@@ -892,12 +908,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Altere a paleta de cores geral da interface do sistema.</p>
             </div>
 
-            <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
+            <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '10px' }}>
               
+              {/* ORKA theme select */}
+              <div 
+                className={`card ${themePref === 'orka' ? 'active-row' : ''}`}
+                style={{ cursor: 'pointer', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: themePref === 'orka' ? '2px solid var(--color-primary)' : '1px solid var(--border-color)' }}
+                onClick={() => handleThemeChange('orka')}
+              >
+                <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(37, 99, 235, 0.1)', color: 'var(--color-primary)' }}>
+                  <Palette size={24} />
+                </div>
+                <div>
+                  <h4 style={{ fontWeight: 700, fontSize: '0.88rem' }}>Tema ORKA (Recomendado)</h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>A identidade visual oficial do ORKA CRM com paleta de cores personalizada.</span>
+                </div>
+              </div>
+
               {/* Dark mode select */}
               <div 
                 className={`card ${themePref === 'dark' ? 'active-row' : ''}`}
-                style={{ cursor: 'pointer', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--border-color)' }}
+                style={{ cursor: 'pointer', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: themePref === 'dark' ? '2px solid var(--color-primary)' : '1px solid var(--border-color)' }}
                 onClick={() => handleThemeChange('dark')}
               >
                 <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: 'var(--color-purple)' }}>
@@ -905,14 +936,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <div>
                   <h4 style={{ fontWeight: 700, fontSize: '0.88rem' }}>Tema Escuro (Padrão)</h4>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cores escuras premium de alto contraste para o ORKA CRM.</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cores escuras premium de alto contraste.</span>
                 </div>
               </div>
 
               {/* Light mode select */}
               <div 
                 className={`card ${themePref === 'light' ? 'active-row' : ''}`}
-                style={{ cursor: 'pointer', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--border-color)' }}
+                style={{ cursor: 'pointer', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px', border: themePref === 'light' ? '2px solid var(--color-primary)' : '1px solid var(--border-color)' }}
                 onClick={() => handleThemeChange('light')}
               >
                 <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(45, 140, 255, 0.1)', color: 'var(--color-primary)' }}>
@@ -920,7 +951,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <div>
                   <h4 style={{ fontWeight: 700, fontSize: '0.88rem' }}>Tema Claro</h4>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cores claras e limpas otimizadas para ambientes iluminados.</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cores claras e limpas otimizadas.</span>
                 </div>
               </div>
 

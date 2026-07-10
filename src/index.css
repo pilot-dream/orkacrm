@@ -33,6 +33,22 @@
   --border-radius-sm: 4px;
 }
 
+.theme-orka {
+  --bg-main: #0d1117;
+  --bg-sidebar: #090d14;
+  --bg-card: #131924;
+  --bg-card-hover: #1c2433;
+  --color-primary: #2563eb;
+  --color-primary-hover: #3b82f6;
+  --color-purple: #7c3aed;
+  
+  --text-main: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --border-color: #1e293b;
+}
+
 /* Reset & Base Styles */
 * {
   box-sizing: border-box;
