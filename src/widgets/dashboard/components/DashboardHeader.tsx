@@ -13,7 +13,10 @@ export const DashboardHeader: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notifications = useAuthStore((state) => state.notifications);
+  const userEmail = useAuthStore((state) => state.userEmail);
   const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
+  const markAllNotificationsAsRead = useAuthStore((state) => state.markAllNotificationsAsRead);
+  const clearNotifications = useAuthStore((state) => state.clearNotifications);
 
   const handleMarkAsRead = async (id: string) => {
     markNotificationAsRead(id);
@@ -21,6 +24,30 @@ export const DashboardHeader: React.FC = () => {
       await supabaseNotifications.markAsRead(id);
     } catch (e) {
       console.error('Erro ao marcar notificação como lida no Supabase:', e);
+    }
+  };
+
+  const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    markAllNotificationsAsRead();
+    if (userEmail) {
+      try {
+        await supabaseNotifications.markAllAsRead(userEmail);
+      } catch (err) {
+        console.error('Erro ao marcar todas as notificações como lidas:', err);
+      }
+    }
+  };
+
+  const handleClearNotifications = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications();
+    if (userEmail) {
+      try {
+        await supabaseNotifications.deleteAll(userEmail);
+      } catch (err) {
+        console.error('Erro ao limpar notificações:', err);
+      }
     }
   };
 
@@ -207,6 +234,16 @@ export const DashboardHeader: React.FC = () => {
                     </div>
                   )}
                 </div>
+                {notifications.length > 0 && (
+                  <div style={{ padding: '8px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                    <button onClick={handleMarkAllAsRead} style={{ flex: 1, padding: '6px', fontSize: '0.75rem', backgroundColor: 'transparent', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 140, 255, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      Marcar Lidas
+                    </button>
+                    <button onClick={handleClearNotifications} style={{ flex: 1, padding: '6px', fontSize: '0.75rem', backgroundColor: 'transparent', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      Limpar
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </button>
