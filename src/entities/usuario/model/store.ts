@@ -18,6 +18,8 @@ interface AuthState {
   setNotifications: (notifications: Notification[]) => void;
   addNotification: (notification: Notification) => void;
   markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  clearNotifications: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -65,5 +67,22 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.setItem(`orka_notifs_${state.userEmail}`, JSON.stringify(updated));
       }
       return { notifications: updated };
+    }),
+
+  markAllNotificationsAsRead: () =>
+    set((state) => {
+      const updated = state.notifications.map((n) => ({ ...n, read: true }));
+      if (state.userEmail) {
+        localStorage.setItem(`orka_notifs_${state.userEmail}`, JSON.stringify(updated));
+      }
+      return { notifications: updated };
+    }),
+
+  clearNotifications: () =>
+    set((state) => {
+      if (state.userEmail) {
+        localStorage.setItem(`orka_notifs_${state.userEmail}`, JSON.stringify([]));
+      }
+      return { notifications: [] };
     }),
 }));

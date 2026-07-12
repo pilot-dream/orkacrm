@@ -842,10 +842,22 @@ export const supabaseNotifications = {
     if (error) console.error('Erro ao marcar notificação como lida no Supabase:', error);
     return !error;
   },
+  markAllAsRead: async (email: string): Promise<boolean> => {
+    if (!isSupabaseActive()) return false;
+    const { error } = await supabase.from('notifications').update({ read: true }).eq('user_email', email);
+    if (error) console.error('Erro ao marcar todas as notificações como lidas no Supabase:', error);
+    return !error;
+  },
   delete: async (id: string): Promise<boolean> => {
     if (!isSupabaseActive()) return false;
     const { error } = await supabase.from('notifications').delete().eq('id', id);
     if (error) console.error('Erro ao deletar notificação no Supabase:', error);
+    return !error;
+  },
+  deleteAll: async (email: string): Promise<boolean> => {
+    if (!isSupabaseActive()) return false;
+    const { error } = await supabase.from('notifications').delete().eq('user_email', email);
+    if (error) console.error('Erro ao limpar notificações no Supabase:', error);
     return !error;
   }
 };
