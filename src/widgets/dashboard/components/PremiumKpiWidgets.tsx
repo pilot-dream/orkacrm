@@ -27,19 +27,19 @@ export const KpiCard: React.FC<{
     <div
       className="card premium-kpi-card"
       onClick={onClick}
-      style={{ padding: '16px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', cursor: onClick ? 'pointer' : 'default' }}
+      style={{ padding: '16px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', minHeight: '120px', cursor: onClick ? 'pointer' : 'default' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: `${color}15`, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {icon}
           </div>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.80rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config?.customTitle || title}</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config?.customTitle || title}</span>
         </div>
       </div>
 
-      <div style={{ zIndex: 1 }}>
-        <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
+      <div style={{ zIndex: 1, marginTop: 'auto', marginBottom: '8px' }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.025em' }}>
           {loading ? '...' : value}
         </div>
         {trend && (
@@ -58,12 +58,12 @@ export const KpiCard: React.FC<{
         )}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45px', opacity: 0.4 }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', opacity: 0.5 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={[{ v: 10 }, { v: 15 }, { v: 12 }, { v: 22 }, { v: 18 }]}>
             <defs>
               <linearGradient id={`color-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.5} />
+                <stop offset="5%" stopColor={color} stopOpacity={0.6} />
                 <stop offset="95%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>

@@ -90,8 +90,10 @@ export const checkOverdueItems = async () => {
       if (parsedDeadline && parsedDeadline < todayStr) {
         const notifText = `⚠️ Tarefa atrasada: "${t.title}"`;
         const alreadyNotified = notifications.some(n => n.text.includes(t.title));
-        if (!alreadyNotified) {
-          await notifyUserByName(notifText, t.assignee);
+        if (!alreadyNotified && t.assignees && t.assignees.length > 0) {
+          for (const a of t.assignees) {
+            await notifyUserByName(notifText, a);
+          }
         }
       }
     }

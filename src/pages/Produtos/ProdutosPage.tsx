@@ -291,6 +291,7 @@ export default function ProdutosPage() {
               </div>
             )}
             
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleCreateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Nome do Produto *</span>
@@ -304,7 +305,7 @@ export default function ProdutosPage() {
                 <span className="input-label">Descrição</span>
                 <textarea className="form-input" style={{ minHeight: '60px', resize: 'none' }} value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} placeholder="Descrição resumida..." />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Taxa de Setup *</span>
                   <input type="number" className="form-input" value={formSetup} onChange={(e) => setFormSetup(e.target.value)} required placeholder="Ex: 5000" />
@@ -314,7 +315,7 @@ export default function ProdutosPage() {
                   <input type="number" className="form-input" value={formMrr} onChange={(e) => setFormMrr(e.target.value)} required placeholder="Ex: 1200" />
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Percentual (%)</span>
                   <input type="number" className="form-input" value={formPercentual} onChange={(e) => setFormPercentual(e.target.value)} placeholder="Ex: 5" />
@@ -333,6 +334,7 @@ export default function ProdutosPage() {
                 <button type="submit" className="primary-btn">Salvar</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
@@ -352,6 +354,7 @@ export default function ProdutosPage() {
               </div>
             )}
             
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleUpdateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Nome do Produto *</span>
@@ -365,7 +368,7 @@ export default function ProdutosPage() {
                 <span className="input-label">Descrição</span>
                 <textarea className="form-input" style={{ minHeight: '60px', resize: 'none' }} value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Taxa de Setup *</span>
                   <input type="number" className="form-input" value={formSetup} onChange={(e) => setFormSetup(e.target.value)} required />
@@ -375,7 +378,7 @@ export default function ProdutosPage() {
                   <input type="number" className="form-input" value={formMrr} onChange={(e) => setFormMrr(e.target.value)} required />
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Percentual (%)</span>
                   <input type="number" className="form-input" value={formPercentual} onChange={(e) => setFormPercentual(e.target.value)} />
@@ -394,6 +397,7 @@ export default function ProdutosPage() {
                 <button type="submit" className="primary-btn">Salvar</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

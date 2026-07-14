@@ -360,7 +360,7 @@ export default function ClientesPage() {
             </div>
 
             {/* Profile Tabs */}
-            <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+            <div className="flex overflow-x-auto scrollbar-none" style={{ gap: '10px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', paddingBottom: '4px' }}>
               {([
                 { id: 'resumo', label: 'Resumo' },
                 { id: 'projetos', label: 'Projetos' },
@@ -392,11 +392,11 @@ export default function ClientesPage() {
             </div>
 
             {/* Profile Drawer Content */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="pb-10" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {activeProfileTab === 'resumo' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Plano Atual</span>
                       <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginTop: '4px' }}>{selectedCustomer.plan || 'Plano Customizado'}</div>
@@ -407,7 +407,7 @@ export default function ClientesPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Pessoa de Contato (POC)</span>
                       <div className="form-input" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>{selectedCustomer.poc || 'Não informado'}</div>
@@ -434,7 +434,7 @@ export default function ClientesPage() {
                       🔗 Traceabilidade e Origem (CRM)
                     </h4>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.78rem' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ fontSize: '0.78rem' }}>
                       <div>
                         <span style={{ display: 'block', color: 'var(--text-muted, #64748B)' }}>Lead Original</span>
                         <strong style={{ color: '#fff' }}>{selectedCustomer.originalLead || selectedCustomer.name}</strong>

@@ -77,7 +77,7 @@ export interface Task {
   description?: string;
   projectId?: string;
   projectName?: string;
-  assignee?: string;
+  assignees?: string[];
   priority: 'baixa' | 'media' | 'alta';
   status: TaskStatus;
   deadline?: string;

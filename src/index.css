@@ -2113,6 +2113,7 @@ html {
   top: 0;
   left: 0;
   width: 100%;
+  box-sizing: border-box;
   height: 56px;
   z-index: 90;
 }
@@ -2239,14 +2240,15 @@ html {
   .drawer, .drawer-wide {
     width: 100% !important;
     max-width: 480px !important;
-    height: auto !important;
+    height: 90vh !important;
     max-height: 90vh !important;
     border-radius: var(--border-radius-lg) !important;
     border: 1px solid var(--border-color) !important;
     padding: 20px !important;
     gap: 16px !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
     animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
   
@@ -2454,6 +2456,14 @@ html {
   .show-on-mobile {
     display: inline-block !important;
   }
+
+  .mobile-column {
+    flex-direction: column !important;
+  }
+
+  .mobile-w-full {
+    width: 100% !important;
+  }
 }
 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -2462,8 +2472,8 @@ html {
 .dashboard-v3-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 40px;
+  gap: 16px;
+  padding-bottom: 24px;
 }
 
 .dashboard-v3-header {
@@ -2538,3 +2548,10 @@ html {
 }
 .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
+@keyframes spin-custom {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-custom {
+  animation: spin-custom 1s linear infinite;
+}

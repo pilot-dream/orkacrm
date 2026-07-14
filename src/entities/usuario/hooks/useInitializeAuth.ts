@@ -113,6 +113,7 @@ export function useInitializeAuth() {
               email: activeProfile.email,
               role: activeProfile.role,
               status: 'Ativo',
+              avatar: activeProfile.avatar || '',
               tenant_id: tenant,
             };
             await supabase.from('team_members').insert(newMember);
@@ -182,6 +183,7 @@ export function useInitializeAuth() {
             email: activeProfile.email,
             role: activeProfile.role,
             status: 'Ativo',
+            avatar: activeProfile.avatar || '',
             tenant_id: tenant,
           };
           activeTeam = [...activeTeam, newMember];

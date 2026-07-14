@@ -156,6 +156,7 @@ export const MrrEvolutionChartWidget = React.memo(() => {
               fill="url(#colorMrr)"
               activeDot={{ r: 6, fill: '#7c3aed', stroke: 'var(--bg-card)', strokeWidth: 2 }}
               dot={<CustomDot dataLength={chartData.length} />}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

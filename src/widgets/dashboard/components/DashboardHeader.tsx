@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { Calendar, RefreshCw, Bell } from 'lucide-react';
-import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
-import { useClienteStore } from '../../../entities/cliente/model/store';
-import { useProjectStore } from '../../../entities/projeto/model/store';
-import { useLeadStore } from '../../../entities/lead/model/store';
-import { useFilterStore } from '../../../entities/dashboard/model/filterStore';
+import { Bell } from 'lucide-react';
 import { useAuthStore } from '../../../entities/usuario/model/store';
 import { supabaseNotifications } from '../../../lib/supabaseService';
 
-export const DashboardHeader: React.FC = () => {
-  const [isRefreshing, setIsRefreshing] = useState(false);
+interface DashboardHeaderProps {
+  children?: React.ReactNode;
+}
+
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ children }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notifications = useAuthStore((state) => state.notifications);
   const userEmail = useAuthStore((state) => state.userEmail);
+  const userProfile = useAuthStore((state) => state.userProfile);
   const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
   const markAllNotificationsAsRead = useAuthStore((state) => state.markAllNotificationsAsRead);
   const clearNotifications = useAuthStore((state) => state.clearNotifications);
@@ -53,28 +52,6 @@ export const DashboardHeader: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleRefresh = async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    
-    try {
-      await Promise.all([
-        useFinanceiroStore.getState().fetchTransactions(true),
-        useClienteStore.getState().fetchClientes(true),
-        useProjectStore.getState().fetchProjects(true),
-        useLeadStore.getState().fetchLeads(true)
-        // Removido o fetchDashboards para não causar unmount/re-render da tela toda
-      ]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      // Pequeno atraso para a animação ficar visível mesmo se o load for muito rápido
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 600);
-    }
-  };
-
   return (
     <>
       <style>
@@ -89,14 +66,18 @@ export const DashboardHeader: React.FC = () => {
           }
         `}
       </style>
-      <header style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        marginBottom: '32px',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
+      <header 
+        className="flex flex-row justify-between items-start md:items-center w-full"
+        style={{ 
+          display: 'flex', 
+          flexDirection: 'row',
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: '32px',
+          width: '100%',
+          gap: '16px'
+        }}
+      >
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>
             Dashboard
@@ -106,59 +87,15 @@ export const DashboardHeader: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ position: 'relative' }}>
-            <button 
-              className="outline-btn" 
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px' }}
-              onClick={() => {
-                const el = document.getElementById('date-filter-menu');
-                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-              }}
-              onBlur={() => setTimeout(() => {
-                const el = document.getElementById('date-filter-menu');
-                if (el) el.style.display = 'none';
-              }, 200)}
-            >
-              <Calendar size={16} />
-              <span>{useFilterStore().dateRangeLabel}</span>
-            </button>
-            <div id="date-filter-menu" style={{
-              display: 'none', position: 'absolute', top: '100%', left: 0, marginTop: '8px',
-              background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-              borderRadius: '8px', padding: '8px', zIndex: 9999, minWidth: '180px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
-            }}>
-              {(['Este Mês', 'Mês Passado', 'Últimos 30 Dias', 'Este Ano', 'Últimos 12 Meses', 'Todo o Período'] as const).map(label => (
-                <button key={label} style={{
-                  display: 'block', width: '100%', padding: '8px 12px', background: 'transparent',
-                  border: 'none', color: useFilterStore().dateRangeLabel === label ? 'var(--color-primary)' : 'var(--text-secondary)',
-                  textAlign: 'left', cursor: 'pointer', borderRadius: '4px',
-                  fontWeight: useFilterStore().dateRangeLabel === label ? 600 : 400
-                }} onClick={() => {
-                  useFilterStore.getState().setDateRange(label);
-                  document.getElementById('date-filter-menu')!.style.display = 'none';
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="flex flex-row items-center gap-4" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px' }}>
           
-          <button 
-            className={`icon-btn ${isRefreshing ? 'refreshing' : ''}`} 
-            style={{ border: '1px solid var(--border-color)' }}
-            onClick={handleRefresh}
-            title="Atualizar dados"
-          >
-            <RefreshCw size={16} />
-          </button>
+          {children}
+
+          {/* Divider */}
+          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
 
           <button 
-            className="icon-btn hide-on-mobile"
+            className="icon-btn flex items-center justify-center"
             onClick={() => setShowNotifications(!showNotifications)}
             style={{ position: 'relative', border: '1px solid var(--border-color)', cursor: 'pointer', background: 'transparent', color: 'var(--text-secondary)' }}
             title="Notificações"
@@ -247,6 +184,23 @@ export const DashboardHeader: React.FC = () => {
               </div>
             )}
           </button>
+
+          {userProfile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-color)', paddingLeft: '16px', marginLeft: '8px' }}>
+              {userProfile.avatar ? (
+                <img src={userProfile.avatar} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+              ) : (
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 700 }}>
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>{userProfile.name}</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{userProfile.role || 'Usuário'}</span>
+              </div>
+            </div>
+          )}
+
         </div>
       </header>
     </>

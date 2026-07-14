@@ -13,6 +13,7 @@ export interface TeamMember {
   email: string;
   role: 'Admin' | 'Comercial' | 'Financeiro' | 'Gestor' | 'Desenvolvedor' | 'Gerente' | 'Vendedor' | 'Analista';
   status: 'Ativo' | 'Convidado' | 'Suspenso';
+  avatar?: string;
   tenant_id?: string;
 }
 

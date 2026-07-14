@@ -149,13 +149,21 @@ const EventPopup: React.FC<EventPopupProps> = ({ task, projectName, anchorRect, 
           </div>
         )}
 
-        {/* Assignee */}
-        {task.assignee && (
+        {/* Assignees */}
+        {task.assignees && task.assignees.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-            <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>
-              {task.assignee.charAt(0).toUpperCase()}
+            <div className="flex -space-x-2 overflow-hidden">
+              {task.assignees.slice(0, 3).map((a, i) => (
+                <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[8px] font-bold" style={{ width: '18px', height: '18px', zIndex: 3 - i, border: '2px solid var(--bg-card)' }} title={a}>
+                  {a.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {task.assignees.length > 3 && (
+                <div className="inline-flex items-center justify-center rounded-full bg-slate-700 text-white text-[8px] font-bold" style={{ width: '18px', height: '18px', zIndex: 0, border: '2px solid var(--bg-card)' }}>
+                  +{task.assignees.length - 3}
+                </div>
+              )}
             </div>
-            <span>{task.assignee}</span>
           </div>
         )}
 
@@ -372,7 +380,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                           <div key={t.id} draggable onDragStart={(e) => handleDragStart(e, t.id)}
                             onClick={(e) => handleTaskChipClick(e, t)}
                             style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: overdue ? 'rgba(239, 68, 68, 0.08)' : 'rgba(51, 65, 85, 0.3)', borderLeft: `3px solid ${getPriorityColor(t.priority)}`, border: overdue ? '1px dashed #EF4444' : undefined, borderLeftWidth: overdue ? '3px' : undefined, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', cursor: 'pointer' }}
-                            title={`${t.title} (${t.assignee || 'Sem resp.'})`}>
+                            title={`${t.title} (${t.assignees ? t.assignees.join(', ') : 'Sem resp.'})`}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 {renderTaskIcon(t.taskType, 12)} {t.title}
@@ -381,9 +389,13 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
                               {t.time && <span style={{ fontSize: '0.65rem', color: '#A78BFA' }}>{t.time}</span>}
                               {overdue && <Clock size={10} style={{ color: '#EF4444' }} />}
-                              {t.assignee && (
-                                <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
-                                  {t.assignee.charAt(0).toUpperCase()}
+                              {t.assignees && t.assignees.length > 0 && (
+                                <div className="flex -space-x-1 overflow-hidden" style={{ flexShrink: 0 }}>
+                                  {t.assignees.slice(0, 3).map((a, i) => (
+                                    <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[7px] font-bold" style={{ width: '14px', height: '14px', zIndex: 3 - i, border: '1px solid var(--bg-card)' }} title={a}>
+                                      {a.charAt(0).toUpperCase()}
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -428,12 +440,16 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {t.time && <span style={{ fontSize: '0.68rem', color: '#A78BFA', fontWeight: 600 }}>⏰ {t.time}</span>}
                               <span style={{ fontSize: '0.7rem', color: overdue ? '#EF4444' : 'var(--text-muted)' }}>
-                                {overdue ? 'Atrasado' : (t.assignee || 'Sem resp.')}
+                                {overdue ? 'Atrasado' : (t.assignees && t.assignees.length > 0 ? t.assignees.length === 1 ? t.assignees[0] : `${t.assignees.length} resp.` : 'Sem resp.')}
                               </span>
                             </div>
-                            {t.assignee && (
-                              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700 }}>
-                                {t.assignee.charAt(0).toUpperCase()}
+                            {t.assignees && t.assignees.length > 0 && (
+                              <div className="flex -space-x-1 overflow-hidden">
+                                {t.assignees.slice(0, 3).map((a, i) => (
+                                  <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[8px] font-bold" style={{ width: '16px', height: '16px', zIndex: 3 - i, border: '1px solid var(--bg-card)' }} title={a}>
+                                    {a.charAt(0).toUpperCase()}
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
@@ -489,10 +505,14 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({
                         </span>
                       )}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.assignee || 'Sem responsável'}</span>
-                        {t.assignee && (
-                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700 }}>
-                            {t.assignee.charAt(0).toUpperCase()}
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.assignees && t.assignees.length > 0 ? t.assignees.join(', ') : 'Sem responsável'}</span>
+                        {t.assignees && t.assignees.length > 0 && (
+                          <div className="flex -space-x-1 overflow-hidden">
+                            {t.assignees.slice(0, 3).map((a, i) => (
+                              <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[9px] font-bold" style={{ width: '20px', height: '20px', zIndex: 3 - i, border: '1px solid var(--bg-card)' }} title={a}>
+                                {a.charAt(0).toUpperCase()}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>

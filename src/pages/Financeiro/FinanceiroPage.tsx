@@ -330,10 +330,10 @@ export default function FinanceiroPage() {
     await updateTransaction(updated);
   };
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = React.useCallback((id: string) => {
     setTransactionToDeleteId(id);
     setIsDeleteConfirmOpen(true);
-  };
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (transactionToDeleteId) {
@@ -359,103 +359,110 @@ export default function FinanceiroPage() {
   };
 
   // Filter logic segmented by activeTab
-  const filteredTransactions = transactions.filter(t => {
-    const matchesSearch = 
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.party.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTransactions = React.useMemo(() => {
+    return transactions.filter(t => {
+      const matchesSearch = 
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.party.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.category.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Tab-level filter overrides
-    let matchesType = true;
-    if (activeTab === 'receber') {
-      matchesType = t.type === 'income';
-    } else if (activeTab === 'pagar') {
-      matchesType = t.type === 'expense';
-    } else if (activeTab === 'fixas') {
-      matchesType = t.type === 'expense' && (t.id.includes('fixed') || t.description.toLowerCase().includes('recorrente') || t.description.toLowerCase().includes('mensalidade'));
-    } else if (activeTab === 'fluxo') {
-      matchesType = typeFilter === 'all' || t.type === typeFilter;
-    }
+      // Tab-level filter overrides
+      let matchesType = true;
+      if (activeTab === 'receber') {
+        matchesType = t.type === 'income';
+      } else if (activeTab === 'pagar') {
+        matchesType = t.type === 'expense';
+      } else if (activeTab === 'fixas') {
+        matchesType = t.type === 'expense' && (t.id.includes('fixed') || t.description.toLowerCase().includes('recorrente') || t.description.toLowerCase().includes('mensalidade'));
+      } else if (activeTab === 'fluxo') {
+        matchesType = typeFilter === 'all' || t.type === typeFilter;
+      }
 
-    const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
-    const matchesMonth = !monthFilter || (t.dueDate && t.dueDate.includes(`/${monthFilter}/`));
+      const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
+      const matchesMonth = !monthFilter || (t.dueDate && t.dueDate.includes(`/${monthFilter}/`));
 
-    let matchesDate = true;
-    if (datePeriod !== 'all') {
-      const tDate = parseDueDate(t.dueDate || '');
-      if (!tDate) {
-        matchesDate = false;
-      } else {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (datePeriod === 'today') {
-          const compDate = new Date(tDate);
-          compDate.setHours(0, 0, 0, 0);
-          matchesDate = compDate.getTime() === today.getTime();
-        } else if (datePeriod === 'week') {
-          const currentDay = today.getDay();
-          const firstDayOfWeek = new Date(today);
-          firstDayOfWeek.setDate(today.getDate() - currentDay);
-          firstDayOfWeek.setHours(0, 0, 0, 0);
+      let matchesDate = true;
+      if (datePeriod !== 'all') {
+        const tDate = parseDueDate(t.dueDate || '');
+        if (!tDate) {
+          matchesDate = false;
+        } else {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
           
-          const lastDayOfWeek = new Date(firstDayOfWeek);
-          lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
-          lastDayOfWeek.setHours(23, 59, 59, 999);
-          
-          matchesDate = tDate.getTime() >= firstDayOfWeek.getTime() && tDate.getTime() <= lastDayOfWeek.getTime();
-        } else if (datePeriod === 'month') {
-          matchesDate = tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
-        } else if (datePeriod === 'custom') {
-          const start = startDateFilter ? new Date(startDateFilter + 'T00:00:00') : null;
-          const end = endDateFilter ? new Date(endDateFilter + 'T23:59:59') : null;
-          if (start) {
-            matchesDate = matchesDate && tDate.getTime() >= start.getTime();
-          }
-          if (end) {
-            matchesDate = matchesDate && tDate.getTime() <= end.getTime();
+          if (datePeriod === 'today') {
+            const compDate = new Date(tDate);
+            compDate.setHours(0, 0, 0, 0);
+            matchesDate = compDate.getTime() === today.getTime();
+          } else if (datePeriod === 'week') {
+            const currentDay = today.getDay();
+            const firstDayOfWeek = new Date(today);
+            firstDayOfWeek.setDate(today.getDate() - currentDay);
+            firstDayOfWeek.setHours(0, 0, 0, 0);
+            
+            const lastDayOfWeek = new Date(firstDayOfWeek);
+            lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+            lastDayOfWeek.setHours(23, 59, 59, 999);
+            
+            matchesDate = tDate.getTime() >= firstDayOfWeek.getTime() && tDate.getTime() <= lastDayOfWeek.getTime();
+          } else if (datePeriod === 'month') {
+            matchesDate = tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
+          } else if (datePeriod === 'custom') {
+            const start = startDateFilter ? new Date(startDateFilter + 'T00:00:00') : null;
+            const end = endDateFilter ? new Date(endDateFilter + 'T23:59:59') : null;
+            if (start) {
+              matchesDate = matchesDate && tDate.getTime() >= start.getTime();
+            }
+            if (end) {
+              matchesDate = matchesDate && tDate.getTime() <= end.getTime();
+            }
           }
         }
       }
-    }
 
-    return matchesSearch && matchesType && matchesStatus && matchesMonth && matchesDate;
-  });
+      return matchesSearch && matchesType && matchesStatus && matchesMonth && matchesDate;
+    });
+  }, [transactions, searchQuery, activeTab, typeFilter, statusFilter, monthFilter, datePeriod, startDateFilter, endDateFilter]);
 
-  // 1. Receivables Totals (all of 'income')
-  const totalRecebidoRealizado = transactions
-    .filter(t => t.type === 'income' && t.status === 'Recebido')
-    .reduce((acc, curr) => acc + curr.value, 0);
-  const totalRecebidoPendente = transactions
-    .filter(t => t.type === 'income' && t.status === 'Pendente')
-    .reduce((acc, curr) => acc + curr.value, 0);
-  const totalRecebidoAtrasado = transactions
-    .filter(t => t.type === 'income' && t.status === 'Atrasado')
-    .reduce((acc, curr) => acc + curr.value, 0);
+  // Aggregated Financial Metrics
+  const metrics = React.useMemo(() => {
+    let trr = 0, trp = 0, tra = 0;
+    let tpr = 0, tpp = 0, tpa = 0;
+    let inflows = 0, outflows = 0;
 
-  // 2. Payables Totals (all of 'expense')
-  const totalPagoRealizado = transactions
-    .filter(t => t.type === 'expense' && t.status === 'Pago')
-    .reduce((acc, curr) => acc + curr.value, 0);
-  const totalPagoPendente = transactions
-    .filter(t => t.type === 'expense' && t.status === 'Pendente')
-    .reduce((acc, curr) => acc + curr.value, 0);
-  const totalPagoAtrasado = transactions
-    .filter(t => t.type === 'expense' && t.status === 'Atrasado')
-    .reduce((acc, curr) => acc + curr.value, 0);
+    transactions.forEach(t => {
+      if (t.type === 'income') {
+        if (t.status === 'Recebido') trr += t.value;
+        if (t.status === 'Pendente') trp += t.value;
+        if (t.status === 'Atrasado') tra += t.value;
+        if (t.status !== 'Cancelado') inflows += t.value;
+      } else if (t.type === 'expense') {
+        if (t.status === 'Pago') tpr += t.value;
+        if (t.status === 'Pendente') tpp += t.value;
+        if (t.status === 'Atrasado') tpa += t.value;
+        if (t.status !== 'Cancelado') outflows += t.value;
+      }
+    });
 
-  // 3. Consolidated Totals
-  const totalInflows = transactions
-    .filter(t => t.type === 'income' && t.status !== 'Cancelado')
-    .reduce((acc, curr) => acc + curr.value, 0);
-  const totalOutflows = transactions
-    .filter(t => t.type === 'expense' && t.status !== 'Cancelado')
-    .reduce((acc, curr) => acc + curr.value, 0);
+    return {
+      totalRecebidoRealizado: trr,
+      totalRecebidoPendente: trp,
+      totalRecebidoAtrasado: tra,
+      totalPagoRealizado: tpr,
+      totalPagoPendente: tpp,
+      totalPagoAtrasado: tpa,
+      totalInflows: inflows,
+      totalOutflows: outflows,
+      realizedNet: trr - tpr,
+      projectedNet: inflows - outflows
+    };
+  }, [transactions]);
 
-  // Realized Net = (Inflows Recebido) - (Outflows Pago)
-  const realizedNet = totalRecebidoRealizado - totalPagoRealizado;
-  // Projected Net = (All Inflows active) - (All Outflows active)
-  const projectedNet = totalInflows - totalOutflows;
+  const {
+    totalRecebidoRealizado, totalRecebidoPendente, totalRecebidoAtrasado,
+    totalPagoRealizado, totalPagoPendente, totalPagoAtrasado,
+    realizedNet, projectedNet
+  } = metrics;
 
   // 4. Removed fixedExpensesGroups calculation
 
@@ -517,18 +524,18 @@ export default function FinanceiroPage() {
 
   return (
     <PageContainer>
-      <header className="page-header" style={{ marginBottom: '24px' }}>
+      <header className="mobile-column" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0 }}>Gestão Financeira & ERP</h1>
         </div>
-        <button className="primary-btn" onClick={() => setIsAddModalOpen(true)}>
+        <button className="primary-btn mobile-w-full" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setIsAddModalOpen(true)}>
           <Plus size={16} />
           <span>Lançar Transação</span>
         </button>
       </header>
 
       {/* ERP Tab Navigation */}
-      <div className="mobile-scroll-tabs-container" style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', marginBottom: '24px', paddingBottom: '2px' }}>
+      <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', overflowX: 'auto', whiteSpace: 'nowrap', gap: '12px', paddingBottom: '8px', borderBottom: '1px solid rgba(30, 41, 59, 0.5)', width: '100%', marginBottom: '24px' }}>
         {[
           { id: 'receber', label: 'Contas a Receber', icon: <ArrowUpRight size={16} /> },
           { id: 'pagar', label: 'Contas a Pagar', icon: <ArrowDownRight size={16} /> },
@@ -546,18 +553,22 @@ export default function FinanceiroPage() {
               else setTypeFilter('all');
             }}
             style={{
-              padding: '10px 20px',
-              border: 'none',
-              background: 'none',
-              color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--text-secondary)',
-              borderBottom: activeTab === tab.id ? '2px solid var(--color-primary)' : 'none',
-              cursor: 'pointer',
-              fontSize: '0.88rem',
-              fontWeight: 600,
+              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              transition: 'all 0.2s'
+              padding: '8px 12px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--text-secondary)',
+              borderBottom: activeTab === tab.id ? '2px solid var(--color-primary)' : '2px solid transparent',
+              background: 'transparent',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              outline: 'none',
+              boxShadow: 'none',
+              transition: 'color 0.2s'
             }}
           >
             <span>{tab.icon}</span>
@@ -1176,6 +1187,7 @@ export default function FinanceiroPage() {
               </div>
             </div>
 
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleConfirmPayment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1223,6 +1235,7 @@ export default function FinanceiroPage() {
                 <button type="submit" className="primary-btn" style={{ backgroundColor: 'var(--color-success)' }}>Confirmar Pagamento</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
@@ -1236,6 +1249,7 @@ export default function FinanceiroPage() {
               <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setIsAddModalOpen(false)}>✕</button>
             </div>
             
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleCreateTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Tipo de Lançamento</span>
@@ -1266,7 +1280,7 @@ export default function FinanceiroPage() {
 
               {formType === 'expense' && formExpenseRecurrence === 'fixa' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Valor Original *</span>
                       <input 
@@ -1286,7 +1300,7 @@ export default function FinanceiroPage() {
                       </select>
                     </div>
                   </div>
-                  <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Frequência</span>
                       <select className="form-select" value={formRecFrequency} onChange={(e) => setFormRecFrequency(e.target.value as any)}>
@@ -1326,7 +1340,7 @@ export default function FinanceiroPage() {
 
               {formType === 'expense' && formExpenseRecurrence === 'unica' && formExpensePaymentMethod === 'parcelado' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div className="force-1col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Valor Total (R$) *</span>
                       <input 
@@ -1365,7 +1379,7 @@ export default function FinanceiroPage() {
               )}
 
               {!(formType === 'expense' && formExpenseRecurrence === 'fixa') && !(formType === 'expense' && formExpenseRecurrence === 'unica' && formExpensePaymentMethod === 'parcelado') && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="input-group">
                     <span className="input-label">Valor (R$) *</span>
                     <input type="number" className="form-input" value={formValue} onChange={(e) => setFormValue(e.target.value)} required placeholder="Ex: 5000" />
@@ -1377,7 +1391,7 @@ export default function FinanceiroPage() {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Categoria</span>
                   <select className="form-select" value={formCategory} onChange={(e) => setFormCategory(e.target.value)}>
@@ -1419,6 +1433,7 @@ export default function FinanceiroPage() {
                 <button type="submit" className="primary-btn">Salvar</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

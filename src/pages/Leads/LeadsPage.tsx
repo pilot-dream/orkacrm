@@ -1068,12 +1068,13 @@ export default function LeadsPage() {
               </div>
             )}
             
-            <form onSubmit={handleCreateLead} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="input-group">
-                <span className="input-label">Empresa *</span>
-                <input type="text" className="form-input" value={formCompany} onChange={(e) => setFormCompany(e.target.value)} required placeholder="Ex: Stripe Inc" />
-              </div>
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
+              <form onSubmit={handleCreateLead} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="input-group">
+                  <span className="input-label">Empresa *</span>
+                  <input type="text" className="form-input" value={formCompany} onChange={(e) => setFormCompany(e.target.value)} required placeholder="Ex: Stripe Inc" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Contato *</span>
                   <input type="text" className="form-input" value={formContactName} onChange={(e) => setFormContactName(e.target.value)} required placeholder="Ex: Mariana Silva" />
@@ -1084,7 +1085,7 @@ export default function LeadsPage() {
                 </div>
               </div>
               
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Telefone</span>
                   <input type="text" className="form-input" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="Ex: (11) 98888-7777" />
@@ -1254,7 +1255,7 @@ export default function LeadsPage() {
                 )}
               </div>
 
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Estágio Inicial</span>
                   <select className="form-select" value={formStage} onChange={(e) => setFormStage(e.target.value as LeadStage)}>
@@ -1307,7 +1308,7 @@ export default function LeadsPage() {
                 }}>
                   <span className="input-label" style={{ fontWeight: 700, color: 'var(--color-primary)' }}>Condições Comerciais</span>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group" style={{ marginBottom: 0 }}>
                       <span className="input-label">Forma de pagamento do Setup</span>
                       <select 
@@ -1346,7 +1347,7 @@ export default function LeadsPage() {
 
                   {formSetupPaymentMethod === 'parcelado' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="input-group" style={{ marginBottom: 0 }}>
                           <span className="input-label">Quantidade de parcelas *</span>
                           <input 
@@ -1401,7 +1402,7 @@ export default function LeadsPage() {
                 </div>
               )}
 
-              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Responsável Comercial</span>
                   <select className="form-select" value={formOwner} onChange={(e) => setFormOwner(e.target.value)}>
@@ -1429,7 +1430,8 @@ export default function LeadsPage() {
                 <button type="button" className="outline-btn" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
                 <button type="submit" className="primary-btn">Salvar Lead</button>
               </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -1449,10 +1451,11 @@ export default function LeadsPage() {
             </div>
 
             {/* Tab navigation */}
-            <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
+            <div className="flex overflow-x-auto scrollbar-none" style={{ gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
               {(['details', 'timeline', 'comments', 'files'] as const).map((tab) => (
                 <button
                   key={tab}
+                  className="whitespace-nowrap"
                   onClick={() => setActiveTab(tab)}
                   style={{
                     padding: '8px 12px',
@@ -1474,7 +1477,7 @@ export default function LeadsPage() {
             </div>
 
             {/* Drawer Content */}
-            <div id="drawer-scroll-container" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div id="drawer-scroll-container" className="pb-10" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {validationError && (
                 <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)' }}>
@@ -1489,7 +1492,7 @@ export default function LeadsPage() {
                     <input type="text" className="form-input" value={editFields.company || ''} onChange={(e) => setEditFields({ ...editFields, company: e.target.value })} />
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Contato</span>
                       <input type="text" className="form-input" value={editFields.contactName || ''} onChange={(e) => setEditFields({ ...editFields, contactName: e.target.value })} />
@@ -1862,24 +1865,6 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
-                  {validationError && (
-                    <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)', marginBottom: '8px' }}>
-                      {validationError}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                    <button className="primary-btn" style={{ flexGrow: 1, justifyContent: 'center' }} onClick={handleSaveEdits}>
-                      Salvar Alterações
-                    </button>
-                    <button 
-                      type="button" 
-                      className="outline-btn" 
-                      style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)', cursor: 'pointer' }} 
-                      onClick={(e) => handleDeleteClick(selectedLead.id, e as any)}
-                    >
-                      Excluir Lead
-                    </button>
-                  </div>
                 </div>
               )}
 
@@ -1939,8 +1924,39 @@ export default function LeadsPage() {
                   onFilesChanged={() => loadTimelineAndComments(selectedLead.id)} 
                 />
               )}
-
             </div>
+            
+            {/* Pinned Action Buttons Footer */}
+            {activeTab === 'details' && (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '12px', 
+                marginTop: '16px', 
+                paddingTop: '16px', 
+                borderTop: '1px solid var(--border-color)',
+                flexShrink: 0
+              }}>
+                {validationError && (
+                  <div style={{ padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--color-danger)' }}>
+                    {validationError}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className="primary-btn" style={{ flexGrow: 1, justifyContent: 'center' }} onClick={handleSaveEdits}>
+                    Salvar Alterações
+                  </button>
+                  <button 
+                    type="button" 
+                    className="outline-btn" 
+                    style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)', cursor: 'pointer' }} 
+                    onClick={(e) => handleDeleteClick(selectedLead.id, e as any)}
+                  >
+                    Excluir Lead
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

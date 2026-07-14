@@ -10,7 +10,6 @@ interface WidgetLibraryDrawerProps {
 }
 
 export const WidgetLibraryDrawer: React.FC<WidgetLibraryDrawerProps> = ({ isOpen, onClose }) => {
-  const addWidget = useDashboardStore((state: any) => state.addWidget);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<WidgetCategory | 'Todas'>('Todas');
   
@@ -33,7 +32,8 @@ export const WidgetLibraryDrawer: React.FC<WidgetLibraryDrawerProps> = ({ isOpen
       top: 0,
       right: 0,
       bottom: 0,
-      width: '450px',
+      width: '100%',
+      maxWidth: '450px',
       background: 'var(--bg-main)',
       borderLeft: '1px solid var(--border-color)',
       boxShadow: '-8px 0 32px rgba(0,0,0,0.6)',
@@ -139,7 +139,8 @@ export const WidgetLibraryDrawer: React.FC<WidgetLibraryDrawerProps> = ({ isOpen
                 </div>
                 <button 
                   onClick={() => {
-                    addWidget(widget.id, widget.defaultWidth, widget.defaultHeight);
+                    useDashboardStore.getState().addWidget(widget.id, widget.defaultWidth, widget.defaultHeight);
+                    useDashboardStore.getState().addMobileWidget(widget.id);
                     onClose(); // Fechar a gaveta para o usuário ver o widget recém adicionado
                   }}
                   style={{ 

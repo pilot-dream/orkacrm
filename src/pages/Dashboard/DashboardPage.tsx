@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PageContainer } from '../../shared/components/PageContainer';
-import { Bell, RefreshCw, ChevronDown, Settings, Plus } from 'lucide-react';
-import { useAuthStore } from '../../entities/usuario/model/store';
+import { RefreshCw, ChevronDown, Settings, Plus, RotateCcw } from 'lucide-react';
 import { useFilterStore } from '../../entities/dashboard/model/filterStore';
 import { useDashboardConfigQuery } from '../../entities/dashboard/hooks/useDashboardQueries';
-import { useDashboardStore } from '../../entities/dashboard/model/store';
+import { useDashboardStore, DEFAULT_DASHBOARD_LAYOUT } from '../../entities/dashboard/model/store';
 import { queryClient } from '../../shared/api/queryClient';
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { Responsive } from 'react-grid-layout';
 import { WIDGET_REGISTRY } from '../../widgets/dashboard/core/widgetRegistry';
 import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
 import { MobileDashboard } from './components/MobileDashboard';
+import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
 
 const ResponsiveGridLayout = (props: any) => {
   const [width, setWidth] = useState(1200);
@@ -36,37 +37,37 @@ const ResponsiveGridLayout = (props: any) => {
 
 export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showNotifs, setShowNotifs] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
-
-  const notifications = useAuthStore((state) => state.notifications);
-  const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const dateRangeLabel = useFilterStore((state) => state.dateRangeLabel);
   const setDateRange = useFilterStore((state) => state.setDateRange);
 
   const handleRefresh = async () => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['dashboardConfig'] }),
-      queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-      queryClient.invalidateQueries({ queryKey: ['clientes'] }),
-      queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-      queryClient.invalidateQueries({ queryKey: ['leads'] }),
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    ]);
-    setTimeout(() => setIsRefreshing(false), 500);
+    
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboardConfig'] }),
+        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['clientes'] }),
+        queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['leads'] }),
+        queryClient.invalidateQueries({ queryKey: ['projects'] })
+      ]);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000);
+    }
   };
 
   // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setShowNotifs(false);
-      }
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilter(false);
       }
@@ -83,9 +84,16 @@ export default function DashboardPage() {
   const setIsEditMode = useDashboardStore((state) => state.setIsEditMode);
   const updateLayout = useDashboardStore((state) => state.updateLayout);
   const saveLayout = useDashboardStore((state) => state.saveLayout);
+  const resetMobileLayout = useDashboardStore((state) => state.resetMobileLayout);
 
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const handleConfirmReset = async () => {
+    setIsConfirmResetOpen(false);
+    updateLayout(DEFAULT_DASHBOARD_LAYOUT);
+    resetMobileLayout();
+    await saveLayout();
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -157,121 +165,288 @@ export default function DashboardPage() {
   return (
     <PageContainer>
       <div className="dashboard-v3-container">
+        <style>{`
+          @keyframes local-fluid-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
         
-        {/* V3 Minimalist Header */}
-        <header className="dashboard-v3-header">
-          <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Dashboard</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>Visão geral da operação em tempo real.</p>
-          </div>
-          
-          <div className="dashboard-v3-header-right">
-            {/* Filter Dropdown */}
-            <div ref={filterRef} style={{ position: 'relative' }}>
-              <div 
-                onClick={() => setShowFilter(!showFilter)}
-                style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px 12px', gap: '12px', cursor: 'pointer' }}
-              >
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Período</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
-                  {currentFilterLabel} <ChevronDown size={14} />
-                </div>
-              </div>
-              
-              {showFilter && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', width: '200px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px', boxShadow: 'var(--shadow-premium)', zIndex: 100 }}>
-                  {dateOptions.map(opt => (
-                    <div 
-                      key={opt.value}
-                      onClick={() => { setDateRange(opt.value as any); setShowFilter(false); }}
-                      style={{ padding: '8px 12px', fontSize: '0.85rem', cursor: 'pointer', borderRadius: '4px', background: dateRangeLabel === opt.value ? 'var(--color-primary-10)' : 'transparent', color: dateRangeLabel === opt.value ? 'var(--color-primary)' : 'var(--text-main)' }}
-                    >
-                      {opt.label}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button 
-              className="outline-btn" 
-              onClick={handleRefresh}
-              style={{ padding: '8px 16px', gap: '8px' }}
-            >
-              <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} />
-              <span>Atualizar dados</span>
-            </button>
-
-            {/* Notifications */}
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button 
-                className="icon-btn" 
-                onClick={() => setShowNotifs(!showNotifs)}
-                style={{ position: 'relative' }}
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && <span className="btn-badge">{unreadCount}</span>}
-              </button>
-              
-              {showNotifs && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', width: '320px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: 'var(--shadow-premium)', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color)', fontWeight: 600, fontSize: '0.9rem' }}>
-                    Notificações
-                  </div>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                        Nenhuma notificação nova.
-                      </div>
-                    ) : (
-                      notifications.map(notif => (
-                        <div 
-                          key={notif.id} 
-                          onClick={() => markNotificationAsRead(notif.id)}
-                          style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer', opacity: notif.read ? 0.6 : 1, background: notif.read ? 'transparent' : 'rgba(var(--color-primary-rgb), 0.05)' }}
-                        >
-                          <p style={{ margin: 0, fontSize: '0.85rem' }}>{notif.text}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </header>
-
-        {/* Toolbar for Dashboard management (hidden on mobile) */}
+        {/* Desktop Header */}
         {!isMobile && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px', padding: '0', gap: '16px' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {isEditMode && (
-                <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
-                  if (window.confirm('Tem certeza que deseja restaurar o layout padrão?')) {
-                    // Update is handled automatically by the store forcing reload
-                  }
+          <DashboardHeader>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
+              {/* Filter Dropdown */}
+              <div ref={filterRef} style={{ width: '210px', height: '36px', position: 'relative', flexShrink: 0 }}>
+                <div 
+                  onClick={() => !isEditMode && setShowFilter(!showFilter)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px', width: '100%', height: '36px', boxSizing: 'border-box', cursor: 'pointer', overflow: 'hidden', whiteSpace: 'nowrap' }}
+                >
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Período</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>
+                    {currentFilterLabel} <ChevronDown size={14} />
+                  </div>
+                </div>
+                
+                {showFilter && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '8px', width: '100%', minWidth: '200px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px', boxShadow: 'var(--shadow-premium)', zIndex: 100 }}>
+                    {dateOptions.map(opt => (
+                      <div 
+                        key={opt.value}
+                        onClick={() => { setDateRange(opt.value as any); setShowFilter(false); }}
+                        style={{ padding: '8px 10px', fontSize: '0.8125rem', cursor: 'pointer', borderRadius: '6px', background: dateRangeLabel === opt.value ? 'var(--color-primary-10)' : 'transparent', color: dateRangeLabel === opt.value ? 'var(--color-primary)' : 'var(--text-main)', fontWeight: dateRangeLabel === opt.value ? 600 : 400 }}
+                      >
+                        {opt.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Circular Icons Row */}
+              <button 
+                onClick={handleRefresh}
+                title="Atualizar dados"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', width: 'auto', height: '36px', flexShrink: 0, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                <span style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  animation: isRefreshing ? 'local-fluid-spin 0.8s linear infinite' : 'none',
+                  transformOrigin: 'center center'
                 }}>
-                  Restaurar Padrão
-                </button>
-              )}
-              <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsLibraryOpen(true)}>
-                <Plus size={14} /> Adicionar Widget
+                  <RefreshCw size={14} color="var(--text-secondary)" />
+                </span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Atualizar dados</span>
               </button>
-              <button style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isEditMode ? 'var(--color-primary)' : 'transparent', border: isEditMode ? 'none' : '1px solid var(--border-color)', color: isEditMode ? '#fff' : 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => {
-                if (isEditMode) {
-                  saveLayout();
-                }
-                setIsEditMode(!isEditMode);
+
+              {/* Reset Button (Animated in Edit Mode) */}
+              <div style={{
+                transition: 'all 0.3s ease-in-out 0.05s',
+                width: isEditMode ? '144px' : '0px',
+                opacity: isEditMode ? 1 : 0,
+                transform: isEditMode ? 'scale(1)' : 'scale(0.95)',
+                pointerEvents: isEditMode ? 'auto' : 'none',
+                overflow: 'hidden',
+                flexShrink: 0,
+                marginRight: isEditMode ? '0px' : '-12px'
               }}>
-                <Settings size={14} /> {isEditMode ? 'Concluir' : 'Personalizar'}
+                <button 
+                  onClick={() => isEditMode && setIsConfirmResetOpen(true)}
+                  title="Restaurar Padrão"
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    width: '144px',
+                    height: '36px',
+                    padding: '0 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <RotateCcw size={14} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Restaurar Padrão</span>
+                </button>
+              </div>
+
+              <button 
+                onClick={() => setIsLibraryOpen(true)}
+                title="Adicionar Widget"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', width: 'auto', height: '36px', flexShrink: 0, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                <Plus size={14} color="var(--text-secondary)" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Adicionar Widget</span>
+              </button>
+
+              <button 
+                onClick={() => {
+                  if (isEditMode) saveLayout();
+                  setIsEditMode(!isEditMode);
+                }}
+                style={{
+                  background: isEditMode ? 'var(--color-primary)' : 'var(--bg-card)',
+                  color: isEditMode ? '#fff' : 'var(--text-secondary)',
+                  border: isEditMode ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  height: '36px',
+                  width: 'auto',
+                  padding: '0 12px',
+                  gap: '8px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}
+                title={isEditMode ? 'Concluir' : 'Personalizar'}
+              >
+                <Settings size={14} color={isEditMode ? '#fff' : 'var(--text-secondary)'} style={{ flexShrink: 0 }} />
+                <span style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', fontWeight: 500, color: isEditMode ? '#fff' : 'var(--text-secondary)' }}>
+                  {isEditMode ? 'Concluir' : 'Personalizar'}
+                </span>
               </button>
             </div>
-          </div>
+          </DashboardHeader>
+        )}
+
+        {/* Mobile Header (Compact) */}
+        {isMobile && (
+          <header style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '16px', marginBottom: '24px', width: '100%' }}>
+            <div style={{ width: '100%' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, color: '#fff', letterSpacing: '-0.025em', lineHeight: 1 }}>Dashboard</h1>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', width: '100%', marginTop: '12px' }}>
+              {/* Filter Dropdown (Disappears in Edit Mode on Mobile) */}
+              <div ref={filterRef} style={{ 
+                position: 'relative',
+                transition: 'all 0.3s ease-in-out',
+                flex: isEditMode ? '0 0 0px' : '1 1 0%',
+                minWidth: isEditMode ? '0px' : '140px',
+                opacity: isEditMode ? 0 : 1,
+                transform: isEditMode ? 'scale(0.95)' : 'scale(1)',
+                pointerEvents: isEditMode ? 'none' : 'auto',
+                overflow: isEditMode ? 'hidden' : 'visible',
+                marginRight: isEditMode ? '-8px' : '0px'
+              }}>
+                <div 
+                  onClick={() => !isEditMode && setShowFilter(!showFilter)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px', width: '100%', height: '36px', boxSizing: 'border-box', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Período</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>
+                    {currentFilterLabel} <ChevronDown size={14} />
+                  </div>
+                </div>
+                {showFilter && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '8px', width: '100%', minWidth: '200px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px', boxShadow: 'var(--shadow-premium)', zIndex: 100 }}>
+                    {dateOptions.map(opt => (
+                      <div 
+                        key={opt.value}
+                        onClick={() => { setDateRange(opt.value as any); setShowFilter(false); }}
+                        style={{ padding: '8px 10px', fontSize: '0.8125rem', cursor: 'pointer', borderRadius: '6px', background: dateRangeLabel === opt.value ? 'var(--color-primary-10)' : 'transparent', color: dateRangeLabel === opt.value ? 'var(--color-primary)' : 'var(--text-main)', fontWeight: dateRangeLabel === opt.value ? 600 : 400 }}
+                      >
+                        {opt.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Refresh Button (Disappears in Edit Mode on Mobile) */}
+              <div style={{
+                transition: 'all 0.3s ease-in-out',
+                width: isEditMode ? '0px' : '36px',
+                opacity: isEditMode ? 0 : 1,
+                transform: isEditMode ? 'scale(0.95)' : 'scale(1)',
+                pointerEvents: isEditMode ? 'none' : 'auto',
+                overflow: 'hidden',
+                flexShrink: 0,
+                marginRight: isEditMode ? '-8px' : '0px'
+              }}>
+                <button 
+                  onClick={handleRefresh}
+                  title="Atualizar dados"
+                  style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', width: '36px', height: '36px', flexShrink: 0, boxSizing: 'border-box', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <span style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    animation: isRefreshing ? 'local-fluid-spin 0.8s linear infinite' : 'none',
+                    transformOrigin: 'center center'
+                  }}>
+                    <RefreshCw size={16} color="var(--text-secondary)" />
+                  </span>
+                </button>
+              </div>
+              {/* Reset Button (Animated in Edit Mode) */}
+              <div style={{
+                transition: 'all 0.3s ease-in-out 0.05s',
+                width: isEditMode ? '144px' : '0px',
+                opacity: isEditMode ? 1 : 0,
+                transform: isEditMode ? 'scale(1)' : 'scale(0.95)',
+                pointerEvents: isEditMode ? 'auto' : 'none',
+                overflow: 'hidden',
+                flexShrink: 0,
+                marginRight: isEditMode ? '0px' : '-8px'
+              }}>
+                <button 
+                  onClick={() => isEditMode && setIsConfirmResetOpen(true)}
+                  title="Restaurar Padrão"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    width: '144px',
+                    height: '36px',
+                    padding: '0 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <RotateCcw size={14} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Restaurar Padrão</span>
+                </button>
+              </div>
+              <button 
+                onClick={() => setIsLibraryOpen(true)}
+                title="Adicionar Widget"
+                style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', width: '36px', height: '36px', boxSizing: 'border-box', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <Plus size={16} color="var(--text-secondary)" />
+              </button>
+              <button 
+                onClick={() => {
+                  if (isEditMode) saveLayout();
+                  setIsEditMode(!isEditMode);
+                }}
+                style={{
+                  background: isEditMode ? 'var(--color-primary)' : 'transparent',
+                  color: isEditMode ? '#fff' : 'var(--text-secondary)',
+                  border: isEditMode ? 'none' : '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  height: '36px',
+                  flex: isEditMode ? 1 : '0 0 auto',
+                  width: isEditMode ? 'auto' : '36px',
+                  padding: isEditMode ? '0 16px' : '0',
+                  gap: isEditMode ? '8px' : '0',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  overflow: 'hidden'
+                }}
+                title={isEditMode ? 'Concluir' : 'Personalizar'}
+              >
+                <Settings size={16} color={isEditMode ? '#fff' : 'var(--text-secondary)'} style={{ flexShrink: 0 }} />
+                {isEditMode && (
+                  <span style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', fontWeight: 600 }}>
+                    Concluir
+                  </span>
+                )}
+              </button>
+            </div>
+          </header>
         )}
 
         {isMobile ? (
-          <MobileDashboard />
+          <MobileDashboard isEditMode={isEditMode} />
         ) : (
           <ResponsiveGridLayout
             className={`layout ${isEditMode ? 'edit-mode' : ''}`}
@@ -283,7 +458,7 @@ export default function DashboardPage() {
             isDraggable={isEditMode}
             isResizable={isEditMode}
             resizeHandles={['s', 'e', 'se']}
-            margin={[20, 20]}
+            margin={[12, 12]}
             measureBeforeMount={false}
             useCSSTransforms={true}
             draggableHandle=".widget-drag-handle"
@@ -311,6 +486,14 @@ export default function DashboardPage() {
         )}
 
         <WidgetLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
+
+        <ConfirmDialog 
+          isOpen={isConfirmResetOpen}
+          title="Restaurar Layout Padrão"
+          message="Tem certeza que deseja restaurar o layout padrão da sua Dashboard? Suas personalizações atuais serão perdidas."
+          onConfirm={handleConfirmReset}
+          onCancel={() => setIsConfirmResetOpen(false)}
+        />
 
       </div>
     </PageContainer>

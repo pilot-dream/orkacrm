@@ -155,7 +155,8 @@ export const RevenueForecastChartWidget = React.memo(() => {
                 stroke="#7c3aed" 
                 strokeWidth={2}
                 strokeDasharray="5 5"
-                fill="none" 
+                fill="none"
+                isAnimationActive={false}
               />
               <Area 
                 type="monotone" 
@@ -165,6 +166,7 @@ export const RevenueForecastChartWidget = React.memo(() => {
                 fillOpacity={1} 
                 fill="url(#colorRealizado)" 
                 connectNulls={false}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>

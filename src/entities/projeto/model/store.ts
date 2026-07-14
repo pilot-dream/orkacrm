@@ -68,7 +68,11 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const success = await projetoService.insert(p);
       if (success) {
         set((state) => ({ projects: [p, ...state.projects], loading: false }));
-        notifyUserByName(`📂 Novo projeto criado: "${p.name}"`, p.team && p.team.length > 0 ? p.team[0] : undefined);
+        if (p.team && p.team.length > 0) {
+          p.team.forEach(member => {
+            notifyUserByName(`📂 Novo projeto criado: "${p.name}"`, member);
+          });
+        }
         return true;
       }
       set({ loading: false });
@@ -82,12 +86,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   updateProject: async (p) => {
     set({ loading: true, error: null });
     try {
+      const oldProject = get().projects.find((item) => item.id === p.id);
       const success = await projetoService.update(p);
       if (success) {
         set((state) => ({
           projects: state.projects.map((item) => (item.id === p.id ? p : item)),
           loading: false
         }));
+        
+        if (p.team && oldProject) {
+          const oldTeam = oldProject.team || [];
+          const newMembers = p.team.filter(member => !oldTeam.includes(member));
+          newMembers.forEach(member => {
+            notifyUserByName(`📂 Você foi adicionado ao projeto: "${p.name}"`, member);
+          });
+        }
         return true;
       }
       set({ loading: false });

@@ -56,6 +56,75 @@ const renderTaskIcon = (type?: string, size = 14) => {
   }
 };
 
+const AssigneeSelect = ({ assignees, setAssignees, teamMembers }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {assignees.map((a: string) => {
+          const member = teamMembers.find((m: any) => m.name === a);
+          return (
+            <div key={a} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', backgroundColor: 'var(--color-primary)', color: '#fff', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+              {member && member.avatar ? (
+                <img src={member.avatar} alt={a} style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 'bold' }}>
+                  {a.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {a}
+              <button type="button" onClick={() => setAssignees(assignees.filter((x: string) => x !== a))} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 0, marginLeft: '4px' }}>✕</button>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ position: 'relative' }}>
+        <button 
+          type="button" 
+          className="form-select" 
+          style={{ width: '100%', textAlign: 'left', display: 'block', backgroundColor: 'var(--bg-input)' }} 
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          + Adicionar Membro...
+        </button>
+        {isOpen && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: '4px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+            {teamMembers.filter((m: any) => !assignees.includes(m.name)).length === 0 ? (
+              <div style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Todos os membros adicionados.</div>
+            ) : (
+              teamMembers.filter((m: any) => !assignees.includes(m.name)).map((m: any) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  onClick={() => {
+                    setAssignees([...assignees, m.name]);
+                    setIsOpen(false);
+                  }}
+                >
+                  {m.avatar ? (
+                    <img src={m.avatar} alt={m.name} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{m.name}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.email}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function TarefasPage() {
   const { tasks, loading, error, fetchTasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTaskStore();
   const { projects, fetchProjects } = useProjectStore();
@@ -83,7 +152,7 @@ export default function TarefasPage() {
   const [formDescription, setFormDescription] = useState('');
   const [formStatus, setFormStatus] = useState<TaskStatus>('pendente');
   const [formPriority, setFormPriority] = useState<'baixa' | 'media' | 'alta'>('media');
-  const [formAssignee, setFormAssignee] = useState('');
+  const [formAssignees, setFormAssignees] = useState<string[]>([]);
   const [formProjectId, setFormProjectId] = useState('');
   const [formDeadline, setFormDeadline] = useState('');
   const [formTime, setFormTime] = useState('');
@@ -131,7 +200,7 @@ export default function TarefasPage() {
       description: formDescription,
       status: formStatus,
       priority: formPriority,
-      assignee: formAssignee || undefined,
+      assignees: formAssignees,
       projectId: formProjectId || undefined,
       projectName: proj ? proj.name : undefined,
       deadline: formDeadline || undefined,
@@ -166,7 +235,7 @@ export default function TarefasPage() {
     setFormDescription('');
     setFormStatus('pendente');
     setFormPriority('media');
-    setFormAssignee('');
+    setFormAssignees([]);
     setFormProjectId('');
     setFormDeadline('');
     setFormTime('');
@@ -299,59 +368,64 @@ export default function TarefasPage() {
     setTaskToDeleteId(null);
   };
 
-  const filteredTasks = tasks.filter(t => {
+  const filteredTasks = React.useMemo(() => tasks.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
     const matchesProject = projectFilter === 'all' || t.projectId === projectFilter;
     return matchesSearch && matchesStatus && matchesPriority && matchesProject;
-  });
+  }), [tasks, searchQuery, statusFilter, priorityFilter, projectFilter]);
 
   return (
     <PageContainer>
-      <header className="page-header" style={{ marginBottom: '24px' }}>
+      <header style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0 }}>Gestão de Tarefas</h1>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '4px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
-            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('list')}>
-              <List size={14} /> Lista
+        
+        {/* Single Row: View Tabs + Search + Add Button */}
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: '100%', gap: '8px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} style={{ padding: '6px 8px', border: 'none', background: viewMode === 'list' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => setViewMode('list')}>
+              <List size={14} /> <span className="hide-on-mobile">Lista</span>
             </button>
-            <button className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('kanban')}>
-              <KanbanSquare size={14} /> Kanban
+            <button className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`} style={{ padding: '6px 8px', border: 'none', background: viewMode === 'kanban' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => setViewMode('kanban')}>
+              <KanbanSquare size={14} /> <span className="hide-on-mobile">Kanban</span>
             </button>
-            <button className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setViewMode('calendar')}>
-              <CalendarIcon size={14} /> Calendário
+            <button className={`toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`} style={{ padding: '6px 8px', border: 'none', background: viewMode === 'calendar' ? 'var(--color-primary)' : 'transparent', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => setViewMode('calendar')}>
+              <CalendarIcon size={14} /> <span className="hide-on-mobile">Calendário</span>
             </button>
           </div>
-          <button className="primary-btn" onClick={() => setIsAddModalOpen(true)}>
+          
+          <div style={{ flex: 1, minWidth: '100px' }}>
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
+          </div>
+
+          <button className="primary-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '8px 10px', height: '36px' }} onClick={() => setIsAddModalOpen(true)}>
             <Plus size={16} />
-            <span>Criar Tarefa</span>
+            <span className="hide-on-mobile" style={{ marginLeft: '6px' }}>Nova</span>
           </button>
         </div>
       </header>
 
-      {/* Filters */}
-      <section style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', marginBottom: '24px', alignItems: 'center' }}>
-        <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar tarefas..." />
-        <div className="mobile-filters-row" style={{ display: 'flex', gap: '12px', flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="form-select" style={{ width: '160px', padding: '6px 12px' }}>
-            <option value="all">Todos os Projetos</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-select" style={{ width: '140px', padding: '6px 12px' }}>
-            <option value="all">Todos os Status</option>
-            {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="form-select" style={{ width: '140px', padding: '6px 12px' }}>
-            <option value="all">Todas Prioridades</option>
-            <option value="alta">Alta</option>
-            <option value="media">Média</option>
-            <option value="baixa">Baixa</option>
-          </select>
-        </div>
+      {/* Horizontal Scroll Filters */}
+      <section className="scrollbar-none" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', overflowX: 'auto', whiteSpace: 'nowrap', gap: '8px', paddingBottom: '8px', marginBottom: '24px', width: '100%' }}>
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="form-select" style={{ flexShrink: 0, width: 'auto', padding: '6px 12px', fontSize: '0.8rem', minWidth: '140px' }}>
+          <option value="all">Todos os Projetos</option>
+          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-select" style={{ flexShrink: 0, width: 'auto', padding: '6px 12px', fontSize: '0.8rem', minWidth: '140px' }}>
+          <option value="all">Todos os Status</option>
+          {STATUS_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+        </select>
+        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="form-select" style={{ flexShrink: 0, width: 'auto', padding: '6px 12px', fontSize: '0.8rem', minWidth: '140px' }}>
+          <option value="all">Todas Prioridades</option>
+          <option value="alta">Alta</option>
+          <option value="media">Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
       </section>
 
       {loading && <LoadingOverlay active={true} message="Carregando tarefas..." />}
@@ -434,15 +508,21 @@ export default function TarefasPage() {
                       </span>
                     ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>}
                   </td>
-                  <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                    {t.assignee ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0 }}>
-                          {t.assignee.charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: '0.82rem' }}>{t.assignee}</span>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    {t.assignees && t.assignees.length > 0 ? (
+                      <div className="flex -space-x-2 overflow-hidden">
+                        {t.assignees.slice(0, 3).map((a, i) => (
+                          <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[10px] font-bold" style={{ width: '26px', height: '26px', zIndex: 3 - i, border: '2px solid var(--bg-card)' }} title={a}>
+                            {a.charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                        {t.assignees.length > 3 && (
+                          <div className="inline-flex items-center justify-center rounded-full bg-slate-700 text-white text-[10px] font-bold" style={{ width: '26px', height: '26px', zIndex: 0, border: '2px solid var(--bg-card)' }} title="Mais pessoas">
+                            +{t.assignees.length - 3}
+                          </div>
+                        )}
                       </div>
-                    ) : '-'}
+                    ) : <span style={{ color: 'var(--text-muted)' }}>-</span>}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'rgba(255,255,255,0.05)', color: STATUS_STAGES.find(s => s.id === t.status)?.color || '#fff' }}>
@@ -502,16 +582,16 @@ export default function TarefasPage() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
+            <div className="flex overflow-x-auto scrollbar-none" style={{ gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
               {(['resumo', 'checklist', 'comentarios', 'arquivos'] as const).map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '8px 10px', border: 'none', background: 'none', color: activeTab === tab ? 'var(--color-primary)' : 'var(--text-secondary)', borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, textTransform: 'capitalize' }}>
+                <button key={tab} className="whitespace-nowrap" onClick={() => setActiveTab(tab)} style={{ padding: '8px 10px', border: 'none', background: 'none', color: activeTab === tab ? 'var(--color-primary)' : 'var(--text-secondary)', borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, textTransform: 'capitalize' }}>
                   {tab === 'resumo' ? 'Resumo' : tab === 'checklist' ? 'Checklist' : tab === 'comentarios' ? 'Comentários' : 'Arquivos'}
                 </button>
               ))}
             </div>
 
             {/* Content */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="pb-10" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
               {activeTab === 'resumo' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -524,7 +604,7 @@ export default function TarefasPage() {
                     <textarea className="form-input" style={{ minHeight: '70px', resize: 'none' }} value={editFields.description || ''} onChange={(e) => setEditFields({ ...editFields, description: e.target.value })} />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Tipo</span>
                       <select className="form-select" value={editFields.taskType || 'outro'} onChange={(e) => setEditFields({ ...editFields, taskType: e.target.value as TaskType })}>
@@ -540,7 +620,7 @@ export default function TarefasPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Data de Entrega</span>
                       <input type="date" className="form-input" value={editFields.deadline || ''} onChange={(e) => setEditFields({ ...editFields, deadline: e.target.value })} />
@@ -558,7 +638,7 @@ export default function TarefasPage() {
                     </select>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Projeto Associado</span>
                       <select className="form-select" value={editFields.projectId || ''} onChange={(e) => setEditFields({ ...editFields, projectId: e.target.value })}>
@@ -567,15 +647,16 @@ export default function TarefasPage() {
                       </select>
                     </div>
                     <div className="input-group">
-                      <span className="input-label">Responsável</span>
-                      <select className="form-select" value={editFields.assignee || ''} onChange={(e) => setEditFields({ ...editFields, assignee: e.target.value })}>
-                        <option value="">Nenhum</option>
-                        {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                      </select>
+                      <span className="input-label">Responsáveis (Equipe)</span>
+                      <AssigneeSelect 
+                        assignees={editFields.assignees || []} 
+                        setAssignees={(newA: string[]) => setEditFields({ ...editFields, assignees: newA })} 
+                        teamMembers={teamMembers} 
+                      />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Prioridade</span>
                       <select className="form-select" value={editFields.priority || 'media'} onChange={(e) => setEditFields({ ...editFields, priority: e.target.value as any })}>
@@ -705,6 +786,7 @@ export default function TarefasPage() {
               </div>
             )}
 
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Título da Tarefa *</span>
@@ -717,7 +799,7 @@ export default function TarefasPage() {
               </div>
 
               {/* Tipo + Status */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Tipo *</span>
                   <select className="form-select" value={formTaskType} onChange={(e) => setFormTaskType(e.target.value as TaskType)} required>
@@ -736,7 +818,7 @@ export default function TarefasPage() {
               </div>
 
               {/* Data + Horário */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Data de Entrega</span>
                   <input type="date" className="form-input" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} />
@@ -756,7 +838,7 @@ export default function TarefasPage() {
               </div>
 
               {/* Projeto + Responsável */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Projeto Associado</span>
                   <select className="form-select" value={formProjectId} onChange={(e) => setFormProjectId(e.target.value)}>
@@ -765,16 +847,17 @@ export default function TarefasPage() {
                   </select>
                 </div>
                 <div className="input-group">
-                  <span className="input-label">Responsável</span>
-                  <select className="form-select" value={formAssignee} onChange={(e) => setFormAssignee(e.target.value)}>
-                    <option value="">Nenhum</option>
-                    {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                  </select>
+                  <span className="input-label">Responsáveis (Equipe)</span>
+                  <AssigneeSelect 
+                    assignees={formAssignees} 
+                    setAssignees={setFormAssignees} 
+                    teamMembers={teamMembers} 
+                  />
                 </div>
               </div>
 
               {/* Prioridade + Local */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Prioridade</span>
                   <select className="form-select" value={formPriority} onChange={(e) => setFormPriority(e.target.value as any)}>
@@ -808,6 +891,7 @@ export default function TarefasPage() {
                 <button type="submit" className="primary-btn">Criar Tarefa</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

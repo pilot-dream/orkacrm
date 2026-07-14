@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import type { Project } from '../../../entities/projeto/model/types';
-import { Calendar, CheckSquare, MessageSquare, Users } from 'lucide-react';
+import { Calendar, CheckSquare, MessageSquare } from 'lucide-react';
 
 interface ProjectKanbanCardProps {
   project: Project;
@@ -35,7 +35,6 @@ export const ProjectKanbanCard: React.FC<ProjectKanbanCardProps> = ({ project, o
   const checklistCount = project.checklist ? project.checklist.length : 0;
   const checklistDone = project.checklist ? project.checklist.filter((item) => item.done).length : 0;
   const commentsCount = project.comments ? project.comments.length : 0;
-  const teamCount = project.team ? project.team.length : 0;
   const progressPercent = project.progress || 0;
 
   return (
@@ -139,10 +138,24 @@ export const ProjectKanbanCard: React.FC<ProjectKanbanCardProps> = ({ project, o
         paddingTop: '8px',
         borderTop: '1px solid rgba(51, 65, 85, 0.4)'
       }}>
-        {/* Team list count */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
-          <Users size={12} />
-          <span style={{ fontSize: '0.72rem' }}>{teamCount} {teamCount === 1 ? 'membro' : 'membros'}</span>
+        {/* Team Avatar Group */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {project.team && project.team.length > 0 ? (
+            <div className="flex -space-x-2 overflow-hidden">
+              {project.team.slice(0, 3).map((a, i) => (
+                <div key={i} className="inline-flex items-center justify-center rounded-full bg-indigo-500 text-white text-[9px] font-bold" style={{ width: '22px', height: '22px', zIndex: 3 - i, border: '2px solid var(--bg-card)' }} title={a}>
+                  {a.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {project.team.length > 3 && (
+                <div className="inline-flex items-center justify-center rounded-full bg-slate-700 text-white text-[9px] font-bold" style={{ width: '22px', height: '22px', zIndex: 0, border: '2px solid var(--bg-card)' }} title="Mais pessoas">
+                  +{project.team.length - 3}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sem equipe</span>
+          )}
         </div>
 
         {/* Stats (Checklist, comments, deadline) */}

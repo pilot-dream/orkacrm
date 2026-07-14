@@ -22,6 +22,75 @@ const STAGES: { id: ProjectStage; label: string; color: string }[] = [
   { id: 'concluido', label: 'Concluído', color: '#10B981' }
 ];
 
+const AssigneeSelect = ({ assignees, setAssignees, teamMembers }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {assignees.map((a: string) => {
+          const member = teamMembers.find((m: any) => m.name === a);
+          return (
+            <div key={a} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', backgroundColor: 'var(--color-primary)', color: '#fff', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+              {member && member.avatar ? (
+                <img src={member.avatar} alt={a} style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 'bold' }}>
+                  {a.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {a}
+              <button type="button" onClick={() => setAssignees(assignees.filter((x: string) => x !== a))} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 0, marginLeft: '4px' }}>✕</button>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ position: 'relative' }}>
+        <button 
+          type="button" 
+          className="form-select" 
+          style={{ width: '100%', textAlign: 'left', display: 'block', backgroundColor: 'var(--bg-input)' }} 
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          + Adicionar Membro...
+        </button>
+        {isOpen && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, marginTop: '4px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+            {teamMembers.filter((m: any) => !assignees.includes(m.name)).length === 0 ? (
+              <div style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Todos os membros adicionados.</div>
+            ) : (
+              teamMembers.filter((m: any) => !assignees.includes(m.name)).map((m: any) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  onClick={() => {
+                    setAssignees([...assignees, m.name]);
+                    setIsOpen(false);
+                  }}
+                >
+                  {m.avatar ? (
+                    <img src={m.avatar} alt={m.name} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{m.name}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.email}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function ProjetosPage() {
   const { projects, loading, error, fetchProjects, addProject, updateProject, updateProjectStage, deleteProject } = useProjectStore();
   const teamMembers = useAuthStore((state) => state.teamMembers);
@@ -56,6 +125,7 @@ export default function ProjetosPage() {
   const [formStage, setFormStage] = useState<ProjectStage>('fila');
   const [formDeadline, setFormDeadline] = useState('');
   const [formPriority, setFormPriority] = useState<'baixa' | 'media' | 'alta'>('media');
+  const [formTeam, setFormTeam] = useState<string[]>([]);
 
   // Edit fields
   const [editFields, setEditFields] = useState<Partial<Project>>({});
@@ -85,7 +155,7 @@ export default function ProjetosPage() {
       deadline: formDeadline || undefined,
       priority: formPriority,
       progress: 0,
-      team: [],
+      team: formTeam,
       checklist: [],
       comments: [],
       files: []
@@ -113,6 +183,7 @@ export default function ProjetosPage() {
     setFormStage('fila');
     setFormDeadline('');
     setFormPriority('media');
+    setFormTeam([]);
     setModalError(null);
   };
 
@@ -331,6 +402,7 @@ export default function ProjetosPage() {
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Projeto</th>
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Progresso</th>
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Estágio</th>
+                <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Equipe</th>
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Prioridade</th>
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>Prazo Limite</th>
                 <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', textAlign: 'right' }}>Ações</th>
@@ -368,6 +440,22 @@ export default function ProjetosPage() {
                       {STAGES.find(s => s.id === p.stage)?.label}
                     </span>
                   </td>
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    {p.team && p.team.length > 0 ? (
+                      <div className="flex -space-x-2 overflow-hidden">
+                        {p.team.slice(0, 3).map((a, i) => (
+                          <div key={i} className="inline-flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold" style={{ width: '26px', height: '26px', zIndex: 3 - i, border: '2px solid var(--bg-card)' }} title={a}>
+                            {a.charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                        {p.team.length > 3 && (
+                          <div className="inline-flex items-center justify-center rounded-full bg-slate-700 text-white text-[10px] font-bold" style={{ width: '26px', height: '26px', zIndex: 0, border: '2px solid var(--bg-card)' }} title="Mais pessoas">
+                            +{p.team.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    ) : <span style={{ color: 'var(--text-muted)' }}>-</span>}
+                  </td>
                   <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{p.priority}</td>
                   <td style={{ padding: '12px 16px' }}>{p.deadline || '-'}</td>
                   <td style={{ padding: '12px 16px', textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
@@ -403,7 +491,7 @@ export default function ProjetosPage() {
             </div>
 
             {/* Tab selection */}
-            <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
+            <div className="flex overflow-x-auto scrollbar-none" style={{ gap: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
               {([
                 { id: 'resumo', label: 'Resumo' },
                 { id: 'checklist', label: 'Checklist' },
@@ -413,6 +501,7 @@ export default function ProjetosPage() {
               ] as const).map(tab => (
                 <button
                   key={tab.id}
+                  className="whitespace-nowrap"
                   onClick={() => setActiveTab(tab.id)}
                   style={{
                     padding: '8px 10px',
@@ -431,7 +520,7 @@ export default function ProjetosPage() {
             </div>
 
             {/* Drawer Tab Content */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="pb-10" style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {activeTab === 'resumo' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -444,7 +533,7 @@ export default function ProjetosPage() {
                     <textarea className="form-input" style={{ minHeight: '80px', resize: 'none' }} value={editFields.description || ''} onChange={(e) => setEditFields({ ...editFields, description: e.target.value })} />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Estágio</span>
                       <select className="form-select" value={editFields.stage || 'fila'} onChange={(e) => setEditFields({ ...editFields, stage: e.target.value as ProjectStage })}>
@@ -457,7 +546,7 @@ export default function ProjetosPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="input-group">
                       <span className="input-label">Prioridade</span>
                       <select className="form-select" value={editFields.priority || 'media'} onChange={(e) => setEditFields({ ...editFields, priority: e.target.value as any })}>
@@ -634,6 +723,7 @@ export default function ProjetosPage() {
               </div>
             )}
             
+            <div className="max-h-[60vh] overflow-y-auto pb-10 px-1 -mx-1">
             <form onSubmit={handleCreateProject} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="input-group">
                 <span className="input-label">Nome do Projeto *</span>
@@ -644,7 +734,7 @@ export default function ProjetosPage() {
                 <textarea className="form-input" style={{ minHeight: '60px', resize: 'none' }} value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Descrição do escopo..." />
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="input-group">
                   <span className="input-label">Estágio Inicial</span>
                   <select className="form-select" value={formStage} onChange={(e) => setFormStage(e.target.value as any)}>
@@ -662,6 +752,15 @@ export default function ProjetosPage() {
               </div>
 
               <div className="input-group">
+                <span className="input-label">Equipe do Projeto</span>
+                <AssigneeSelect 
+                  assignees={formTeam} 
+                  setAssignees={setFormTeam} 
+                  teamMembers={teamMembers} 
+                />
+              </div>
+
+              <div className="input-group">
                 <span className="input-label">Prazo de Conclusão</span>
                 <input type="text" className="form-input" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} placeholder="Ex: 30/08/2026" />
               </div>
@@ -671,6 +770,7 @@ export default function ProjetosPage() {
                 <button type="submit" className="primary-btn">Criar</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

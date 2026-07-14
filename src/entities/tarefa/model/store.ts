@@ -66,7 +66,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const success = await tarefaService.insert(t);
       if (success) {
         set((state) => ({ tasks: [t, ...state.tasks], loading: false }));
-        notifyUserByName(`📌 Nova tarefa atribuída a você: "${t.title}"`, t.assignee);
+        if (t.assignees && t.assignees.length > 0) {
+          for (const a of t.assignees) {
+            notifyUserByName(`📌 Nova tarefa atribuída a você: "${t.title}"`, a);
+          }
+        }
         return true;
       }
       set({ loading: false });
@@ -87,8 +91,12 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           tasks: state.tasks.map((item) => (item.id === t.id ? t : item)),
           loading: false
         }));
-        if (t.assignee && oldTask && oldTask.assignee !== t.assignee) {
-          notifyUserByName(`📌 Nova tarefa atribuída a você: "${t.title}"`, t.assignee);
+        if (t.assignees && oldTask) {
+          const oldAssignees = oldTask.assignees || [];
+          const newAssignees = t.assignees.filter(a => !oldAssignees.includes(a));
+          newAssignees.forEach(assignee => {
+            notifyUserByName(`📌 Nova tarefa atribuída a você: "${t.title}"`, assignee);
+          });
         }
         return true;
       }

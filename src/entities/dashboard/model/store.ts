@@ -31,13 +31,17 @@ interface DashboardState {
   setActiveDashboard: (id: string) => Promise<void>;
   updateLayout: (newLayout: DashboardLayoutItem[]) => void;
   saveLayout: () => Promise<void>;
-  addWidget: (widgetId: string) => void;
+  addWidget: (widgetId: string, defaultW?: number, defaultH?: number) => void;
   removeWidget: (instanceId: string) => void;
   updateWidgetConfig: (instanceId: string, config: any) => void;
   createDashboard: (name: string, layoutOption?: 'empty' | 'default') => Promise<void>;
   deleteDashboard: (id: string) => Promise<void>;
   isEditMode: boolean;
   setIsEditMode: (isEditMode: boolean) => void;
+  mobileCardOrder: string[];
+  setMobileCardOrder: (order: string[]) => void;
+  resetMobileLayout: () => void;
+  addMobileWidget: (widgetId: string) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -46,6 +50,24 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loading: false,
   isEditMode: false,
   setIsEditMode: (isEditMode) => set({ isEditMode }),
+  mobileCardOrder: JSON.parse(localStorage.getItem('mobileCardOrder') || 'null') || ['PremiumKpiRow_Revenue', 'PremiumKpiRow_MRR', 'PremiumKpiRow_Clients', 'PremiumKpiRow_Projects', 'PremiumKpiRow_Leads', 'TaskListWidget'],
+  setMobileCardOrder: (order) => {
+    set({ mobileCardOrder: order });
+    localStorage.setItem('mobileCardOrder', JSON.stringify(order));
+  },
+  resetMobileLayout: () => {
+    const defaultOrder = ['PremiumKpiRow_Revenue', 'PremiumKpiRow_MRR', 'PremiumKpiRow_Clients', 'PremiumKpiRow_Projects', 'PremiumKpiRow_Leads', 'TaskListWidget'];
+    set({ mobileCardOrder: defaultOrder });
+    localStorage.setItem('mobileCardOrder', JSON.stringify(defaultOrder));
+  },
+  addMobileWidget: (widgetId) => set(state => {
+    if (!state.mobileCardOrder.includes(widgetId)) {
+      const newOrder = [...state.mobileCardOrder, widgetId];
+      localStorage.setItem('mobileCardOrder', JSON.stringify(newOrder));
+      return { mobileCardOrder: newOrder };
+    }
+    return state;
+  }),
 
   fetchDashboards: async () => {
     const userEmail = useAuthStore.getState().userEmail;

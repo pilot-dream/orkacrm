@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   MoreVertical, Copy, EyeOff, Trash2, Maximize2, 
-  Settings, RefreshCw, Download, Pin, Share2
+  RefreshCw
 } from 'lucide-react';
 import { useLongPress } from '../../../hooks/useLongPress';
 import { useDashboardStore } from '../../../entities/dashboard/model/store';
@@ -21,7 +21,22 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
   const addWidget = useDashboardStore((state: any) => state.addWidget);
   const setIsEditMode = useDashboardStore((state: any) => state.setIsEditMode);
   const [isLongPressing, setIsLongPressing] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
   const longPressProps = useLongPress(() => {
     setIsEditMode(true);
     setIsLongPressing(true);
@@ -60,7 +75,7 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
           
           <div 
             className="widget-menu-container" 
-            onMouseLeave={() => setShowMenu(false)}
+            ref={menuRef}
           >
             <button 
               className="widget-menu-btn" 
@@ -74,32 +89,19 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
 
             {showMenu && (
               <div className="widget-dropdown-menu">
-                <button className="widget-menu-item" onClick={() => alert('Configurações do widget em breve')}>
-                  <Settings size={14} /> Configurar
-                </button>
-                <button className="widget-menu-item" onClick={() => alert('Recarregando dados...')}>
+                <button className="widget-menu-item" onClick={() => { alert('Recarregando dados...'); setShowMenu(false); }}>
                   <RefreshCw size={14} /> Atualizar Dados
                 </button>
                 <button className="widget-menu-item" onClick={handleDuplicate}>
                   <Copy size={14} /> Duplicar Widget
                 </button>
-                <button className="widget-menu-item" onClick={() => alert('Em breve')}>
-                  <Share2 size={14} /> Copiar para Dashboard...
-                </button>
-                <button className="widget-menu-item" onClick={() => alert('Em breve')}>
-                  <Pin size={14} /> Fixar Posição
-                </button>
-                <div className="widget-menu-divider" />
-                <button className="widget-menu-item" onClick={() => alert('Em breve')}>
+                <button className="widget-menu-item" onClick={() => { alert('Em breve'); setShowMenu(false); }}>
                   <Maximize2 size={14} /> Tela Cheia
                 </button>
-                <button className="widget-menu-item" onClick={() => alert('Exportando PDF/CSV...')}>
-                  <Download size={14} /> Exportar Dados
-                </button>
-                <div className="widget-menu-divider" />
                 <button className="widget-menu-item" onClick={handleRemove}>
                   <EyeOff size={14} /> Ocultar
                 </button>
+                <div className="widget-menu-divider" />
                 <button className="widget-menu-item danger" onClick={handleRemove}>
                   <Trash2 size={14} /> Remover da Dashboard
                 </button>

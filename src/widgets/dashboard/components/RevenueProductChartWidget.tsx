@@ -3,10 +3,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
 import { Layers } from 'lucide-react';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
 
-export default function RevenueProductChartWidget() {
+const RevenueProductChartWidget = React.memo(() => {
   const navigate = useNavigate();
   const transactions = useFinanceiroStore((state) => state.transactions);
   const loading = useFinanceiroStore((state) => state.loading);
@@ -69,6 +69,7 @@ export default function RevenueProductChartWidget() {
               outerRadius={75}
               paddingAngle={2}
               dataKey="value"
+              isAnimationActive={false}
             >
               {displayData.map((entry, index) => (
                 <Cell 
@@ -101,4 +102,6 @@ export default function RevenueProductChartWidget() {
       </div>
     </div>
   );
-}
+});
+
+export default RevenueProductChartWidget;

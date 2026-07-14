@@ -137,25 +137,24 @@ export const TaskKanbanCard: React.FC<TaskKanbanCardProps> = React.memo(({ task,
         paddingTop: '8px',
         borderTop: '1px solid rgba(51, 65, 85, 0.4)'
       }}>
-        {/* Assignee */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--color-primary, #3B82F6)',
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '0.65rem',
-            fontWeight: 700
-          }}>
-            {task.assignee ? task.assignee.charAt(0).toUpperCase() : '?'}
-          </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #94A3B8)', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {task.assignee || 'Sem resp.'}
-          </span>
+        {/* Assignees */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {task.assignees && task.assignees.length > 0 ? (
+            <div className="flex -space-x-2 overflow-hidden">
+              {task.assignees.slice(0, 3).map((a, i) => (
+                <div key={i} className="inline-flex items-center justify-center rounded-full bg-blue-500 text-white text-[9px] font-bold" style={{ width: '22px', height: '22px', zIndex: 3 - i, border: '2px solid var(--bg-card)' }} title={a}>
+                  {a.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {task.assignees.length > 3 && (
+                <div className="inline-flex items-center justify-center rounded-full bg-slate-700 text-white text-[9px] font-bold" style={{ width: '22px', height: '22px', zIndex: 0, border: '2px solid var(--bg-card)' }} title="Mais pessoas">
+                  +{task.assignees.length - 3}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sem resp.</span>
+          )}
         </div>
 
         {/* Stats and Deadline */}
