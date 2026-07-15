@@ -53,7 +53,9 @@ BEGIN
       AND reminder != 'sem_lembrete' 
       AND (notification_sent = false OR notification_sent IS NULL)
       AND deadline IS NOT NULL 
-      AND deadlin    -- 2. Converter o prazo (deadline + time) para timestamp com fuso horário brasileiro
+      AND deadline != ''
+  LOOP
+    -- 2. Converter o prazo (deadline + time) para timestamp com fuso horário brasileiro
     BEGIN
       -- deadline pode estar formatado como 'DD/MM/YYYY' (gerado por triggers de onboarding) 
       -- ou como 'YYYY-MM-DD' (salvo pelo date picker HTML5 do frontend)
