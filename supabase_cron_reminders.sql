@@ -133,7 +133,9 @@ BEGIN
               PERFORM net.http_post(
                 url := 'https://' || project_ref || '.supabase.co/functions/v1/send-push',
                 headers := jsonb_build_object(
-                  'Content-Type', 'application/json'
+                  'Content-Type', 'application/json',
+                  'apikey', 'sb_publishable_UZQmOucePwYEp5aL2a4uVA_qUXjkDvz',
+                  'Authorization', 'Bearer sb_publishable_UZQmOucePwYEp5aL2a4uVA_qUXjkDvz'
                 ),
                 body := jsonb_build_object(
                   'user_email', assignee_email,
