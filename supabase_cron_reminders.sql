@@ -53,15 +53,21 @@ BEGIN
       AND reminder != 'sem_lembrete' 
       AND (notification_sent = false OR notification_sent IS NULL)
       AND deadline IS NOT NULL 
-      AND deadline != ''
-  LOOP
-    -- 2. Converter o prazo (deadline + time) para timestamp com fuso horário brasileiro
+      AND deadlin    -- 2. Converter o prazo (deadline + time) para timestamp com fuso horário brasileiro
     BEGIN
-      -- deadline está formatado como 'DD/MM/YYYY' no frontend/db
-      task_datetime := to_timestamp(
-        task_rec.deadline || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00'), 
-        'DD/MM/YYYY HH24:MI'
-      ) AT TIME ZONE 'America/Sao_Paulo';
+      -- deadline pode estar formatado como 'DD/MM/YYYY' (gerado por triggers de onboarding) 
+      -- ou como 'YYYY-MM-DD' (salvo pelo date picker HTML5 do frontend)
+      IF task_rec.deadline LIKE '%/%' THEN
+        task_datetime := to_timestamp(
+          task_rec.deadline || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00'), 
+          'DD/MM/YYYY HH24:MI'
+        ) AT TIME ZONE 'America/Sao_Paulo';
+      ELSE
+        task_datetime := to_timestamp(
+          task_rec.deadline || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00'), 
+          'YYYY-MM-DD HH24:MI'
+        ) AT TIME ZONE 'America/Sao_Paulo';
+      END IF;
     EXCEPTION WHEN OTHERS THEN
       -- Ignora a tarefa silenciosamente se os dados de data/hora forem inválidos
       CONTINUE;
@@ -169,7 +175,10 @@ SELECT cron.schedule(
     SET notification_sent = false 
     WHERE status != 'concluida' 
       AND (
-        to_date(deadline, 'DD/MM/YYYY') >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
+        CASE 
+          WHEN deadline LIKE '%/%' THEN to_date(deadline, 'DD/MM/YYYY')
+          ELSE to_date(deadline, 'YYYY-MM-DD')
+        END >= (now() AT TIME ZONE 'America/Sao_Paulo')::date
       );
   $$
 );
