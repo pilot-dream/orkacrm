@@ -85,10 +85,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const oldTask = get().tasks.find((item) => item.id === t.id);
-      const success = await tarefaService.update(t);
+      
+      // Se alterou data, hora ou lembrete, reinicia o flag de notificação enviada
+      let taskToSave = { ...t };
+      if (oldTask && (
+        oldTask.deadline !== t.deadline ||
+        oldTask.time !== t.time ||
+        oldTask.reminder !== t.reminder
+      )) {
+        taskToSave.notificationSent = false;
+      }
+
+      const success = await tarefaService.update(taskToSave);
       if (success) {
         set((state) => ({
-          tasks: state.tasks.map((item) => (item.id === t.id ? t : item)),
+          tasks: state.tasks.map((item) => (item.id === t.id ? taskToSave : item)),
           loading: false
         }));
         if (t.assignees && oldTask) {
