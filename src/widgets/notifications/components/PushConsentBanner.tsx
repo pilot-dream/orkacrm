@@ -98,7 +98,7 @@ export const PushConsentBanner: React.FC = () => {
       // 2. Obter registro do Service Worker
       const registration = await navigator.serviceWorker.ready;
       
-      // 3. Pegar chave VAPID pública das variáveis de ambiente
+       // 3. Pegar chave VAPID pública das variáveis de ambiente (Vercel/Local)
       const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
         throw new Error('Chave VAPID pública não configurada no cliente. Adicione VITE_VAPID_PUBLIC_KEY no seu .env');
