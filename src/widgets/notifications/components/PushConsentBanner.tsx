@@ -32,42 +32,50 @@ export const PushConsentBanner: React.FC = () => {
       return;
     }
 
-    // 1. Verificar suporte a Service Workers e Push
-    const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
-    if (!isPushSupported) {
-      console.warn('Este navegador não suporta Notificações Push.');
-      return;
-    }
+    const checkPushStatus = async () => {
+      // 1. Verificar suporte a Service Workers e Push
+      const isPushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+      if (!isPushSupported) {
+        console.warn('Este navegador não suporta Notificações Push.');
+        return;
+      }
 
-    // 2. Verificar se já tem permissão
-    if (Notification.permission === 'granted') {
-      // Já está ativado, não mostra o banner
-      setIsVisible(false);
-      return;
-    }
+      if (Notification.permission === 'denied') {
+        // Usuário bloqueou, não incomodar com banner
+        setIsVisible(false);
+        return;
+      }
 
-    if (Notification.permission === 'denied') {
-      // Usuário bloqueou, não incomodar com banner
-      setIsVisible(false);
-      return;
-    }
+      // 3. Detectar iOS e PWA Standalone
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const ios = /iphone|ipad|ipod/.test(userAgent);
+      setIsIos(ios);
 
-    // 3. Detectar iOS e PWA Standalone
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const ios = /iphone|ipad|ipod/.test(userAgent);
-    setIsIos(ios);
+      const standalone = 
+        (window.navigator as any).standalone === true || 
+        window.matchMedia('(display-mode: standalone)').matches;
+      setIsStandalone(standalone);
 
-    const standalone = 
-      (window.navigator as any).standalone === true || 
-      window.matchMedia('(display-mode: standalone)').matches;
-    setIsStandalone(standalone);
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
 
-    // Exibir banner após 3 segundos para não ser intrusivo
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 3000);
+        if (subscription && Notification.permission === 'granted') {
+          // Já está 100% configurado e com a subscrição ativa, esconde!
+          setIsVisible(false);
+        } else {
+          // Não tem subscrição (mesmo que a permissão já tenha sido dada antes), então mostra o banner.
+          const timer = setTimeout(() => {
+            setIsVisible(true);
+          }, 3000);
+          return () => clearTimeout(timer);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar status da subscrição push:', err);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    checkPushStatus();
   }, [isAuthenticated, userEmail]);
 
   const handleSubscribe = async () => {

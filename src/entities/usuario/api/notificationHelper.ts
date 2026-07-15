@@ -23,6 +23,16 @@ export const triggerSystemNotification = async (text: string, targetEmail?: stri
         read: newNotif.read
       }]);
       if (error) throw error;
+      
+      // Invoca a Edge Function de Web Push para disparar notificação real para o dispositivo
+      supabase.functions.invoke('send-push', {
+        body: {
+          user_email: newNotif.userEmail,
+          title: 'Orka CRM',
+          body: newNotif.text,
+          url: '/' // Pode ser dinâmico no futuro dependendo do tipo de notificação
+        }
+      }).catch(err => console.error('Erro silencioso ao invocar send-push:', err));
     } else {
       // Offline fallback
       const saved = localStorage.getItem(`orka_notifs_${emailToNotify}`);
