@@ -67,25 +67,22 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ children }) =>
         `}
       </style>
       <header 
-        className="flex flex-row justify-between items-start md:items-center w-full"
+        className="flex flex-row justify-between items-center w-full"
         style={{ 
           display: 'flex', 
           flexDirection: 'row',
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          marginBottom: '32px',
+          marginBottom: '8px', /* Decreased space between header and cards */
           width: '100%',
-          gap: '16px'
+          gap: '16px',
+          padding: '0 12px', /* Matches react-grid-layout margin */
+          boxSizing: 'border-box'
         }}
       >
-        <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#fff', margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>
-            Dashboard
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
-            Visão geral da operação em tempo real.
-          </p>
-        </div>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center' }}>
+          Dashboard
+        </h1>
 
         <div className="flex flex-row items-center gap-4" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px' }}>
           

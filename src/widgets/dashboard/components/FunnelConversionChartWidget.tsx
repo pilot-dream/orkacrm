@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, 
@@ -14,7 +15,7 @@ import { Target } from 'lucide-react';
 import { useEffect } from 'react';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
 
-export default function FunnelConversionChartWidget() {
+const FunnelConversionChartWidget = React.memo(() => {
   const navigate = useNavigate();
   const leads = useLeadStore((state) => state.leads);
   const loading = useLeadStore((state) => state.loading);
@@ -104,4 +105,6 @@ export default function FunnelConversionChartWidget() {
       </div>
     </div>
   );
-}
+});
+
+export default FunnelConversionChartWidget;

@@ -15,7 +15,7 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 };
 
-export const KanbanColumn: React.FC<KanbanColumnProps> = ({
+export const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(({
   id,
   label,
   color,
@@ -122,4 +122,4 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
     </div>
   );
-};
+});

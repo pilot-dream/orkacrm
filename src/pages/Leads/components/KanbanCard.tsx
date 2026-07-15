@@ -5,7 +5,7 @@ import { Calendar, Award, MoreVertical, Trash2 } from 'lucide-react';
 
 interface KanbanCardProps {
   lead: Lead;
-  onClick: () => void;
+  onClick: (id: string) => void;
   onDelete?: (id: string, e: React.MouseEvent) => void;
 }
 
@@ -31,7 +31,7 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 };
 
-export const KanbanCard: React.FC<KanbanCardProps> = ({ lead, onClick, onDelete }) => {
+export const KanbanCard: React.FC<KanbanCardProps> = React.memo(({ lead, onClick, onDelete }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   });
@@ -78,7 +78,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ lead, onClick, onDelete 
           setIsMenuOpen(false);
           return;
         }
-        onClick();
+        onClick(lead.id);
       }}
       className="kanban-lead-card"
       style={{
@@ -312,4 +312,4 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ lead, onClick, onDelete 
       )}
     </div>
   );
-};
+});

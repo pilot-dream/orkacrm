@@ -125,6 +125,9 @@
 }
 
 /* react-grid-layout overrides */
+.layout-transitioning .react-grid-item {
+  transition: none !important;
+}
 .react-grid-item.react-grid-placeholder {
   background: var(--color-primary) !important;
   opacity: 0.1 !important;

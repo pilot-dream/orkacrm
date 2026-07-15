@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { 
   DollarSign, TrendingUp, Users, FolderKanban, Target, HeartPulse, 
   Bell, Lightbulb, PieChart, LineChart, BarChart, Calendar, 
@@ -7,37 +7,38 @@ import {
   CheckCircle, Receipt, AlertTriangle, LayoutDashboard
 } from 'lucide-react';
 
-// Import existing components
-import CashFlowChartWidget from '../components/CashFlowChartWidget';
-import { MrrEvolutionChartWidget } from '../components/MrrEvolutionChartWidget';
-import { RevenueForecastChartWidget } from '../components/RevenueForecastChartWidget';
-import { FunnelWidget } from '../components/FunnelWidget';
-import { FinanceSummaryWidget } from '../components/FinanceSummaryWidget';
-import RevenueProductChartWidget from '../components/RevenueProductChartWidget';
-import FunnelConversionChartWidget from '../components/FunnelConversionChartWidget';
+// Lightweight components imported statically
 import SectionHeaderWidget from '../components/SectionHeaderWidget';
-import FinancialOverviewWidget, {
-  MrrContratadoWidget,
-  ReceitaRecebidaWidget,
-  ReceitaPrevistaWidget,
-  ReceitaAtrasadaWidget,
-  DespesasPagasWidget,
-  DespesasAPagarWidget,
-  DespesasAtrasadasWidget,
-  FluxoCaixaWidget
-} from '../components/FinancialOverviewWidget';
-import { TaskListWidget } from '../components/TaskListWidget';
-import AgendaWidget from '../components/AgendaWidget';
-import ActivityTimelineWidget from '../components/ActivityTimelineWidget';
-import ContasReceberWidget from '../components/ContasReceberWidget';
-import ContasPagarWidget from '../components/ContasPagarWidget';
-import { 
-  RevenueKpiWidget, 
-  MrrKpiWidget, 
-  ClientsKpiWidget, 
-  ProjectsKpiWidget, 
-  LeadsKpiWidget 
-} from '../components/PremiumKpiWidgets';
+
+// Heavy components (Charts, complex widgets) imported lazily
+const CashFlowChartWidget = lazy(() => import('../components/CashFlowChartWidget'));
+const MrrEvolutionChartWidget = lazy(() => import('../components/MrrEvolutionChartWidget').then(module => ({ default: module.MrrEvolutionChartWidget })));
+const RevenueForecastChartWidget = lazy(() => import('../components/RevenueForecastChartWidget').then(module => ({ default: module.RevenueForecastChartWidget })));
+const FunnelWidget = lazy(() => import('../components/FunnelWidget').then(module => ({ default: module.FunnelWidget })));
+const FinanceSummaryWidget = lazy(() => import('../components/FinanceSummaryWidget').then(module => ({ default: module.FinanceSummaryWidget })));
+const RevenueProductChartWidget = lazy(() => import('../components/RevenueProductChartWidget'));
+const FunnelConversionChartWidget = lazy(() => import('../components/FunnelConversionChartWidget'));
+const FinancialOverviewWidget = lazy(() => import('../components/FinancialOverviewWidget'));
+const MrrContratadoWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.MrrContratadoWidget })));
+const ReceitaRecebidaWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.ReceitaRecebidaWidget })));
+const ReceitaPrevistaWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.ReceitaPrevistaWidget })));
+const ReceitaAtrasadaWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.ReceitaAtrasadaWidget })));
+const DespesasPagasWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.DespesasPagasWidget })));
+const DespesasAPagarWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.DespesasAPagarWidget })));
+const DespesasAtrasadasWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.DespesasAtrasadasWidget })));
+const FluxoCaixaWidget = lazy(() => import('../components/FinancialOverviewWidget').then(m => ({ default: m.FluxoCaixaWidget })));
+
+const TaskListWidget = lazy(() => import('../components/TaskListWidget').then(m => ({ default: m.TaskListWidget })));
+const AgendaWidget = lazy(() => import('../components/AgendaWidget'));
+const ActivityTimelineWidget = lazy(() => import('../components/ActivityTimelineWidget'));
+const ContasReceberWidget = lazy(() => import('../components/ContasReceberWidget'));
+const ContasPagarWidget = lazy(() => import('../components/ContasPagarWidget'));
+
+const RevenueKpiWidget = lazy(() => import('../components/PremiumKpiWidgets').then(m => ({ default: m.RevenueKpiWidget })));
+const MrrKpiWidget = lazy(() => import('../components/PremiumKpiWidgets').then(m => ({ default: m.MrrKpiWidget })));
+const ClientsKpiWidget = lazy(() => import('../components/PremiumKpiWidgets').then(m => ({ default: m.ClientsKpiWidget })));
+const ProjectsKpiWidget = lazy(() => import('../components/PremiumKpiWidgets').then(m => ({ default: m.ProjectsKpiWidget })));
+const LeadsKpiWidget = lazy(() => import('../components/PremiumKpiWidgets').then(m => ({ default: m.LeadsKpiWidget })));
 
 // Import placeholder
 import { PlaceholderWidget } from '../components/PlaceholderWidget';

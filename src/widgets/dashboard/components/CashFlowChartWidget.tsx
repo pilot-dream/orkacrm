@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   LineChart, 
@@ -33,7 +34,7 @@ const getLast6Months = () => {
 import { useEffect } from 'react';
 import { ChartSkeleton } from '../../skeletons/WidgetSkeletons';
 
-export default function CashFlowChartWidget() {
+const CashFlowChartWidget = React.memo(() => {
   const navigate = useNavigate();
   const transactions = useFinanceiroStore((state) => state.transactions);
   const loading = useFinanceiroStore((state) => state.loading);
@@ -153,4 +154,6 @@ export default function CashFlowChartWidget() {
       </div>
     </div>
   );
-}
+});
+
+export default CashFlowChartWidget;

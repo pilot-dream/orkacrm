@@ -11,7 +11,8 @@ import { useClienteStore } from '../../entities/cliente/model/store';
 import { useProductStore } from '../../entities/produto/model/store';
 import { usePropostaStore } from '../../entities/proposta/model/store';
 import { useAuthStore } from '../../entities/usuario/model/store';
-import { KanbanBoard } from './components/KanbanBoard';
+const KanbanBoard = React.lazy(() => import('./components/KanbanBoard').then(m => ({ default: m.KanbanBoard })));
+import { KanbanSkeleton } from '../../widgets/skeletons/KanbanSkeleton';
 import { LeadFiles } from './components/LeadFiles';
 import type { Lead, LeadStage, NegotiatedProduct } from '../../entities/lead/model/types';
 import type { Proposta } from '../../entities/proposta/model/types';
@@ -691,7 +692,7 @@ export default function LeadsPage() {
   };
 
   // Drag and Drop implementation with business rules validations
-  const handleLeadMove = async (leadId: string, targetStage: LeadStage) => {
+  const handleLeadMove = React.useCallback(async (leadId: string, targetStage: LeadStage) => {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
     const oldStage = lead.stage;
@@ -759,7 +760,7 @@ export default function LeadsPage() {
     } catch (err: any) {
       alert(`Erro ao salvar alteração de estágio: ${err.message || 'Erro de conexão.'}`);
     }
-  };
+  }, [leads, updateLeadStage, mockOfflineConversion, fetchClientes]);
 
   // Add Comment Action
   const handleAddComment = async (e: React.FormEvent) => {
@@ -836,11 +837,16 @@ export default function LeadsPage() {
   };
 
   // Open Delete Confirm Dialog
-  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+  const handleLeadClick = React.useCallback((leadId: string) => {
+    setSelectedLeadId(leadId);
+    setIsDetailDrawerOpen(true);
+  }, []);
+
+  const handleDeleteClick = React.useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setLeadToDeleteId(id);
     setIsDeleteConfirmOpen(true);
-  };
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (leadToDeleteId) {
@@ -964,16 +970,15 @@ export default function LeadsPage() {
 
       {/* Kanban Board View */}
       {viewMode === 'kanban' ? (
-        <KanbanBoard
-          leads={sortedLeads}
-          stages={STAGES}
-          onLeadMove={handleLeadMove}
-          onLeadClick={(leadId) => {
-            setSelectedLeadId(leadId);
-            setIsDetailDrawerOpen(true);
-          }}
-          onLeadDelete={handleDeleteClick}
-        />
+        <React.Suspense fallback={<KanbanSkeleton />}>
+          <KanbanBoard
+            leads={sortedLeads}
+            stages={STAGES}
+            onLeadMove={handleLeadMove}
+            onLeadClick={handleLeadClick}
+            onLeadDelete={handleDeleteClick}
+          />
+        </React.Suspense>
       ) : (
         /* List View */
         <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--border-color)', overflowX: 'auto' }}>

@@ -63,7 +63,9 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ instanceId, widget
     >
       {/* The component itself */}
       <div style={{ height: '100%', pointerEvents: isEditMode ? 'none' : 'auto' }}>
-        {children}
+        <React.Suspense fallback={<div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card)', borderRadius: '12px' }}><div className="animate-pulse" style={{ width: '40px', height: '40px', backgroundColor: 'var(--border-color)', borderRadius: '50%' }}></div></div>}>
+          {children}
+        </React.Suspense>
       </div>
 
       {/* Overlay just for Edit Mode */}

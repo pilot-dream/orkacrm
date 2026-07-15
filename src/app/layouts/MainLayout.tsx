@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Sidebar } from '../../widgets/sidebar/Sidebar';
@@ -6,6 +6,7 @@ import { useAuthStore } from '../../entities/usuario/model/store';
 import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
 import { checkOverdueItems } from '../../entities/usuario/api/notificationHelper';
+import { PushConsentBanner } from '../../widgets/notifications/components/PushConsentBanner';
 
 export const MainLayout: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -31,6 +32,19 @@ export const MainLayout: React.FC = () => {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const tasks = useTaskStore((state) => state.tasks);
   const projects = useProjectStore((state) => state.projects);
+
+  // Track layout transition for smooth grid resize
+  const [isLayoutTransitioning, setIsLayoutTransitioning] = useState(false);
+  const prevExpanded = useRef(isExpanded);
+
+  useEffect(() => {
+    if (prevExpanded.current !== isExpanded) {
+      setIsLayoutTransitioning(true);
+      const timer = setTimeout(() => setIsLayoutTransitioning(false), 350);
+      prevExpanded.current = isExpanded;
+      return () => clearTimeout(timer);
+    }
+  }, [isExpanded]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -64,7 +78,7 @@ export const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className={`app-container ${isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+    <div className={`app-container ${isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'} ${isLayoutTransitioning ? 'layout-transitioning' : ''}`}>
       {/* Mobile Header Bar */}
       <div className="mobile-header-bar">
         <button 
@@ -161,7 +175,7 @@ export const MainLayout: React.FC = () => {
       />
 
       <div className="main-canvas">
-        <main style={{ flexGrow: 1, backgroundColor: 'var(--bg-main)', position: 'relative' }}>
+        <main className="will-change-transform transform-gpu" style={{ flexGrow: 1, backgroundColor: 'var(--bg-main)', position: 'relative' }}>
           <Outlet />
         </main>
       </div>
@@ -187,6 +201,9 @@ export const MainLayout: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* PWA Push Notification Consent Banner */}
+      <PushConsentBanner />
     </div>
   );
 };

@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside 
-      className={`sidebar ${isOpen ? 'open' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
+      className={`sidebar transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width,transform] transform-gpu ${isOpen ? 'open' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}
     >

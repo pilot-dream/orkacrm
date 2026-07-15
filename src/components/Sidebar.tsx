@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const initials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width,transform] transform-gpu ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo" style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <img 
           src={orkaLogo} 

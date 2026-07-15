@@ -21,7 +21,7 @@ interface KanbanBoardProps {
   stages: { id: LeadStage; label: string; color: string }[];
 }
 
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({
+export const KanbanBoard: React.FC<KanbanBoardProps> = React.memo(({
   leads,
   onLeadMove,
   onLeadClick,
@@ -101,7 +101,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <KanbanCard
                   key={lead.id}
                   lead={lead}
-                  onClick={() => onLeadClick(lead.id)}
+                  onClick={onLeadClick}
                   onDelete={onLeadDelete}
                 />
               ))}
@@ -128,4 +128,4 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </DragOverlay>
     </DndContext>
   );
-};
+});

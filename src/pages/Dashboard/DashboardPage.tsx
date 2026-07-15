@@ -12,6 +12,7 @@ import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
 import { MobileDashboard } from './components/MobileDashboard';
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
+import { ChartSkeleton } from '../../widgets/skeletons/WidgetSkeletons';
 
 const ResponsiveGridLayout = (props: any) => {
   const [width, setWidth] = useState(1200);
@@ -19,13 +20,23 @@ const ResponsiveGridLayout = (props: any) => {
 
   useEffect(() => {
     if (!ref.current) return;
+    
+    let timeoutId: any;
+    
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) {
-        setWidth(entries[0].contentRect.width);
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setWidth(entries[0].contentRect.width);
+        }, 150);
       }
     });
+    
     observer.observe(ref.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
@@ -222,8 +233,8 @@ export default function DashboardPage() {
               </button>
 
               {/* Reset Button (Animated in Edit Mode) */}
-              <div style={{
-                transition: 'all 0.3s ease-in-out 0.05s',
+              <div className="will-change-[width,opacity,transform] transform-gpu whitespace-nowrap" style={{
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s, opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s',
                 width: isEditMode ? '144px' : '0px',
                 opacity: isEditMode ? 1 : 0,
                 transform: isEditMode ? 'scale(1)' : 'scale(0.95)',
@@ -307,9 +318,9 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', width: '100%', marginTop: '12px' }}>
               {/* Filter Dropdown (Disappears in Edit Mode on Mobile) */}
-              <div ref={filterRef} style={{ 
+              <div ref={filterRef} className="will-change-[width,opacity,transform] transform-gpu whitespace-nowrap" style={{ 
                 position: 'relative',
-                transition: 'all 0.3s ease-in-out',
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 flex: isEditMode ? '0 0 0px' : '1 1 0%',
                 minWidth: isEditMode ? '0px' : '140px',
                 opacity: isEditMode ? 0 : 1,
@@ -342,8 +353,8 @@ export default function DashboardPage() {
                 )}
               </div>
               {/* Refresh Button (Disappears in Edit Mode on Mobile) */}
-              <div style={{
-                transition: 'all 0.3s ease-in-out',
+              <div className="will-change-[width,opacity,transform] transform-gpu whitespace-nowrap" style={{
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 width: isEditMode ? '0px' : '36px',
                 opacity: isEditMode ? 0 : 1,
                 transform: isEditMode ? 'scale(0.95)' : 'scale(1)',
@@ -369,8 +380,8 @@ export default function DashboardPage() {
                 </button>
               </div>
               {/* Reset Button (Animated in Edit Mode) */}
-              <div style={{
-                transition: 'all 0.3s ease-in-out 0.05s',
+              <div className="will-change-[width,opacity,transform] transform-gpu whitespace-nowrap" style={{
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s, opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s',
                 width: isEditMode ? '144px' : '0px',
                 opacity: isEditMode ? 1 : 0,
                 transform: isEditMode ? 'scale(1)' : 'scale(0.95)',
@@ -429,9 +440,10 @@ export default function DashboardPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s, border-color 0.3s, color 0.3s',
                   overflow: 'hidden'
                 }}
+                className="will-change-[width,opacity,transform] transform-gpu whitespace-nowrap"
                 title={isEditMode ? 'Concluir' : 'Personalizar'}
               >
                 <Settings size={16} color={isEditMode ? '#fff' : 'var(--text-secondary)'} style={{ flexShrink: 0 }} />
@@ -474,7 +486,7 @@ export default function DashboardPage() {
                 return (
                   <div key={item.i} data-grid={{ x: item.x, y: item.y, w: item.w, h: item.h, minW: manifest.minWidth, minH: manifest.minHeight }}>
                     <WidgetWrapper instanceId={item.i} widgetId={item.widgetId} config={item.config} isEditMode={isEditMode}>
-                      <React.Suspense fallback={<div style={{ height: '100%', background: 'var(--bg-card)', borderRadius: '12px' }} />}>
+                      <React.Suspense fallback={<ChartSkeleton height="100%" />}>
                         <WidgetComponent config={item.config} />
                       </React.Suspense>
                     </WidgetWrapper>
