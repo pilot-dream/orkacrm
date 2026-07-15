@@ -148,7 +148,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 4. CADASTRAR O AGENDAMENTO DE CHECAGEM (CRON JOB DE 1 MINUTO)
 -- Remove o agendamento antigo caso exista para evitar duplicidade de execuções
-SELECT cron.unschedule('check-task-reminders');
+SELECT cron.unschedule(jobname) FROM cron.job WHERE jobname = 'check-task-reminders';
 
 SELECT cron.schedule(
   'check-task-reminders',   -- Nome identificador único do cron job
@@ -159,7 +159,7 @@ SELECT cron.schedule(
 -- 5. CADASTRAR CRON JOB DE REINICIALIZAÇÃO DIÁRIA (MEIA-NOITE)
 -- Limpa a flag notification_sent para tarefas pendentes futuras ou reagendadas.
 -- Isso é útil se uma tarefa recorrente ou reagendada para o futuro precisar receber novos lembretes.
-SELECT cron.unschedule('reset-daily-reminders');
+SELECT cron.unschedule(jobname) FROM cron.job WHERE jobname = 'reset-daily-reminders';
 
 SELECT cron.schedule(
   'reset-daily-reminders',
