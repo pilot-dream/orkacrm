@@ -251,7 +251,7 @@ export default function AnotacoesPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 8 } })
   );
 
   const handleSelectBoard = (boardId: string) => {
