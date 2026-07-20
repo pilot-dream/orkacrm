@@ -58,6 +58,7 @@ export const renderCanvasLinks = (text: string) => {
           className="note-auto-link inline-flex items-center gap-1 font-semibold"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
         >
           {part}
           <ExternalLink size={11} className="inline ml-0.5" />
@@ -84,7 +85,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   // Estilo padrão para novos post-its ('solid' | 'semi' | 'outline')
   const [defaultStyleMode, setDefaultStyleMode] = useState<'solid' | 'semi' | 'outline'>('solid');
 
-  // Panning com o mouse
+  // Panning com o mouse ou toque
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const startPanRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -142,6 +143,47 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     setDraggingCardId(null);
   };
 
+  // Touch handlers para mobile
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 1 && (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('canvas-world'))) {
+      setIsPanning(true);
+      const touch = e.touches[0];
+      startPanRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isPanning && e.touches.length === 1) {
+      const touch = e.touches[0];
+      setPan({
+        x: touch.clientX - startPanRef.current.x,
+        y: touch.clientY - startPanRef.current.y,
+      });
+    } else if (draggingCardId && e.touches.length === 1) {
+      const touch = e.touches[0];
+      const dx = (touch.clientX - cardStartPosRef.current.mouseX) / scale;
+      const dy = (touch.clientY - cardStartPosRef.current.mouseY) / scale;
+
+      onUpdateNotes(
+        canvasNotes.map((note) => {
+          if (note.id === draggingCardId) {
+            return {
+              ...note,
+              x: Math.round(cardStartPosRef.current.cardX + dx),
+              y: Math.round(cardStartPosRef.current.cardY + dy),
+            };
+          }
+          return note;
+        })
+      );
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+    setDraggingCardId(null);
+  };
+
   const handleCardMouseDown = (e: React.MouseEvent, note: CanvasNoteItem) => {
     e.stopPropagation();
     setDraggingCardId(note.id);
@@ -150,6 +192,18 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       cardY: note.y,
       mouseX: e.clientX,
       mouseY: e.clientY,
+    };
+  };
+
+  const handleCardTouchStart = (e: React.TouchEvent, note: CanvasNoteItem) => {
+    e.stopPropagation();
+    setDraggingCardId(note.id);
+    const touch = e.touches[0];
+    cardStartPosRef.current = {
+      cardX: note.x,
+      cardY: note.y,
+      mouseX: touch.clientX,
+      mouseY: touch.clientY,
     };
   };
 
@@ -177,7 +231,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     );
   };
 
-  const cycleCardStyleMode = (note: CanvasNoteItem, e: React.MouseEvent) => {
+  const cycleCardStyleMode = (note: CanvasNoteItem, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     const currentMode = note.styleMode || 'solid';
     let nextMode: 'solid' | 'semi' | 'outline' = 'solid';
@@ -189,7 +243,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     handleUpdateNoteField(note.id, { styleMode: nextMode });
   };
 
-  const handleDeleteNote = (id: string, e: React.MouseEvent) => {
+  const handleDeleteNote = (id: string, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     onUpdateNotes(canvasNotes.filter((note) => note.id !== id));
   };
@@ -218,6 +272,9 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       onMouseMove={handleCanvasMouseMove}
       onMouseUp={handleCanvasMouseUp}
       onMouseLeave={handleCanvasMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Dock Flutuante Superior (Estilos & Cores) */}
       <div className="canvas-toolbar">
@@ -299,6 +356,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
                 top: `${note.y}px`,
               }}
               onMouseDown={(e) => handleCardMouseDown(e, note)}
+              onTouchStart={(e) => handleCardTouchStart(e, note)}
             >
               <div className="canvas-card-header">
                 <input
@@ -308,11 +366,13 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
                   onChange={(e) => handleUpdateNoteField(note.id, { title: e.target.value })}
                   placeholder="Título..."
                   onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button
                     onClick={(e) => cycleCardStyleMode(note, e)}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -335,6 +395,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
                   <button
                     onClick={(e) => handleDeleteNote(note.id, e)}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -356,6 +417,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
                 onChange={(e) => handleUpdateNoteField(note.id, { body: e.target.value })}
                 placeholder="Escreva aqui livremente..."
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               />
 
               <div style={{ fontSize: '0.72rem', opacity: 0.8, paddingTop: '4px' }}>

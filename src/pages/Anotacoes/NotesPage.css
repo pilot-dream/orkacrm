@@ -72,6 +72,10 @@
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
+.mobile-only-back-btn {
+  display: none !important;
+}
+
 /* Base Main Content View Area */
 .notes-main-area {
   flex: 1;
@@ -953,4 +957,140 @@
   outline: none;
   resize: vertical;
   font-family: inherit;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE E ADAPTAÇÃO TOTAL PARA MOBILE (max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .notes-page-container {
+    height: calc(100vh - 120px);
+    gap: 10px;
+  }
+
+  .notes-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .notes-title-group h1 {
+    font-size: 1.1rem !important;
+  }
+
+  .notes-mode-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .notes-mode-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .notes-mode-btn span {
+    display: inline-block;
+  }
+
+  .mobile-only-back-btn {
+    display: inline-flex !important;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Notion Mobile 2-Screen Layout */
+  .notion-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    border-right: none !important;
+  }
+
+  .notion-editor-right {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+
+  .notion-editor-toolbar {
+    padding: 10px 14px !important;
+  }
+
+  .notion-editor-body {
+    padding: 16px !important;
+  }
+
+  .notion-title-input {
+    font-size: 1.3rem !important;
+  }
+
+  /* Trello / Kanban Mobile Cards & Scroll */
+  .kanban-board-scroll {
+    padding: 10px !important;
+    gap: 12px !important;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kanban-column {
+    width: 86vw !important;
+    min-width: 86vw !important;
+    max-width: 86vw !important;
+    scroll-snap-align: center;
+  }
+
+  /* Canvas Mobile Floating Controls */
+  .canvas-toolbar {
+    top: 10px !important;
+    padding: 6px 12px !important;
+    gap: 10px !important;
+    max-width: 94vw !important;
+  }
+
+  .canvas-style-icon-btn, .canvas-color-dot {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .bottom-boards-bar {
+    bottom: 12px !important;
+    left: 10px !important;
+    max-width: 60vw !important;
+    padding: 3px 6px !important;
+  }
+
+  .board-tab {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .canvas-zoom-controls {
+    bottom: 12px !important;
+    right: 10px !important;
+    padding: 3px 6px !important;
+  }
+
+  .canvas-zoom-btn {
+    padding: 4px !important;
+  }
+
+  /* Modals Mobile Bottom Sheet Style */
+  .kanban-modal {
+    max-width: 94vw !important;
+    margin: 0 auto;
+    border-radius: 16px !important;
+  }
+
+  .kanban-modal-header {
+    padding: 14px 18px !important;
+  }
+
+  .kanban-modal-body {
+    padding: 16px !important;
+  }
+
+  .kanban-modal-footer {
+    padding: 12px 18px !important;
+  }
 }

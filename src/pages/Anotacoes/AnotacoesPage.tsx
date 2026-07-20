@@ -10,7 +10,8 @@ import {
   Maximize2,
   ExternalLink,
   Edit3,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import {
   DndContext,
@@ -166,6 +167,9 @@ const INITIAL_BOARDS: BoardData[] = [
 export default function AnotacoesPage() {
   const [activeMode, setActiveMode] = useState<'editor' | 'kanban' | 'canvas'>('kanban');
 
+  // Controle de Visualização no Mobile (Notion Editor 2-Screen Flow)
+  const [mobileNotionView, setMobileNotionView] = useState<'list' | 'editor'>('list');
+
   // Gerenciamento de Múltiplos Quadros
   const [boards, setBoards] = useState<BoardData[]>(() => {
     try {
@@ -190,7 +194,7 @@ export default function AnotacoesPage() {
   const cards = activeBoard.cards;
   const canvasNotes = activeBoard.canvasNotes;
 
-  // Modais de Quadro no tema do sistema (Sem window.prompt/confirm)
+  // Modais de Quadro no tema do sistema
   const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
   const [boardNameInput, setBoardNameInput] = useState('');
   const [boardToDeleteId, setBoardToDeleteId] = useState<string | null>(null);
@@ -484,7 +488,7 @@ export default function AnotacoesPage() {
           {/* MODE 1: NOTION SIDE-BY-SIDE EDITOR */}
           {activeMode === 'editor' && (
             <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-              <div className="notion-sidebar">
+              <div className={`notion-sidebar ${mobileNotionView === 'editor' ? 'mobile-hidden' : ''}`}>
                 <div className="notion-sidebar-header">
                   <div style={{ position: 'relative' }}>
                     <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
@@ -500,7 +504,10 @@ export default function AnotacoesPage() {
                   <button
                     className="primary-btn"
                     style={{ width: '100%', padding: '8px', fontSize: '0.82rem', justifyContent: 'center' }}
-                    onClick={() => handleAddCard(columns[0]?.id || 'col-todo')}
+                    onClick={() => {
+                      handleAddCard(columns[0]?.id || 'col-todo');
+                      setMobileNotionView('editor');
+                    }}
                   >
                     <Plus size={14} />
                     <span>Nova Nota</span>
@@ -515,7 +522,10 @@ export default function AnotacoesPage() {
                       <div
                         key={card.id}
                         className={`notion-note-item ${isSelected ? 'active' : ''}`}
-                        onClick={() => setActiveNotionCardId(card.id)}
+                        onClick={() => {
+                          setActiveNotionCardId(card.id);
+                          setMobileNotionView('editor');
+                        }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-main)' }}>
@@ -538,11 +548,21 @@ export default function AnotacoesPage() {
               </div>
 
               {/* Editor central */}
-              <div className="notion-editor-right">
+              <div className={`notion-editor-right ${mobileNotionView === 'list' ? 'mobile-hidden' : ''}`}>
                 {selectedNotionCard ? (
                   <>
                     <div className="notion-editor-toolbar">
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {/* Botão de Voltar exclusivo no Mobile */}
+                        <button
+                          className="notes-mode-btn mobile-only-back-btn"
+                          onClick={() => setMobileNotionView('list')}
+                          style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                        >
+                          <ArrowLeft size={13} />
+                          <span>Notas</span>
+                        </button>
+
                         <button
                           className={`notes-mode-btn ${notionTab === 'write' ? 'active' : ''}`}
                           onClick={() => setNotionTab('write')}
