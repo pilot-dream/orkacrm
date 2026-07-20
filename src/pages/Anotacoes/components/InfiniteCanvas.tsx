@@ -6,7 +6,6 @@ import {
   Trash2, 
   Move, 
   ExternalLink,
-  StickyNote,
   Type,
   Square,
   Maximize2,
@@ -440,15 +439,16 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
             <LayoutGrid size={13} />
             <span>{board.name}</span>
             {boards.length > 1 && board.id === activeBoardId && (
-              <X
-                size={12}
-                style={{ marginLeft: '4px', opacity: 0.7 }}
+              <span
+                style={{ marginLeft: '4px', opacity: 0.7, display: 'inline-flex', alignItems: 'center' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDeleteBoard(board.id);
                 }}
                 title="Excluir este quadro"
-              />
+              >
+                <X size={12} />
+              </span>
             )}
           </button>
         ))}

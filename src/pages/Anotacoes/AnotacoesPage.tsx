@@ -721,15 +721,16 @@ export default function AnotacoesPage() {
                     <LayoutGrid size={13} />
                     <span>{board.name}</span>
                     {boards.length > 1 && board.id === activeBoardId && (
-                      <X
-                        size={12}
-                        style={{ marginLeft: '4px', opacity: 0.7 }}
+                      <span
+                        style={{ marginLeft: '4px', opacity: 0.7, display: 'inline-flex', alignItems: 'center' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenDeleteBoardModal(board.id);
                         }}
                         title="Excluir este quadro"
-                      />
+                      >
+                        <X size={12} />
+                      </span>
                     )}
                   </button>
                 ))}
@@ -885,6 +886,10 @@ export default function AnotacoesPage() {
           categories={CATEGORIES}
           onClose={() => setEditingCard(null)}
           onSave={handleSaveCard}
+          onDelete={(cardId) => {
+            handleDeleteCard(cardId);
+            setEditingCard(null);
+          }}
         />
       </div>
     </PageContainer>
