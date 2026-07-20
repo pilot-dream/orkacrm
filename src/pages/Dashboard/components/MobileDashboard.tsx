@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { TrendingUp, Users, Target, FolderKanban, DollarSign, Expand, MoreVertical, RotateCw, Copy, Maximize2, EyeOff, Trash2 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import { useFinanceiroStore } from '../../../entities/financeiro/model/store';
@@ -8,6 +8,7 @@ import { useLeadStore } from '../../../entities/lead/model/store';
 import { useFilterStore, isDateInRange } from '../../../entities/dashboard/model/filterStore';
 import { useDashboardStore } from '../../../entities/dashboard/model/store';
 import { TaskListWidget } from '../../../widgets/dashboard/components/TaskListWidget';
+import { WIDGET_REGISTRY } from '../../../widgets/dashboard/core/widgetRegistry';
 
 import { queryClient } from '../../../shared/api/queryClient';
 import {
@@ -143,8 +144,16 @@ const SortableMobileWidget: React.FC<{ id: string; isEditMode?: boolean; onRemov
       <div style={{ transition: 'all 0.2s', filter: isEditMode ? 'brightness(0.9)' : 'none', border: isEditMode ? '2px dashed rgba(59,130,246,0.5)' : 'none', borderRadius: '12px', boxShadow: isDragging ? '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)' : 'none' }}>
         {isTaskList ? (
           <div style={{ pointerEvents: isEditMode ? 'none' : 'auto' }}><TaskListWidget /></div>
+        ) : data ? (
+          <MobileKpiCard {...data} isEditMode={isEditMode} isDragging={isDragging} />
+        ) : WIDGET_REGISTRY[baseId]?.component ? (
+          <div style={{ pointerEvents: isEditMode ? 'none' : 'auto', overflow: 'hidden', borderRadius: '12px', background: 'var(--bg-card)' }}>
+            <Suspense fallback={<div style={{ padding: '20px', color: '#fff' }}>Carregando widget...</div>}>
+              {React.createElement(WIDGET_REGISTRY[baseId].component)}
+            </Suspense>
+          </div>
         ) : (
-          data ? <MobileKpiCard {...data} isEditMode={isEditMode} isDragging={isDragging} /> : <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '12px', color: '#fff' }}>Widget não encontrado: {baseId}</div>
+          <div style={{ padding: '20px', background: 'var(--bg-card)', borderRadius: '12px', color: '#fff' }}>Widget não encontrado: {baseId}</div>
         )}
       </div>
     </div>
@@ -236,7 +245,9 @@ export const MobileDashboard: React.FC<{ isEditMode?: boolean }> = ({ isEditMode
     .filter(t => t.type === 'income' && t.status === 'Pago' && isDateInRange(t.dueDate, startDate, endDate))
     .reduce((acc, curr) => acc + curr.value, 0);
 
-  const mrr = 0; // Se houver campo recorrente usaríamos aqui.
+  const mrr = clientes
+    .filter(c => c.status === 'active')
+    .reduce((acc, c) => acc + (c.mrrValue || c.monthlySpend || c.monthlyRevenue || 0), 0);
   const ativos = projects.filter(p => p.stage === 'desenvolvimento').length;
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);

@@ -9,10 +9,12 @@ import {
   DollarSign,
   Settings,
   Pin,
-  Package
+  Package,
+  StickyNote
 } from 'lucide-react';
 import orkaLogo from '../../assets/orka_logo.png';
-import orkaLogoIcon from '../../assets/orka_logo_icon.png';
+// Use the public logo for the icon since orka_logo_icon.png might be the full logo by mistake
+const orkaLogoIcon = '/logo-192.png';
 import { useAuthStore } from '../../entities/usuario/model/store';
 
 interface SidebarProps {
@@ -47,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'projects', label: 'Projetos', icon: Briefcase, path: '/projetos' },
     { id: 'tasks', label: 'Tarefas', icon: CheckSquare, path: '/tarefas' },
     { id: 'financial', label: 'Financeiro', icon: DollarSign, path: '/financeiro' },
+    { id: 'notes', label: 'Anotações', icon: StickyNote, path: '/anotacoes' },
     { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
 
@@ -59,6 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'projects': import('../../pages/Projetos/ProjetosPage'); break;
       case 'tasks': import('../../pages/Tarefas/TarefasPage'); break;
       case 'financial': import('../../pages/Financeiro/FinanceiroPage'); break;
+      case 'notes': import('../../pages/Anotacoes/AnotacoesPage'); break;
       case 'settings': import('../../pages/Configuracoes/ConfiguracoesPage'); break;
     }
   };

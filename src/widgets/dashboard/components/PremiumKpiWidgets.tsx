@@ -110,8 +110,10 @@ export const RevenueKpiWidget = React.memo(({ config, onClick }: { config?: any,
 });
 
 export const MrrKpiWidget = React.memo(({ config, onClick }: { config?: any, onClick?: () => void }) => {
-  const { isLoading } = useFinanceiroQuery();
-  const mrr = 0; // Exemplo simplificado
+  const { data: clientes = [], isLoading } = useClientesQuery();
+  const mrr = clientes
+    .filter((c: any) => c.status === 'active')
+    .reduce((acc: number, c: any) => acc + (c.mrrValue || c.monthlySpend || c.monthlyRevenue || 0), 0);
 
   return (
     <KpiCard

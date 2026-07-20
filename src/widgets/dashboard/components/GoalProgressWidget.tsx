@@ -18,7 +18,9 @@ export default function GoalProgressWidget() {
     return <ChartSkeleton height="320px" />;
   }
 
-  const mrrTotal = clientes.reduce((acc, c) => acc + (c.monthlySpend || 0), 0);
+  const mrrTotal = clientes
+    .filter(c => c.status === 'active')
+    .reduce((acc, c) => acc + (c.mrrValue || c.monthlySpend || c.monthlyRevenue || 0), 0);
   
   const targetMrr = 50000; // Company Target
   const percentage = Math.min(Math.round((mrrTotal / targetMrr) * 100), 100);

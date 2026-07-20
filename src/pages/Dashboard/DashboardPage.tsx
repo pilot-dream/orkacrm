@@ -12,6 +12,7 @@ import { WidgetWrapper } from '../../widgets/dashboard/core/WidgetWrapper';
 import { WidgetLibraryDrawer } from '../../widgets/dashboard/components/WidgetLibraryDrawer';
 import { MobileDashboard } from './components/MobileDashboard';
 import { DashboardHeader } from '../../widgets/dashboard/components/DashboardHeader';
+import { DailyBriefing } from '../../widgets/dashboard/components/DailyBriefing';
 import { ChartSkeleton } from '../../widgets/skeletons/WidgetSkeletons';
 
 const ResponsiveGridLayout = (props: any) => {
@@ -456,6 +457,8 @@ export default function DashboardPage() {
             </div>
           </header>
         )}
+
+        <DailyBriefing />
 
         {isMobile ? (
           <MobileDashboard isEditMode={isEditMode} />

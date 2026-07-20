@@ -16,8 +16,8 @@ export default defineConfig({
         name: 'ORKA CRM',
         short_name: 'ORKA CRM',
         description: 'Gerenciador de Relacionamento com Clientes Premium',
-        theme_color: '#020617',
-        background_color: '#020617',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

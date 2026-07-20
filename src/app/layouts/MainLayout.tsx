@@ -7,6 +7,8 @@ import { useTaskStore } from '../../entities/tarefa/model/store';
 import { useProjectStore } from '../../entities/projeto/model/store';
 import { checkOverdueItems } from '../../entities/usuario/api/notificationHelper';
 import { PushConsentBanner } from '../../widgets/notifications/components/PushConsentBanner';
+import { PwaInstallBanner } from '../../widgets/pwa/components/PwaInstallBanner';
+import { supabaseNotifications } from '../../lib/supabaseService';
 
 export const MainLayout: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -18,7 +20,32 @@ export const MainLayout: React.FC = () => {
   const userProfile = useAuthStore((state) => state.userProfile);
   const notifications = useAuthStore((state) => state.notifications);
   const markNotificationAsRead = useAuthStore((state) => state.markNotificationAsRead);
+  const markAllNotificationsAsRead = useAuthStore((state) => state.markAllNotificationsAsRead);
+  const clearNotifications = useAuthStore((state) => state.clearNotifications);
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleMarkAsRead = async (id: string) => {
+    markNotificationAsRead(id);
+    if (userProfile?.email) {
+      await supabaseNotifications.markAsRead(id);
+    }
+  };
+
+  const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    markAllNotificationsAsRead();
+    if (userProfile?.email) {
+      await supabaseNotifications.markAllAsRead(userProfile.email);
+    }
+  };
+
+  const handleClearNotifications = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications();
+    if (userProfile?.email) {
+      await supabaseNotifications.deleteAll(userProfile.email);
+    }
+  };
 
   // Sidebar hover & pin states
   const [isPinned, setIsPinned] = useState<boolean>(() => {
@@ -112,12 +139,22 @@ export const MainLayout: React.FC = () => {
                 </div>
                 <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
                   {notifications.map(notif => (
-                    <div key={notif.id} onClick={() => markNotificationAsRead(notif.id)} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-color)', opacity: notif.read ? 0.6 : 1, background: notif.read ? 'transparent' : 'rgba(45,140,255,0.05)' }}>
+                    <div key={notif.id} onClick={() => handleMarkAsRead(notif.id)} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-color)', opacity: notif.read ? 0.6 : 1, background: notif.read ? 'transparent' : 'rgba(45,140,255,0.05)' }}>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: '#fff' }}>{notif.text}</p>
                     </div>
                   ))}
                   {notifications.length === 0 && <div style={{ padding: '16px', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Nenhuma notificação nova.</div>}
                 </div>
+                {notifications.length > 0 && (
+                  <div onClick={(e) => e.stopPropagation()} style={{ padding: '8px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '8px' }}>
+                    <button onClick={handleMarkAllAsRead} style={{ flex: 1, padding: '6px', fontSize: '0.75rem', backgroundColor: 'transparent', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', borderRadius: '4px', cursor: 'pointer' }}>
+                      Marcar Lidas
+                    </button>
+                    <button onClick={handleClearNotifications} style={{ flex: 1, padding: '6px', fontSize: '0.75rem', backgroundColor: 'transparent', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', borderRadius: '4px', cursor: 'pointer' }}>
+                      Limpar Todas
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </button>
@@ -204,6 +241,9 @@ export const MainLayout: React.FC = () => {
       
       {/* PWA Push Notification Consent Banner */}
       <PushConsentBanner />
+      
+      {/* PWA App Install Banner for Mobile Browsers */}
+      <PwaInstallBanner />
     </div>
   );
 };

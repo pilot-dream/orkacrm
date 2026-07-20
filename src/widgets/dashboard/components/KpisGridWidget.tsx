@@ -45,7 +45,9 @@ export default function KpisGridWidget() {
   };
 
   // KPIs
-  const mrrTotal = clientes.reduce((acc, c) => acc + (c.monthlySpend || 0), 0);
+  const mrrTotal = clientes
+    .filter(c => c.status === 'active')
+    .reduce((acc, c) => acc + (c.mrrValue || c.monthlySpend || c.monthlyRevenue || 0), 0);
   const activeClientesCount = clientes.filter(c => c.status === 'active').length;
   const activeLeadsCount = leads.filter(l => l.stage !== 'fechado' && l.stage !== 'perdido').length;
   const ongoingProjectsCount = projects.filter(p => p.stage !== 'concluido').length;

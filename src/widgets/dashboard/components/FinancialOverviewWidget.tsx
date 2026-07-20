@@ -84,13 +84,12 @@ const formatCurrency = (val: number) => {
 
 export const MrrContratadoWidget = () => {
   const { clientes, fetchClientes, loading } = useClienteStore();
-  const { startDate, endDate } = useFilterStore();
-  
+
   useEffect(() => { fetchClientes(); }, []);
   
   const mrrContratado = clientes
-    .filter(c => c.status === 'active' && isDateInRange(c.createdAt || '', startDate, endDate))
-    .reduce((acc, curr) => acc + (curr.monthlySpend || 0), 0);
+    .filter(c => c.status === 'active')
+    .reduce((acc, c) => acc + (c.mrrValue || c.monthlySpend || c.monthlyRevenue || 0), 0);
 
   return <GenericFinancialCard loading={loading && clientes.length === 0} label="MRR CONTRATADO" value={formatCurrency(mrrContratado)} sub="Base de clientes ativos" icon={TrendingUp} color="#C084FC" />;
 };

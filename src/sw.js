@@ -1,4 +1,9 @@
 import { precacheAndRoute } from 'workbox-precaching';
+import { clientsClaim } from 'workbox-core';
+
+// Force immediate activation and control of clients when a new service worker is installed
+self.skipWaiting();
+clientsClaim();
 
 // Precaching do Vite
 precacheAndRoute(self.__WB_MANIFEST || []);

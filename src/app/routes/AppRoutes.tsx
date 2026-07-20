@@ -10,6 +10,7 @@ const ProdutosPage = lazy(() => import('../../pages/Produtos/ProdutosPage'));
 const ProjetosPage = lazy(() => import('../../pages/Projetos/ProjetosPage'));
 const TarefasPage = lazy(() => import('../../pages/Tarefas/TarefasPage'));
 const FinanceiroPage = lazy(() => import('../../pages/Financeiro/FinanceiroPage'));
+const AnotacoesPage = lazy(() => import('../../pages/Anotacoes/AnotacoesPage'));
 const ConfiguracoesPage = lazy(() => import('../../pages/Configuracoes/ConfiguracoesPage'));
 const LoginPage = lazy(() => import('../../pages/Login/LoginPage'));
 
@@ -63,6 +64,10 @@ export const AppRoutes: React.FC = () => {
         
         <Route path="financeiro" element={
           <Suspense fallback={<TableSkeleton />}><FinanceiroPage /></Suspense>
+        } />
+        
+        <Route path="anotacoes" element={
+          <Suspense fallback={<TableSkeleton />}><AnotacoesPage /></Suspense>
         } />
         
         <Route path="configuracoes" element={

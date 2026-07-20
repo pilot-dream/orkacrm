@@ -40,7 +40,31 @@ export class GlobalErrorBoundary extends Component<Props, State> {
               : this.state.error?.message?.toString()}
           </p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={async () => {
+              try {
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                  const registrations = await navigator.serviceWorker.getRegistrations();
+                  for (const registration of registrations) {
+                    await registration.unregister();
+                  }
+                }
+                // Clear all cache storage
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  for (const key of keys) {
+                    await caches.delete(key);
+                  }
+                }
+              } catch (e) {
+                console.error('Erro ao limpar cache/service worker:', e);
+              }
+              
+              // Force reload bypassing browser cache with a timestamp
+              const url = new URL(window.location.href);
+              url.searchParams.set('reload', Date.now().toString());
+              window.location.href = url.toString();
+            }}
             style={{ padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
           >
             Recarregar Página

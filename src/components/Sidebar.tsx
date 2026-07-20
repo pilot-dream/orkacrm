@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Profile } from '../lib/supabaseService';
 import orkaLogo from '../assets/orka_logo.png';
+const orkaLogoIcon = '/logo-192.png';
 
 interface SidebarProps {
   activeTab: string;
@@ -57,16 +58,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className={`sidebar transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width,transform] transform-gpu ${isOpen ? 'open' : ''}`}>
-      <div className="sidebar-logo" style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <img 
-          src={orkaLogo} 
-          alt="Orka CRM" 
-          style={{ 
-            height: '28px', 
-            width: 'auto',
-            objectFit: 'contain'
-          }} 
-        />
+      <div className="sidebar-logo" style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: isOpen ? 'flex-start' : 'center', gap: '10px' }}>
+        {isOpen ? (
+          <img 
+            src={orkaLogo} 
+            alt="Orka CRM" 
+            style={{ 
+              height: '28px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }} 
+          />
+        ) : (
+          <img 
+            src={orkaLogoIcon} 
+            alt="Orka CRM Icon" 
+            style={{ 
+              height: '28px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }} 
+          />
+        )}
       </div>
 
       <nav className="sidebar-nav">

@@ -27,7 +27,7 @@ export const FinanceSummaryWidget = React.memo(() => {
     const today = new Date();
     today.setHours(0,0,0,0);
     return transactions
-      .filter((t: any) => t.type === 'expense' && t.status === 'Pendente')
+      .filter((t: any) => t.type === 'expense' && (t.status === 'Pendente' || t.status === 'Atrasado'))
       .map((t: any) => {
         let dueDate: Date;
         if (t.dueDate?.includes('/')) {

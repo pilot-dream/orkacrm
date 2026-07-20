@@ -59,16 +59,16 @@ BEGIN
     BEGIN
       -- deadline pode estar formatado como 'DD/MM/YYYY' (gerado por triggers de onboarding) 
       -- ou como 'YYYY-MM-DD' (salvo pelo date picker HTML5 do frontend)
-      IF task_rec.deadline LIKE '%/%' THEN
-        task_datetime := (to_timestamp(
-          task_rec.deadline || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00'), 
-          'DD/MM/YYYY HH24:MI'
-        )::timestamp) AT TIME ZONE 'America/Sao_Paulo';
+      IF task_rec.deadline::text LIKE '%/%' THEN
+        task_datetime := to_timestamp(
+          task_rec.deadline::text || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00') || ' -03:00', 
+          'DD/MM/YYYY HH24:MI TZH:TZM'
+        );
       ELSE
-        task_datetime := (to_timestamp(
-          task_rec.deadline || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00'), 
-          'YYYY-MM-DD HH24:MI'
-        )::timestamp) AT TIME ZONE 'America/Sao_Paulo';
+        task_datetime := to_timestamp(
+          task_rec.deadline::text || ' ' || COALESCE(NULLIF(task_rec.time, ''), '09:00') || ' -03:00', 
+          'YYYY-MM-DD HH24:MI TZH:TZM'
+        );
       END IF;
     EXCEPTION WHEN OTHERS THEN
       -- Ignora a tarefa silenciosamente se os dados de data/hora forem inválidos
